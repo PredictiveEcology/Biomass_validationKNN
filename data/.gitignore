@@ -1,0 +1,6 @@
+## ignore all data
+*
+
+## don't ignore
+!CHECKSUMS.txt
+!.gitignore
