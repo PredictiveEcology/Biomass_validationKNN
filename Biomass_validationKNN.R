@@ -87,9 +87,9 @@ defineModule(sim, list(
                  sourceURL = "http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada-forests-attributes_attributs-forests-canada/2011-attributes_attributs-2011/")
   ),
   outputObjects = bind_rows(
-    createsOutput("disturbedIDs", "RasterLayer",
-                  desc = paste("pixels that have been disturbed by fire or suffered land-cover changes",
-                               "during the validation period. These pixels are excluded form the validation.")),
+    createsOutput("rstDisturbedPix", "RasterLayer",
+                  desc = paste("Raster of pixel IDs (as a mask) that have been disturbed by fire or suffered land-cover",
+                               "changes during the validation period. These pixels are excluded form the validation.")),
     createsOutput("rawBiomassMapValidation", "RasterLayer",
                   desc = paste("total biomass raster layer in study area used for validation.",
                                "Filtered to exclude pixels that were disturbed during the validation period")),
@@ -130,16 +130,21 @@ Init <- function(sim) {
 
   ## make vector of pixels that are both in fire perimeters and LCChange
   ## export to sim
-  sim$disturbedIDs <- union(inFireIDs, inLCChangeIDs)
+  disturbedIDs <- union(inFireIDs, inLCChangeIDs)
+
+  sim$rstDisturbedPix <- sim$rasterToMatch
+  sim$rstDisturbedPix <- setValues(sim$rstDisturbedPix, values = NA)
+  sim$rstDisturbedPix[disturbedIDs] <- 1
 
   ## exclude these pixels from validation layers
-  sim$speciesLayersValidation[sim$disturbedIDs] <- NA
-  sim$rawBiomassMapValidation[sim$disturbedIDs] <- NA
+  sim$speciesLayersValidation[disturbedIDs] <- NA
+  sim$rawBiomassMapValidation[disturbedIDs] <- NA
   sim$standAgeMapValidation[disturbedIDs] <- NA
 
+
   ## return some statistics about excluded pixels
-  excludedPixStats <- data.table(noPixels = length(sim$disturbedIDs),
-                                 landscapePrc = round(length(sim$disturbedIDs)/
+  excludedPixStats <- data.table(noPixels = length(disturbedIDs),
+                                 landscapePrc = round(length(disturbedIDs)/
                                                         sum(!is.na(getValues(sim$biomassMap))),
                                                       2) * 100)
   message(blue("Pixels disturbed during the validation period will be excluded from validation, representing a loss of:\n",
