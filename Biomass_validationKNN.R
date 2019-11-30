@@ -78,6 +78,12 @@ defineModule(sim, list(
                               "Defaults to the Canadian Forestry Service, National Forest Inventory,",
                               "kNN-derived species cover maps from 2011 -",
                               "see https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990 for metadata"),
+                 sourceURL = "http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada-forests-attributes_attributs-forests-canada/2011-attributes_attributs-2011/"),
+    expectsInput("standAgeMapValidation", "RasterLayer",
+                 desc = paste("stand age raster layer in study area used for validation. Defaults to the",
+                              "Canadian Forestry Service, National Forest Inventory, kNN-derived stand age",
+                              "map from 2011. See",
+                              "https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990"),
                  sourceURL = "http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada-forests-attributes_attributs-forests-canada/2011-attributes_attributs-2011/")
   ),
   outputObjects = bind_rows(
@@ -129,6 +135,7 @@ Init <- function(sim) {
   ## exclude these pixels from validation layers
   sim$speciesLayersValidation[sim$disturbedIDs] <- NA
   sim$rawBiomassMapValidation[sim$disturbedIDs] <- NA
+  sim$standAgeMapValidation[disturbedIDs] <- NA
 
   ## return some statistics about excluded pixels
   excludedPixStats <- data.table(noPixels = length(sim$disturbedIDs),
@@ -500,6 +507,31 @@ Init <- function(sim) {
     stop("'rawBiomassMapValidation' and 'rasterToMatch' differ in
          their properties. Please check")
   }
+
+  ## Age layer ----------------------------------------------------
+  if (!suppliedElsewhere("standAgeMapValidation", sim)) {
+    ## get all online file names
+    fileURLs <- getURL(extractURL("standAgeMapValidation"), dirlistonly = TRUE)
+    fileNames <- getHTMLLinks(fileURLs)
+    standAgeValFileName <- grep("Stand_Age.*.tif$", fileNames, value = TRUE)
+    standAgeValURL <- paste0(extractURL("standAgeMapValidation"), standAgeValFileName)
+
+    sim$standAgeMapValidation <- Cache(prepInputs,
+                                       targetFile = asPath(standAgeValFileName),
+                                       url = standAgeValURL,
+                                       destinationPath = asPath(dPath),
+                                       fun = "raster::raster",
+                                       studyArea = sim$studyArea,
+                                       rasterToMatch = sim$rasterToMatch,
+                                       useSAcrs = FALSE,
+                                       method = "bilinear",
+                                       datatype = "INT2U",
+                                       filename2 = TRUE,
+                                       overwrite = TRUE,
+                                       userTags = c(cacheTags, "standAgeMapValidation"),
+                                       omitArgs = c("userTags"))
+  }
+
 
   return(invisible(sim))
 }
