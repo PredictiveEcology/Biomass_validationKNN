@@ -21,7 +21,7 @@ defineModule(sim, list(
   citation = list("citation.bib"),
   documentation = list("README.txt", "Biomass_validationKNN.Rmd"),
   reqdPkgs = list("crayon", "reproducible", "raster",
-                  "sf"),
+                  "sf", "XML", "RCurl"),
   parameters = rbind(
     defineParameter("coverThresh", "integer", "10", NA, NA,
                     paste("The minimum % cover a species needs to have (per pixel) in the study",
