@@ -40,6 +40,10 @@ defineModule(sim, list(
                     desc = "Controls cache; caches the init event by default")
     ),
   inputObjects = bind_rows(
+    createsOutput("biomassMap", "RasterLayer",
+                  desc = paste("total biomass raster layer in study area, filtered for pixels covered by cohortData.",
+                               "Used to calculate total no. of pixels being simulated",
+                               "If not supplied, will default to 'rawBiomassMap'.")),
     expectsInput("firePerimeters", "sf",
                  desc = paste("A map of fire perimeters in the study area that can be used to exclude pixels",
                               "that have been burnt during the validation period. Defaults to the Canadian",
@@ -461,7 +465,7 @@ Init <- function(sim) {
          their properties. Please check")
   }
 
-  ## Biomass layer ----------------------------------------------------
+  ## Biomass layers ----------------------------------------------------
   if (!suppliedElsewhere("rawBiomassMapValidation", sim)) {
     ## get all online file names
     fileURLs <- getURL(extractURL("rawBiomassMapValidation"), dirlistonly = TRUE)
@@ -483,6 +487,11 @@ Init <- function(sim) {
                                          overwrite = TRUE,
                                          userTags = c(cacheTags, "rawBiomassMapValidation"),
                                          omitArgs = c("userTags"))
+  }
+
+  if (!suppliedElsewhere("biomassMap", sim)) {
+    ## get all online file names
+    sim$biomassMap <- sim$rawBiomassMap
   }
 
   ## check rasters
