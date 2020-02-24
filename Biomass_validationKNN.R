@@ -1,4 +1,3 @@
-
 # Everything in this file gets sourced during simInit, and all functions and objects
 # are put into the simList. To use objects, use sim$xxx, and are thus globally available
 # to all modules. Functions can be used without sim$ as they are namespaced, like functions
@@ -164,7 +163,6 @@ Init <- function(sim) {
   sim$speciesLayersValidation[disturbedIDs] <- NA
   sim$rawBiomassMapValidation[disturbedIDs] <- NA
   sim$standAgeMapValidation[disturbedIDs] <- NA
-
 
   ## return some statistics about excluded pixels
   excludedPixStats <- data.table(noPixels = length(disturbedIDs),
@@ -407,7 +405,6 @@ Init <- function(sim) {
     if (is.null(sim$sppColorVect))
       stop("If you provide 'sppEquiv' you MUST also provide 'sppColorVect'")
   }
-
 
   ## Species raster layers -------------------------------------------
   if (!suppliedElsewhere("sppEquiv", sim)) {
