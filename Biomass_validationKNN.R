@@ -27,6 +27,11 @@ defineModule(sim, list(
                     paste("The minimum % cover a species needs to have (per pixel) in the study",
                           "area to be considered present. Should be the same as the one used to obtain",
                           "the species cover layers for simualtion set up.")),
+    defineParameter("LCChangeYr", "integer", c(2001:2011), 1985, 2015,
+                    paste("An integer or vector of integers of the validation period years, defining which",
+                          "years of land-cover changes (i.e. disturbances) should be excluded.",
+                          "Only used if rstLCChangeYr is not NULL.",
+                          "See https://opendata.nfis.org/mapserver/nfis-change_eng.html for more information.")),
     defineParameter("sppEquivCol", "character", "Boreal", NA, NA,
                     "The column in sim$specieEquivalency data.table to use as a naming convention"),
     defineParameter(".plotInitialTime", "numeric", 0, NA, NA,
@@ -324,19 +329,17 @@ Init <- function(sim) {
                            omitArgs = c("destinationPath", "targetFile", "userTags"))
 
     ## only keep pixels that have been disturbed during the validation period
-    pixKeep <- getValues(sim$rstLCChange) > 0 &
-      getValues(rstLCChangeYr) > 100 &
-      getValues(rstLCChangeYr) < 112
+    ## convert years to the map's format
+    yrs <- P(sim)$LCChangeYr - 1900
+    pixKeep <- !is.na(getValues(sim$rstLCChange)) &
+      getValues(sim$rstLCChangeYr) %in% yrs
 
     sim$rstLCChange[!pixKeep] <- NA
+    sim$rstLCChangeYr[!pixKeep] <- NA
   }
 
-  if (!compareRaster(sim$rstLCChange,
-                     sim$rasterToMatch, stopiffalse = FALSE)) {
-    stop("'rstLCChange' and 'rasterToMatch' differ in
-         their properties. Please check")
-  }
-
+  ## Check that rstLCChange is a mask and matches RTM
+  assertRstLCChange(sim$rstLCChange, sim$rasterToMatch)
 
   ## Fire perimeter data ---------------------------------------------------
 
