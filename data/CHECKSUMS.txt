@@ -34,3 +34,6 @@
 "NFI_MODIS250m_2011_kNN_Species_Popu_Gra_v1.tif" "e4bba3b03c3826b9" "15553063" "xxhash64"
 "NFI_MODIS250m_2011_kNN_Species_Popu_Spp_v1.tif" "41188d3d63f8c3b3" "40621139" "xxhash64"
 "NFI_MODIS250m_2011_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif" "cb8174c4b1ec4b1b" "311101317" "xxhash64"
+"NFI_MODIS250m_2011_kNN_Structure_Stand_Age_v1.tif" "ccff4929b4591b7d" "259251529" "xxhash64"
+"NFI_MODIS250m_2011_kNN_Species_Popu_Tre_v1.tif" "918db4ad75d20299" "140200510" "xxhash64"
+"NFI_MODIS250m_2011_kNN_Species_Popu_Tri_v1.tif" "4069cec52232163a" "8273639" "xxhash64"
