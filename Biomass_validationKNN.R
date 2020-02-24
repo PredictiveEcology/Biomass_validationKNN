@@ -312,6 +312,8 @@ Init <- function(sim) {
                              filename2 = TRUE, overwrite = TRUE,
                              userTags = c("rstLCChange", cacheTags),
                              omitArgs = c("destinationPath", "targetFile", "userTags"))
+    ## convert to mask
+    sim$rstLCChange[!is.na(sim$rstLCChange)] <- 1
 
     sim$rstLCChangeYr <- Cache(prepInputs,
                            targetFile = LCChangeYrFilename,
