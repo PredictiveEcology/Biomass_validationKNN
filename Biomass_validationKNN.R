@@ -53,38 +53,57 @@ defineModule(sim, list(
     expectsInput("rawBiomassMap", "RasterLayer",
                  desc = paste("total biomass raster layer in study area. Defaults to the Canadian Forestry",
                               "Service, National Forest Inventory, kNN-derived total aboveground biomass map",
-                              "from 2001. See http://tree.pfc.forestry.ca/NFI_MAP_V0_metadata.xls for metadata"),
-                 sourceURL = "http://tree.pfc.forestry.ca/kNN-StructureBiomass.tar"),
+                              "from 2001. See https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990",
+                              "for metadata"),
+                 sourceURL = paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
+                                    "canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/",
+                                    "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif")),
     expectsInput("rawBiomassMapValidation", "RasterLayer",
                  desc = paste("total biomass raster layer in study area used for validation. Defaults to the",
                                       "Canadian Forestry Service, National Forest Inventory, kNN-derived total aboveground",
                                       "biomass map from 2011. See",
                                       "https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990"),
-                 sourceURL = "http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada-forests-attributes_attributs-forests-canada/2011-attributes_attributs-2011/"),
+                 sourceURL = paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
+                                    "canada-forests-attributes_attributs-forests-canada/2011-attributes_attributs-2011/",
+                                    "NFI_MODIS250m_2011_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif")),
     expectsInput("rstLCChange", "RasterLayer",
-                 desc = paste("A map of land cover change types in the study area that can be used to exclude pixels",
+                 desc = paste("A mask-type map of land cover changes in the study area that can be used to exclude pixels",
                               "that have been disturbed during the validation period. Defaults to Canada's forest",
-                              "change national map between 1985-2011 (CFS), subset to years 2001-2011 (inclusively).",
+                              "change map between 1985-2011 (CFS), filtered for years 2001-2011 (inclusively)",
+                              "and all disturbances collapsed (map only has values of 1 and NA). See parameter LCChangeYr",
+                              "to change the period of disturbances, and",
+                              "https://opendata.nfis.org/mapserver/nfis-change_eng.html for more information."),
+                 sourceURL = "https://opendata.nfis.org/downloads/forest_change/C2C_change_year_1985_2011.zip"),
+    expectsInput("rstLCChangeYr", "RasterLayer",
+                 desc = paste("An OPTIONAL map of land cover change years in the study area used to exclude pixels that have",
+                              "been disturbed during the validation period. Defaults to Canada's forest",
+                              "change national map between 1985-2011 (CFS). By default disturbances are subset to",
+                              " to years 2001-2011 (inclusively; see parameter LCChangeYr).",
                               "See https://opendata.nfis.org/mapserver/nfis-change_eng.html for more information."),
-                 sourceURL = "https://opendata.nfis.org/downloads/forest_change/C2C_change_type_1985_2011.zip"),
+                 sourceURL = "https://opendata.nfis.org/downloads/forest_change/C2C_change_year_1985_2011.zip"),
     expectsInput("speciesLayers", "RasterStack",
                  desc = paste("cover percentage raster layers by species in Canada species map.",
                               "Defaults to the Canadian Forestry Service, National Forest Inventory,",
                               "kNN-derived species cover maps from 2001, using a cover threshold of 10% -",
-                              "see http://tree.pfc.forestry.ca/NFI_MAP_V0_metadata.xls for metadata"),
-                 sourceURL = "http://tree.pfc.forestry.ca/kNN-Species.tar"),
+                              "see https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990",
+                              "for metadata"),
+                 sourceURL = paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
+                                    "canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/")),
     expectsInput("speciesLayersValidation", "RasterStack",
                  desc = paste("cover percentage raster layers by species in Canada species map used for validation.",
                               "Defaults to the Canadian Forestry Service, National Forest Inventory,",
                               "kNN-derived species cover maps from 2011 -",
                               "see https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990 for metadata"),
-                 sourceURL = "http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada-forests-attributes_attributs-forests-canada/2011-attributes_attributs-2011/"),
+                 sourceURL = paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
+                                    "canada-forests-attributes_attributs-forests-canada/2011-attributes_attributs-2011/")),
     expectsInput("standAgeMapValidation", "RasterLayer",
                  desc = paste("stand age raster layer in study area used for validation. Defaults to the",
                               "Canadian Forestry Service, National Forest Inventory, kNN-derived stand age",
                               "map from 2011. See",
                               "https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990"),
-                 sourceURL = "http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada-forests-attributes_attributs-forests-canada/2011-attributes_attributs-2011/")
+                 sourceURL = paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
+                                    "canada-forests-attributes_attributs-forests-canada/2011-attributes_attributs-2011/",
+                                    "NFI_MODIS250m_2011_kNN_Structure_Stand_Age_v1.tif"))
   ),
   outputObjects = bind_rows(
     createsOutput("rstDisturbedPix", "RasterLayer",
@@ -179,10 +198,10 @@ Init <- function(sim) {
   }
 
   if (!suppliedElsewhere("rawBiomassMap", sim) || needRTM) {
+    rawBiomassMapFilename <- "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
+
     sim$rawBiomassMap <- Cache(prepInputs,
-                               targetFile = asPath(basename(rawBiomassMapFilename)),
-                               archive = asPath(c("kNN-StructureBiomass.tar",
-                                                  "NFI_MODIS250m_kNN_Structure_Biomass_TotalLiveAboveGround_v0.zip")),
+                               targetFile = rawBiomassMapFilename,
                                url = extractURL("rawBiomassMap"),
                                destinationPath = dPath,
                                studyArea = sim$studyArea,
@@ -479,15 +498,11 @@ Init <- function(sim) {
 
   ## Biomass layers ----------------------------------------------------
   if (!suppliedElsewhere("rawBiomassMapValidation", sim)) {
-    ## get all online file names
-    fileURLs <- getURL(extractURL("rawBiomassMapValidation"), dirlistonly = TRUE)
-    fileNames <- getHTMLLinks(fileURLs)
-    rawBiomassValFileName <- grep("Biomass_TotalLiveAboveGround.*.tif$", fileNames, value = TRUE)
-    rawBiomassValURL <- paste0(extractURL("rawBiomassMapValidation"), rawBiomassValFileName)
+    rawBiomassValFileName <- "NFI_MODIS250m_2011_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
 
     sim$rawBiomassMapValidation <- Cache(prepInputs,
-                                         targetFile = asPath(rawBiomassValFileName),
-                                         url = rawBiomassValURL,
+                                         targetFile = rawBiomassValFileName,
+                                         url = extractURL("rawBiomassMapValidation"),
                                          destinationPath = asPath(dPath),
                                          fun = "raster::raster",
                                          studyArea = sim$studyArea,
@@ -515,15 +530,11 @@ Init <- function(sim) {
 
   ## Age layer ----------------------------------------------------
   if (!suppliedElsewhere("standAgeMapValidation", sim)) {
-    ## get all online file names
-    fileURLs <- getURL(extractURL("standAgeMapValidation"), dirlistonly = TRUE)
-    fileNames <- getHTMLLinks(fileURLs)
-    standAgeValFileName <- grep("Stand_Age.*.tif$", fileNames, value = TRUE)
-    standAgeValURL <- paste0(extractURL("standAgeMapValidation"), standAgeValFileName)
+    standAgeValFileName <- "NFI_MODIS250m_2011_kNN_Structure_Stand_Age_v1.tif"
 
     sim$standAgeMapValidation <- Cache(prepInputs,
-                                       targetFile = asPath(standAgeValFileName),
-                                       url = standAgeValURL,
+                                       targetFile = standAgeValFileName,
+                                       url = extractURL("standAgeMapValidation"),
                                        destinationPath = asPath(dPath),
                                        fun = "raster::raster",
                                        studyArea = sim$studyArea,
