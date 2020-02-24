@@ -218,7 +218,8 @@ Init <- function(sim) {
                                useSAcrs = FALSE,     ## never use SA CRS
                                method = "bilinear",
                                datatype = "INT2U",
-                               filename2 = TRUE, overwrite = TRUE, userTags = cacheTags,
+                               filename2 = TRUE, overwrite = TRUE,
+                               userTags = c(cacheTags, "rawBiomassMap"),
                                omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
   }
   if (needRTM) {
@@ -230,7 +231,7 @@ Init <- function(sim) {
     sim$rasterToMatch <- Cache(writeOutputs, sim$rasterToMatch,
                                filename2 = file.path(cachePath(sim), "rasters", "rasterToMatch.tif"),
                                datatype = "INT2U", overwrite = TRUE,
-                               userTags = cacheTags,
+                               userTags = c(cacheTags, "rasterToMatch"),
                                omitArgs = c("userTags"))
 
     ## this is old, and potentially not needed anymore
@@ -270,7 +271,7 @@ Init <- function(sim) {
       sim$rasterToMatch <- Cache(writeRaster, sim$rasterToMatch,
                                  filename = file.path(dPath, "rasterToMatch.tif"),
                                  datatype = "INT2U", overwrite = TRUE,
-                                 userTags = cacheTags,
+                                 userTags = c(cacheTags, "rasterToMatch"),
                                  omitArgs = c("userTags"))
     }
   }
