@@ -313,7 +313,7 @@ Init <- function(sim) {
                              userTags = c("rstLCChange", cacheTags),
                              omitArgs = c("destinationPath", "targetFile", "userTags"))
 
-    rstLCChangeYr <- Cache(prepInputs,
+    sim$rstLCChangeYr <- Cache(prepInputs,
                            targetFile = LCChangeYrFilename,
                            archive = asPath("C2C_change_year_1985_2011.zip"),
                            url = extractURL("rstLCChangeYr"),
