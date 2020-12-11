@@ -493,7 +493,7 @@ Init <- function(sim) {
          Please check these objects and/or they are being produced")
   }
 
-  if (!compareRaster(sim$speciesLayersValidation,
+  if (!compareRaster(stack(sim$speciesLayersValidation),
                      sim$rasterToMatch, stopiffalse = FALSE)) {
     stop("'speciesLayersValidation' and 'rasterToMatch' differ in
          their properties. Please check")
