@@ -53,7 +53,7 @@ defineModule(sim, list(
                               "that have been burnt during the validation period. Defaults to the Canadian",
                               "Wildland Fire Information System 1986-2018 National Burned Area Composite,",
                               "subset to fires between 2001 and 2011 (inclusively)."),
-                 sourceURL = "http://cwfis.cfs.nrcan.gc.ca/downloads/nbac/nbac_1986_to_2018_20191017.zip"),
+                 sourceURL = "http://cwfis.cfs.nrcan.gc.ca/downloads/nbac/nbac_1986_to_2019_20200921.zip"),
     expectsInput("rawBiomassMap", "RasterLayer",
                  desc = paste("total biomass raster layer in study area. Defaults to the Canadian Forestry",
                               "Service, National Forest Inventory, kNN-derived total aboveground biomass map",
@@ -345,11 +345,11 @@ Init <- function(sim) {
   ## Fire perimeter data ---------------------------------------------------
 
   if (!suppliedElsewhere("firePerimeters", sim)) {
-    firePerimetersFile <- "nbac_1986_to_2018_20191017.shp"
+    firePerimetersFile <- "nbac_1986_to_2019_20200921.shp"
     sim$firePerimeters <- Cache(prepInputs,
                                 targetFile = firePerimetersFile,
                                 alsoExtract = "similar",
-                                archive = asPath("nbac_1986_to_2018_20191017.zip"),
+                                archive = asPath("nbac_1986_to_2019_20200921.zip"),
                                 url = extractURL("firePerimeters"),
                                 destinationPath = dPath,
                                 studyArea = sim$studyArea,
@@ -493,7 +493,7 @@ Init <- function(sim) {
          Please check these objects and/or they are being produced")
   }
 
-  if (!compareRaster(sim$speciesLayersValidation,
+  if (!compareRaster(stack(sim$speciesLayersValidation),
                      sim$rasterToMatch, stopiffalse = FALSE)) {
     stop("'speciesLayersValidation' and 'rasterToMatch' differ in
          their properties. Please check")
