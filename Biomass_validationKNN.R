@@ -202,7 +202,8 @@ Init <- function(sim) {
 
   if (!suppliedElsewhere("rawBiomassMap", sim) || needRTM) {
     rawBiomassMapFilename <- "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
-
+    httr::with_config(config = httr::config(ssl_verifypeer = 0L), { ## TODO: re-enable verify
+      #necessary for KNN
     sim$rawBiomassMap <- Cache(prepInputs,
                                targetFile = rawBiomassMapFilename,
                                url = extractURL("rawBiomassMap"),
@@ -219,6 +220,7 @@ Init <- function(sim) {
                                filename2 = TRUE, overwrite = TRUE,
                                userTags = c(cacheTags, "rawBiomassMap"),
                                omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
+    })
   }
   if (needRTM) {
     ## if we need rasterToMatch, that means a) we don't have it, but b) we will have rawBiomassMap
