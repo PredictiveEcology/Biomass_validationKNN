@@ -504,7 +504,8 @@ Init <- function(sim) {
   ## Biomass layers ----------------------------------------------------
   if (!suppliedElsewhere("rawBiomassMapValidation", sim)) {
     rawBiomassValFileName <- "NFI_MODIS250m_2011_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
-
+    httr::with_config(config = httr::config(ssl_verifypeer = 0L), { ## TODO: re-enable verify
+      #necessary for KNN
     sim$rawBiomassMapValidation <- Cache(prepInputs,
                                          targetFile = rawBiomassValFileName,
                                          url = extractURL("rawBiomassMapValidation"),
@@ -519,6 +520,7 @@ Init <- function(sim) {
                                          overwrite = TRUE,
                                          userTags = c(cacheTags, "rawBiomassMapValidation"),
                                          omitArgs = c("userTags"))
+    })
   }
 
   if (!suppliedElsewhere("biomassMap", sim)) {
@@ -536,7 +538,8 @@ Init <- function(sim) {
   ## Age layer ----------------------------------------------------
   if (!suppliedElsewhere("standAgeMapValidation", sim)) {
     standAgeValFileName <- "NFI_MODIS250m_2011_kNN_Structure_Stand_Age_v1.tif"
-
+    httr::with_config(config = httr::config(ssl_verifypeer = 0L), { ## TODO: re-enable verify
+      #necessary for KNN
     sim$standAgeMapValidation <- Cache(prepInputs,
                                        targetFile = standAgeValFileName,
                                        url = extractURL("standAgeMapValidation"),
@@ -551,9 +554,8 @@ Init <- function(sim) {
                                        overwrite = TRUE,
                                        userTags = c(cacheTags, "standAgeMapValidation"),
                                        omitArgs = c("userTags"))
+    })
   }
-
-
   return(invisible(sim))
 }
 ### add additional events as needed by copy/pasting from above
