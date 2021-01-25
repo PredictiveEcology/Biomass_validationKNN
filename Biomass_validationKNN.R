@@ -559,4 +559,3 @@ Init <- function(sim) {
   }
   return(invisible(sim))
 }
-### add additional events as needed by copy/pasting from above
