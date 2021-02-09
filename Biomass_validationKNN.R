@@ -634,16 +634,16 @@ obsrvdDeltaMapsEvent <- function(sim) {
 
   if (P(sim)$.savePlots) {
     ggsave(filename = file.path(mod$plotPath, "observedDeltaBDeltaAge_lm.png"),
-           plot = plot4, width = 7, height = 5, units = "in", res = 300)
+           plot = plot4, width = 7, height = 5, units = "in")
 
     ggsave(filename = file.path(mod$plotPath, "observedDeltaB_yearGap.png"),
-           plot = plot5, width = 5, height = 4, units = "in", res = 300)
+           plot = plot5, width = 5, height = 4, units = "in")
 
     ggsave(filename = file.path(mod$plotPath, "observedDeltaBDeltaAge_lmADJ.png"),
-           plot = plot9, width = 7, height = 5, units = "in", res = 300)
+           plot = plot9, width = 7, height = 5, units = "in")
 
     ggsave(filename = file.path(mod$plotPath, "observedDeltaB_yearGapADJ.png"),
-           plot = plot10, width = 5, height = 4, units = "in", res = 300)
+           plot = plot10, width = 5, height = 4, units = "in")
 
     dev.set(mod$mapWindow)
     dev.copy(pdf, file = file.path(mod$plotPath, 'deltaB_Age_Maps.pdf'))
@@ -795,7 +795,7 @@ landscapeWidePlotsEvent <- function(sim) {
     plotLandscapeComp2 <- annotate_figure(plotLandscapeComp,
                                           top = text_grob("Landscape-averaged comparisons", size = 16))
     ggsave(filename = file.path(mod$plotPath, "LandscapeComparisons_relB_PresAbs.png"),
-           plot = plotLandscapeComp2, width = 12, height = 7, units = "in", res = 300)
+           plot = plotLandscapeComp2, width = 12, height = 7, units = "in")
   }
 
   return(invisible(sim))
@@ -875,7 +875,7 @@ standLevelPlotsEvent <- function(sim) {
     standCompPlot2 <- annotate_figure(standCompPlot,
                                       top = text_grob("Stand-level comparisons", size = 16))
     ggsave(filename = file.path(mod$plotPath, "StandComparisons_relB.png"),
-           plot = standCompPlot2, width = 12, height = 6, units = "in", res = 300)
+           plot = standCompPlot2, width = 12, height = 6, units = "in")
   }
 
   return(invisible(sim))
@@ -944,7 +944,7 @@ deltaBComparisonsEvent <- function(sim) {
     simObsDeltaBPlot2 <- annotate_figure(simObsDeltaBPlot,
                                          top = text_grob("Stand-level comparisons", size = 16))
     ggsave(filename = file.path(mod$plotPath, "LandscapeStandComparisons_deltaB.png"),
-           plot = simObsDeltaBPlot2, width = 10, height = 6, units = "in", res = 300)
+           plot = simObsDeltaBPlot2, width = 10, height = 6, units = "in")
   }
   return(invisible(sim))
 }
