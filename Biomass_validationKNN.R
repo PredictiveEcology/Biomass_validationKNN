@@ -1362,7 +1362,7 @@ deltaBComparisonsEvent <- function(sim) {
         fileNames <- cohortDataOutputs[saveTime == y, file]
         reps <- paste("rep", reps, sep = "")
         reps <- sub("(rep)([[:digit:]])$", "\\10\\2", reps)
-        out <- sapply(reps, FUN = function(x) any(grepl(x, fileNames)))
+        out <- vapply(reps, FUN = function(x) any(grepl(x, fileNames)), FUN.VALUE = logical(1))
         out2 <- which(!out)
         if (length(out2))
           stop(paste("Missing 'cohortData' outputs for year", y, "and rep(s)", paste(out2, collapse = ", ")))
@@ -1379,13 +1379,12 @@ deltaBComparisonsEvent <- function(sim) {
       cohortDataOutputs <- cohortDataOutputs[grepl(repsStr, file)]
       cohortDataOutputs[, rep := sub("(.*rep)([[:digit:]]*)(\\/.*)", "\\2", file)]
 
-      ## check that file paths match outputPath(sim)
-      if (any(!grepl(outputPath(sim), cohortDataOutputs$file))) {
-        stop("All/some cohortData file paths do not match (partially, or entirely) 'outputPath(sim)'.
-             This can be because the simulation outputs were saved in different directories from the one
-             passed to Biomass_validationKNN as 'outputPath(sim)'.
-             Please verify paths in 'simulationOutputs' and correct if necessary -
-             i.e. make sure file paths start with 'outputPath(sim)' ")
+      ## check that files exist
+      if (any(!vapply(cohortDataOutputs$file, file.exists, FUN.VALUE = logical(1)))) {
+        stop("All/some cohortData files cannot be found.
+             This can be because the simulation outputs were saved in different paths from the ones
+             passed to Biomass_validationKNN in sim$simulationOutputs.
+             Please verify paths in 'simulationOutputs' and correct if necessary")
       }
 
       sim$allCohortData <- rbindlist(fill = TRUE, use.names = TRUE,
@@ -1409,7 +1408,7 @@ deltaBComparisonsEvent <- function(sim) {
         fileNames <- pixelGroupMapOutputs[saveTime == y, file]
         reps <- paste("rep", reps, sep = "")
         reps <- sub("(rep)([[:digit:]])$", "\\10\\2", reps)
-        out <- sapply(reps, FUN = function(x) any(grepl(x, fileNames)))
+        out <- vapply(reps, FUN = function(x) any(grepl(x, fileNames)), FUN.VALUE = logical(1))
         out2 <- which(!out)
         if (length(out2))
           stop(paste("Missing 'pixelGroupMap' outputs for year", y, "and rep(s)", paste(out2, collapse = ", ")))
@@ -1431,13 +1430,12 @@ deltaBComparisonsEvent <- function(sim) {
       pixelGroupMapOutputs[, rep := sub("(.*rep)([[:digit:]]*)(\\/.*)", "\\2", file)]
 
 
-      ## check that file paths match outputPath(sim)
-      if (any(!grepl(outputPath(sim), pixelGroupMapOutputs$file))) {
-        stop("All/some cohortData file paths do not match (partially, or entirely) 'outputPath(sim)'.
-             This can be because the simulation outputs were saved in different directories from the one
-             passed to Biomass_validationKNN as 'outputPath(sim)'.
-             Please verify paths in 'simulationOutputs' and correct if necessary -
-             i.e. make sure file paths start with 'outputPath(sim)' ")
+      ## check that files exist
+      if (any(!vapply(pixelGroupMapOutputs$file, file.exists, FUN.VALUE = logical(1)))) {
+        stop("All/some pixelGroupMap files cannot be found.
+             This can be because the simulation outputs were saved in different paths from the ones
+             passed to Biomass_validationKNN in sim$simulationOutputs.
+             Please verify paths in 'simulationOutputs' and correct if necessary")
       }
 
       sim$pixelGroupMapStk <- apply(pixelGroupMapOutputs, MARGIN = 1, FUN = function(x) {
