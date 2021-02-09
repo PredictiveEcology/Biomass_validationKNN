@@ -202,7 +202,7 @@ doEvent.Biomass_validationKNN = function(sim, eventTime, eventType) {
       sim <- Init(sim)
 
       if (!is.na(P(sim)$.plotInitialTime)) {
-        dev(height = 7, width = 9)   ## don't overwrite other plots, open new window
+        dev(height = 7, width = 12)   ## don't overwrite other plots, open new window
         mod$statsWindow <- dev.cur()
         if (P(sim)$obsDeltaAgeB) {
           mod$mapWindow <- mod$statsWindow + 1 ## this window should to be made first if need be
