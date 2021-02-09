@@ -779,11 +779,11 @@ landscapeWidePlotsEvent <- function(sim) {
          y = "proportion of pixels", fill = "")
 
   plotLandscapeComp <- ggarrange(plot1 + scale_y_continuous(limits = c(0,1)),
-                     plot2 + scale_y_continuous(limits = c(0,2000)),
-                     plot3 + scale_y_continuous(limits = c(0,1)),
-                     plot4 + scale_y_continuous(limits = c(0,2000)),
-                     common.legend = TRUE, legend = "bottom",
-                     nrow = 2, ncol = 2)
+                                 plot2 + scale_y_continuous(limits = c(0,2000)),
+                                 plot3 + scale_y_continuous(limits = c(0,1)),
+                                 plot4 + scale_y_continuous(limits = c(0,2000)),
+                                 common.legend = TRUE, legend = "bottom",
+                                 nrow = 2, ncol = 2)
 
   if (!is.na(P(sim)$.plotInitialTime)) {
     dev(mod$landscapeWindow)
@@ -861,9 +861,9 @@ standLevelPlotsEvent <- function(sim) {
          fill = "")
 
   standCompPlot <- ggarrange(plot1,
-                     plot2 + labs(y = " \n "),
-                     common.legend = TRUE, legend = "bottom",
-                     ncol = 2)
+                             plot2 + labs(y = " \n "),
+                             common.legend = TRUE, legend = "bottom",
+                             ncol = 2)
 
   if (!is.na(P(sim)$.plotInitialTime)) {
     dev(mod$standWindow)
@@ -932,8 +932,8 @@ deltaBComparisonsEvent <- function(sim) {
          x = "", y = expression(paste(Delta, "B")))
 
   simObsDeltaBPlot <- ggarrange(plot1, plot2 + labs(y = " \n "),
-                     common.legend = TRUE, legend = "bottom",
-                     ncol = 2)
+                                common.legend = TRUE, legend = "bottom",
+                                ncol = 2)
 
   if (!is.na(P(sim)$.plotInitialTime)) {
     dev.set(mod$statsWindow)
@@ -1357,7 +1357,7 @@ deltaBComparisonsEvent <- function(sim) {
     } else {
       cohortDataOutputs <- sim$simulationOutputs[objectName == "cohortData"]
 
-      ## check that the selected years and reps exist in outputs
+      ## check that the selected years and reps exist in outputs table
       out <- lapply(P(sim)$validationYears, FUN = function(y, cohortDataOutputs, reps) {
         fileNames <- cohortDataOutputs[saveTime == y, file]
         reps <- paste("rep", reps, sep = "")
@@ -1404,7 +1404,7 @@ deltaBComparisonsEvent <- function(sim) {
     } else {
       pixelGroupMapOutputs <- sim$simulationOutputs[objectName == "pixelGroupMap"]
 
-      ## check that the selected years and reps exist in outputs
+      ## check that the selected years and reps exist in outputs table
       out <- lapply(P(sim)$validationYears, FUN = function(y, pixelGroupMapOutputs, reps) {
         fileNames <- pixelGroupMapOutputs[saveTime == y, file]
         reps <- paste("rep", reps, sep = "")
