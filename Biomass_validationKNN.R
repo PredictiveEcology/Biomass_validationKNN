@@ -633,25 +633,17 @@ obsrvdDeltaMapsEvent <- function(sim) {
   }
 
   if (P(sim)$.savePlots) {
-    png(file.path(mod$plotPath, "observedDeltaBDeltaAge_lm.png"),
-        width = 7, height = 5, units = "in", res = 300)
-    plot4
-    dev.off()
+    ggsave(filename = file.path(mod$plotPath, "observedDeltaBDeltaAge_lm.png"),
+           plot = plot4, width = 7, height = 5, units = "in", res = 300)
 
-    png(file.path(mod$plotPath, "observedDeltaB_yearGap.png"),
-        width = 5, height = 4, units = "in", res = 300)
-    plot5
-    dev.off()
+    ggsave(filename = file.path(mod$plotPath, "observedDeltaB_yearGap.png"),
+           plot = plot5, width = 5, height = 4, units = "in", res = 300)
 
-    png(file.path(mod$plotPath, "observedDeltaBDeltaAge_lmADJ.png"),
-        width = 7, height = 5, units = "in", res = 300)
-    plot9
-    dev.off()
+    ggsave(filename = file.path(mod$plotPath, "observedDeltaBDeltaAge_lmADJ.png"),
+           plot = plot9, width = 7, height = 5, units = "in", res = 300)
 
-    png(file.path(mod$plotPath, "observedDeltaB_yearGapADJ.png"),
-        width = 5, height = 4, units = "in", res = 300)
-    plot10
-    dev.off()
+    ggsave(filename = file.path(mod$plotPath, "observedDeltaB_yearGapADJ.png"),
+           plot = plot10, width = 5, height = 4, units = "in", res = 300)
 
     dev.set(mod$mapWindow)
     dev.copy(pdf, file = file.path(mod$plotPath, 'deltaB_Age_Maps.pdf'))
@@ -800,11 +792,10 @@ landscapeWidePlotsEvent <- function(sim) {
   }
 
   if (P(sim)$.savePlots) {
-    png(file.path(mod$plotPath, "LandscapeComparisons_relB_PresAbs.png"),
-        width = 12, height = 7, units = "in", res = 300)
-    annotate_figure(plotLandscapeComp,
-                    top = text_grob("Landscape-averaged comparisons", size = 16))
-    dev.off()
+    plotLandscapeComp2 <- annotate_figure(plotLandscapeComp,
+                                          top = text_grob("Landscape-averaged comparisons", size = 16))
+    ggsave(filename = file.path(mod$plotPath, "LandscapeComparisons_relB_PresAbs.png"),
+           plot = plotLandscapeComp2, width = 12, height = 7, units = "in", res = 300)
   }
 
   return(invisible(sim))
@@ -881,11 +872,10 @@ standLevelPlotsEvent <- function(sim) {
   }
 
   if (P(sim)$.savePlots) {
-    png(file.path(mod$plotPath, "StandComparisons_relB.png"),
-        width = 12, height = 6, units = "in", res = 300)
-    annotate_figure(standCompPlot,
-                    top = text_grob("Stand-level comparisons", size = 16))
-    dev.off()
+    standCompPlot2 <- annotate_figure(standCompPlot,
+                                      top = text_grob("Stand-level comparisons", size = 16))
+    ggsave(filename = file.path(mod$plotPath, "StandComparisons_relB.png"),
+           plot = standCompPlot2, width = 12, height = 6, units = "in", res = 300)
   }
 
   return(invisible(sim))
@@ -951,11 +941,10 @@ deltaBComparisonsEvent <- function(sim) {
   }
 
   if (P(sim)$.savePlots) {
-    png(file.path(mod$plotPath, "LandscapeStandComparisons_deltaB.png"),
-        width = 10, height = 6, units = "in", res = 300)
-    annotate_figure(simObsDeltaBPlot,
-                    top = text_grob("Stand-level comparisons", size = 16))
-    dev.off()
+    simObsDeltaBPlot2 <- annotate_figure(simObsDeltaBPlot,
+                                         top = text_grob("Stand-level comparisons", size = 16))
+    ggsave(filename = file.path(mod$plotPath, "LandscapeStandComparisons_deltaB.png"),
+           plot = simObsDeltaBPlot2, width = 10, height = 6, units = "in", res = 300)
   }
   return(invisible(sim))
 }
