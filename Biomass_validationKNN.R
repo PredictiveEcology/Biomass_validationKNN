@@ -740,13 +740,11 @@ landscapeWidePlotsEvent <- function(sim) {
   rm(plotData1, plotData2)
 
   ## calculate landscape average
-  plotData1 <- plotData[, relativeAbund := mean(relativeAbund),
-                        by = .(rep, year, dataType, vegType)]
-  plot3 <- ggplot(data = plotData1[!grepl("Obsrvd", dataType)],
+  plot3 <- ggplot(data = plotData[dataType == "relativeAbund"],
                   aes(x = vegType, y = relativeAbund)) +
     stat_summary(fun = "mean", geom = "bar") +
     stat_summary(fun.data = "mean_sd", geom = "linerange", size = 1) +
-    stat_summary(data = plotData1[grepl("Obsrvd", dataType)],
+    stat_summary(data = plotData[dataType == "relativeAbundObsrvd"],
                  aes(x = vegType, y = relativeAbund, colour = "observed"),
                  fun = "mean", geom = "point", size = 2) +
     scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
@@ -763,11 +761,11 @@ landscapeWidePlotsEvent <- function(sim) {
   ## this is because B is adjusted using a statistical model
   plotData1 <- plotData[, list(count = length(pixelIndex)),
                         by = .(rep, year, dataType, vegType)]
-  plot4 <- ggplot(data = plotData1[!grepl("Obsrvd", dataType)],
+  plot4 <- ggplot(data = plotData1[dataType == "relativeAbund"],
                   aes(x = vegType, y = count)) +
     stat_summary(fun = "mean", geom = "bar") +
     stat_summary(fun.data = "mean_sd", geom = "linerange", size = 1) +
-    geom_point(data = plotData1[grepl("Obsrvd", dataType)],
+    geom_point(data = plotData1[dataType == "relativeAbundObsrvd"],
                aes(x = vegType, y = count, colour = "observed"), size = 2) +
     scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
     scale_color_manual(values = c("observed" = "red3")) +
@@ -919,11 +917,11 @@ deltaBComparisonsEvent <- function(sim) {
   plotData <- rbind(plotData1, plotData2, use.names = TRUE)
   rm(plotData1, plotData2)
 
-  plot1 <-  ggplot(data = plotData[!grepl("Obsrvd", dataType)],
+  plot1 <-  ggplot(data = plotData[dataType == "relativeAbund"],
                    aes(x = speciesCode, y = deltaB, group = rep)) +
     stat_summary(fun = "mean", geom = "bar") +
     stat_summary(fun.data = "mean_sd", geom = "linerange", size = 1) +
-    stat_summary(data = plotData[grepl("Obsrvd", dataType)],
+    stat_summary(data = plotData[dataType == "relativeAbundObsrvd"],
                  aes(x = speciesCode, y = deltaB, group = rep),
                  fun = "mean", geom = "point", size = 2) +
     scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
