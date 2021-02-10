@@ -645,9 +645,20 @@ obsrvdDeltaMapsEvent <- function(sim) {
     ggsave(filename = file.path(mod$plotPath, "observedDeltaB_yearGapADJ.png"),
            plot = plot10, width = 5, height = 4, units = "in")
 
-    dev.set(mod$mapWindow)
-    dev.copy(pdf, file = file.path(mod$plotPath, 'deltaB_Age_Maps.pdf'))
-    dev.off()
+    if (!is.na(P(sim)$.plotInitialTime)) {
+      dev.set(mod$mapWindow)
+      dev.copy(pdf, file = file.path(mod$plotPath, 'deltaB_Age_Maps.pdf'))
+      dev.off()
+    } else {
+      pdf(file = file.path(mod$plotPath, 'deltaB_Age_Maps.pdf'))
+      layout(matrix(1:4, ncol=2))
+      raster::plot(standDeltaBObsrvdRas, main = "stand delta-B")
+      raster::plot(standDeltaAgeObsrvdRas, main = "stand delta-Age")
+      raster::plot(standDeltaBObsrvdAdj, main = "stand delta-B - adjusted")
+      raster::plot(standDeltaAgeObsrvdAdj, main = "stand delta-Age - adjusted")
+      dev.off()
+    }
+
   }
 
   return(invisible(sim))
