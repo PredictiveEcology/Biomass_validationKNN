@@ -48,7 +48,8 @@ defineModule(sim, list(
     defineParameter("sppEquivCol", "character", "Boreal", NA, NA,
                     desc =  "The column in sim$specieEquivalency data.table to use as a naming convention"),
     defineParameter("validationReps", "integer", 1:10, NA, NA,
-                    desc = "The simulation repetitions for the validation. Defaults to 1:10"),
+                    desc = paste("The simulation repetitions for the validation. Defaults to 1:10. Set to NA if not using repetitions",
+                    "(i.e. only one run)")),
     defineParameter("validationYears", "integer", c(2001, 2011), NA, NA,
                     desc = "The simulation years for the validation. Defaults to 2001 and 2011. Must select two years"),
     defineParameter(".plotInitialTime", "numeric", 0, NA, NA,
@@ -253,6 +254,11 @@ Init <- function(sim) {
     mod$plotPath <- plotPath
   }
 
+  ## make internal module reps variable
+  mod$validationReps <- if (!is.na(P(sim)$validationReps))
+    P(sim)$validationReps else
+      1L
+
   ## CHECK RASTER LAYERS AGAINST RASTERTOMATCH -----------------------------------
   if (!compareRaster(sim$biomassMap, sim$rasterToMatch, stopiffalse = FALSE)) {
     sim$biomassMap <- postProcess(sim$biomassMap, rasterToMatch = sim$rasterToMatch)
@@ -316,7 +322,7 @@ Init <- function(sim) {
 
   ## PREPARE OBSERVED DATA (VALIDATION) PIXEL TABLES   -----------------------------------
   ## need to reproduce some steps in Biomass_borealDataPrep
-  ## FIRST VALIDATION YEAR
+  ## FIRST VALIDATION
   message(blue("Making pixelCohortData-equivalent tables with observed data: first year"))
   pixelTable <- makePixelTable(speciesLayers = sim$speciesLayersStart,
                                biomassMap = sim$rawBiomassMapStart,
@@ -368,7 +374,7 @@ Init <- function(sim) {
   message(blue("Making pixelCohortData tables of simulated outputs"))
 
   ## check that starting conditions are the same
-  assertRepsAllCohortData(allCohortData = sim$allCohortData, reps = P(sim)$validationReps,
+  assertRepsAllCohortData(allCohortData = sim$allCohortData, reps = mod$validationReps,
                           years = P(sim)$validationYears)
 
   allPixelCohortData <- rbindlist(fill = TRUE, use.names = TRUE,
@@ -400,12 +406,12 @@ Init <- function(sim) {
   ## is only joined to some reps/years, making observed averages "vary" across reps/years
   combinationsStart <- as.data.table(expand.grid(list(speciesCode = unique(standCohortData$speciesCode),
                                                       pixelIndex = unique(c(validationDataStart$pixelIndex, standCohortData$pixelIndex)),
-                                                      rep = P(sim)$validationReps,
+                                                      rep = mod$validationReps,
                                                       year = P(sim)$validationYears[1])))
 
   combinationsEnd <- as.data.table(expand.grid(list(speciesCode = unique(standCohortData$speciesCode),
                                                     pixelIndex = unique(c(validationDataEnd$pixelIndex, standCohortData$pixelIndex)),
-                                                    rep = P(sim)$validationReps,
+                                                    rep = mod$validationReps,
                                                     year = P(sim)$validationYears[2])))
   validationDataStart <- validationDataStart[combinationsStart,
                                              on = c("pixelIndex", "speciesCode")]
@@ -443,6 +449,7 @@ Init <- function(sim) {
   standCohortData[, standB := asInteger(sum(B)),
                   .(rep, year, pixelIndex)]
   standCohortData[, relativeAbund := B/standB]
+  standCohortData[standB == 0, relativeAbund := 0]
 
   ## replace inserted standB/AgeObsrvd 0s (coming from merge) with actual stand biomass/age
   standCohortData[, `:=`(standBObsrvd = max(standBObsrvd),
@@ -917,11 +924,11 @@ deltaBComparisonsEvent <- function(sim) {
   plotData <- rbind(plotData1, plotData2, use.names = TRUE)
   rm(plotData1, plotData2)
 
-  plot1 <-  ggplot(data = plotData[dataType == "relativeAbund"],
+  plot1 <-  ggplot(data = plotData[dataType == "deltaB"],
                    aes(x = speciesCode, y = deltaB, group = rep)) +
     stat_summary(fun = "mean", geom = "bar") +
     stat_summary(fun.data = "mean_sd", geom = "linerange", size = 1) +
-    stat_summary(data = plotData[dataType == "relativeAbundObsrvd"],
+    stat_summary(data = plotData[dataType == "deltaBObsrvd"],
                  aes(x = speciesCode, y = deltaB, group = rep),
                  fun = "mean", geom = "point", size = 2) +
     scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
@@ -1367,26 +1374,37 @@ deltaBComparisonsEvent <- function(sim) {
       cohortDataOutputs <- sim$simulationOutputs[objectName == "cohortData"]
 
       ## check that the selected years and reps exist in outputs table
-      out <- lapply(P(sim)$validationYears, FUN = function(y, cohortDataOutputs, reps) {
-        fileNames <- cohortDataOutputs[saveTime == y, file]
-        reps <- paste("rep", reps, sep = "")
-        reps <- sub("(rep)([[:digit:]])$", "\\10\\2", reps)
-        out <- vapply(reps, FUN = function(x) any(grepl(x, fileNames)), FUN.VALUE = logical(1))
-        out2 <- which(!out)
-        if (length(out2))
-          stop(paste("Missing 'cohortData' outputs for year", y, "and rep(s)", paste(out2, collapse = ", ")))
-      }, cohortDataOutputs = cohortDataOutputs, reps = P(sim)$validationReps)
-
+      if (!is.na(P(sim)$validationReps)) {
+        out <- lapply(P(sim)$validationYears, FUN = function(y, cohortDataOutputs, reps) {
+          fileNames <- cohortDataOutputs[saveTime == y, file]
+          reps <- paste("rep", reps, sep = "")
+          reps <- sub("(rep)([[:digit:]])$", "\\10\\2", reps)
+          out <- vapply(reps, FUN = function(x) any(grepl(x, fileNames)), FUN.VALUE = logical(1))
+          out2 <- which(!out)
+          if (length(out2))
+            stop(paste("Missing 'cohortData' outputs for year", y, "and rep(s)", paste(out2, collapse = ", ")))
+        }, cohortDataOutputs = cohortDataOutputs, reps = P(sim)$validationReps)
+      } else {
+        out <- lapply(P(sim)$validationYears, FUN = function(y, cohortDataOutputs) {
+          fileNames <- cohortDataOutputs[saveTime == y, file]
+          if (!length(fileNames))
+            stop(paste("Missing 'cohortData' outputs for year", y))
+        }, cohortDataOutputs = cohortDataOutputs)
+      }
 
       ##  subset to validation years
       cohortDataOutputs <- cohortDataOutputs[saveTime %in% P(sim)$validationYears]
 
       ## subset to validation reps and add reps column
-      repsStr <- paste("rep", P(sim)$validationReps, sep = "")
-      repsStr <- sub("(rep)([[:digit:]])$", "\\10\\2", repsStr)
-      repsStr <- paste(repsStr, sep = "", collapse = "|" )
-      cohortDataOutputs <- cohortDataOutputs[grepl(repsStr, file)]
-      cohortDataOutputs[, rep := sub("(.*rep)([[:digit:]]*)(\\/.*)", "\\2", file)]
+      if (!is.na(P(sim)$validationReps)) {
+        repsStr <- paste("rep", P(sim)$validationReps, sep = "")
+        repsStr <- sub("(rep)([[:digit:]])$", "\\10\\2", repsStr)
+        repsStr <- paste(repsStr, sep = "", collapse = "|" )
+        cohortDataOutputs <- cohortDataOutputs[grepl(repsStr, file)]
+        cohortDataOutputs[, rep := sub("(.*rep)([[:digit:]]*)(\\/.*)", "\\2", file)]
+      } else {
+        cohortDataOutputs[, rep := "1"]
+      }
 
       ## check that files exist
       if (any(!vapply(cohortDataOutputs$file, file.exists, FUN.VALUE = logical(1)))) {
@@ -1413,30 +1431,37 @@ deltaBComparisonsEvent <- function(sim) {
       pixelGroupMapOutputs <- sim$simulationOutputs[objectName == "pixelGroupMap"]
 
       ## check that the selected years and reps exist in outputs table
-      out <- lapply(P(sim)$validationYears, FUN = function(y, pixelGroupMapOutputs, reps) {
-        fileNames <- pixelGroupMapOutputs[saveTime == y, file]
-        reps <- paste("rep", reps, sep = "")
-        reps <- sub("(rep)([[:digit:]])$", "\\10\\2", reps)
-        out <- vapply(reps, FUN = function(x) any(grepl(x, fileNames)), FUN.VALUE = logical(1))
-        out2 <- which(!out)
-        if (length(out2))
-          stop(paste("Missing 'pixelGroupMap' outputs for year", y, "and rep(s)", paste(out2, collapse = ", ")))
-      }, pixelGroupMapOutputs = pixelGroupMapOutputs, reps = P(sim)$validationReps)
+      if (!is.na(P(sim)$validationReps)) {
+        out <- lapply(P(sim)$validationYears, FUN = function(y, pixelGroupMapOutputs, reps) {
+          fileNames <- pixelGroupMapOutputs[saveTime == y, file]
+          reps <- paste("rep", reps, sep = "")
+          reps <- sub("(rep)([[:digit:]])$", "\\10\\2", reps)
+          out <- vapply(reps, FUN = function(x) any(grepl(x, fileNames)), FUN.VALUE = logical(1))
+          out2 <- which(!out)
+          if (length(out2))
+            stop(paste("Missing 'pixelGroupMap' outputs for year", y, "and rep(s)", paste(out2, collapse = ", ")))
+        }, pixelGroupMapOutputs = pixelGroupMapOutputs, reps = P(sim)$validationReps)
+      } else {
+        out <- lapply(P(sim)$validationYears, FUN = function(y, pixelGroupMapOutputs) {
+          fileNames <- pixelGroupMapOutputs[saveTime == y, file]
+          if (!length(fileNames))
+            stop(paste("Missing 'pixelGroupMap' outputs for year", y))
+        }, pixelGroupMapOutputs = pixelGroupMapOutputs)
+      }
 
+      ##  subset to validation years
       pixelGroupMapOutputs <- pixelGroupMapOutputs[saveTime %in% P(sim)$validationYears]
-      repsStr <- paste("rep", P(sim)$validationReps, sep = "")
-      repsStr <- sub("(rep)([[:digit:]])$", "\\10\\2", repsStr)
-      repsStr <- paste(repsStr, sep = "", collapse = "|" )
-
-      ## subset to validation years
-      pixelGroupMapOutputs <- pixelGroupMapOutputs[grepl(repsStr, file)]
 
       ## subset to validation reps and add reps column
-      repsStr <- paste("rep", P(sim)$validationReps, sep = "")
-      repsStr <- sub("(rep)([[:digit:]])$", "\\10\\2", repsStr)
-      repsStr <- paste(repsStr, sep = "", collapse = "|" )
-      pixelGroupMapOutputs <- pixelGroupMapOutputs[grepl(repsStr, file)]
-      pixelGroupMapOutputs[, rep := sub("(.*rep)([[:digit:]]*)(\\/.*)", "\\2", file)]
+      if (!is.na(P(sim)$validationReps)) {
+        repsStr <- paste("rep", P(sim)$validationReps, sep = "")
+        repsStr <- sub("(rep)([[:digit:]])$", "\\10\\2", repsStr)
+        repsStr <- paste(repsStr, sep = "", collapse = "|" )
+        pixelGroupMapOutputs <- pixelGroupMapOutputs[grepl(repsStr, file)]
+        pixelGroupMapOutputs[, rep := sub("(.*rep)([[:digit:]]*)(\\/.*)", "\\2", file)]
+      } else {
+        pixelGroupMapOutputs[, rep := "1"]
+      }
 
 
       ## check that files exist
