@@ -376,7 +376,6 @@ Init <- function(sim) {
   ## check that starting conditions are the same
   assertRepsAllCohortData(allCohortData = sim$allCohortData, reps = mod$validationReps,
                           years = P(sim)$validationYears)
-
   allPixelCohortData <- rbindlist(fill = TRUE, use.names = TRUE,
                                   l = lapply(unstack(sim$pixelGroupMapStk), FUN = function(pixelGroupMap, allCohortData) {
                                     yr <- as.numeric(sub("year([[:digit:]]*)_rep.*", "\\1", names(pixelGroupMap)))
@@ -389,7 +388,7 @@ Init <- function(sim) {
   ## summarize allPixelCohortData to stand totalB per species and
   ## and biomass-averaged stand age
   standCohortData <- allPixelCohortData[, .(B, sum(B), age),
-                                        by = .( rep, year, pixelIndex, speciesCode)]
+                                        by = .(rep, year, pixelIndex, speciesCode)]
   standCohortData <- standCohortData[, standAge := sum(age * B, na.rm = TRUE) / sum(B, na.rm = TRUE),
                                      by = .(rep, year, pixelIndex)]
   ## drop unnecessary columns and remove separate cohorts
