@@ -745,12 +745,16 @@ landscapeWidePlotsEvent <- function(sim) {
   plotData[noDoms > 1, vegType := "Mixed"]
   rm(plotData1, plotData2)
 
-  ## calculate landscape average
-  plot3 <- ggplot(data = plotData[dataType == "relativeAbund"],
+  ## average across landscape (so that the plot show variation across reps, not stands)
+  plotData2 <- plotData[, list(relativeAbund = mean(relativeAbund),
+                              noDoms = sum(noDoms)),
+                       by = .(dataType, rep, year, vegType)]
+
+  plot3 <- ggplot(data = plotData2[dataType == "relativeAbund"],
                   aes(x = vegType, y = relativeAbund)) +
     stat_summary(fun = "mean", geom = "bar") +
     stat_summary(fun.data = "mean_sd", geom = "linerange", size = 1) +
-    stat_summary(data = plotData[dataType == "relativeAbundObsrvd"],
+    stat_summary(data = plotData2[dataType == "relativeAbundObsrvd"],
                  aes(x = vegType, y = relativeAbund, colour = "observed"),
                  fun = "mean", geom = "point", size = 2) +
     scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
@@ -780,18 +784,6 @@ landscapeWidePlotsEvent <- function(sim) {
     facet_wrap(~ year) +
     labs(title = "Dominant species' presences",
          x = "", y = "no. pixels", fill = "", colour = "")
-
-
-  ## as previous, but in relative terms - not outputting this one.
-  plot5 <- ggplot(data = plotData1, aes(x = dataType, y = count, fill = vegType)) +
-    stat_summary(fun = "mean", geom = "bar", position = "fill") +
-    scale_fill_brewer(palette = "Accent", labels = sim$speciesLabels) +
-    scale_x_discrete(labels = c("relativeAbund" = "simulated", "relativeAbundObsrvd" = "observed")) +
-    theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45) +
-    theme(legend.position = "right") +
-    facet_wrap(~ year) +
-    labs(title = "Dominant species presences", x = "",
-         y = "proportion of pixels", fill = "")
 
   maxPixels <- sum(!is.na(getValues(sim$biomassMap)))
   plotLandscapeComp <- ggarrange(plot1 + scale_y_continuous(limits = c(0,1)),
@@ -930,7 +922,7 @@ deltaBComparisonsEvent <- function(sim) {
     stat_summary(fun.data = "mean_sd", geom = "linerange", size = 1) +
     stat_summary(data = plotData[dataType == "deltaBObsrvd"],
                  aes(x = speciesCode, y = deltaB, group = rep),
-                 fun = "mean", geom = "point", size = 2) +
+                 fun = "mean", geom = "point", size = 2, colour = "red3") +
     scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
     theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45) +
     labs(title = "Landscape-averaged",
