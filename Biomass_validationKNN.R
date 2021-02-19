@@ -918,7 +918,7 @@ deltaBComparisonsEvent <- function(sim) {
     stat_summary(fun.data = "mean_sd", geom = "linerange", size = 1) +
     stat_summary(data = plotData[dataType == "deltaBObsrvd"],
                  aes(x = speciesCode, y = deltaB, group = rep),
-                 fun = "mean", geom = "point", size = 2) +
+                 fun = "mean", geom = "point", size = 2, colour = "red3") +
     scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
     theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45) +
     labs(title = "Landscape-averaged",
