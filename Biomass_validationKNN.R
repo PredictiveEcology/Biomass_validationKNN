@@ -1374,7 +1374,7 @@ deltaBComparisonsEvent <- function(sim) {
       cohortDataOutputs <- sim$simulationOutputs[objectName == "cohortData"]
 
       ## check that the selected years and reps exist in outputs table
-      if (!is.na(P(sim)$validationReps)) {
+      if (!any(is.na(P(sim)$validationReps))) {
         out <- lapply(P(sim)$validationYears, FUN = function(y, cohortDataOutputs, reps) {
           fileNames <- cohortDataOutputs[saveTime == y, file]
           reps <- paste("rep", reps, sep = "")
@@ -1396,7 +1396,7 @@ deltaBComparisonsEvent <- function(sim) {
       cohortDataOutputs <- cohortDataOutputs[saveTime %in% P(sim)$validationYears]
 
       ## subset to validation reps and add reps column
-      if (!is.na(P(sim)$validationReps)) {
+      if (!any(is.na(P(sim)$validationReps))) {
         repsStr <- paste("rep", P(sim)$validationReps, sep = "")
         repsStr <- sub("(rep)([[:digit:]])$", "\\10\\2", repsStr)
         repsStr <- paste(repsStr, sep = "", collapse = "|" )
