@@ -745,12 +745,16 @@ landscapeWidePlotsEvent <- function(sim) {
   plotData[noDoms > 1, vegType := "Mixed"]
   rm(plotData1, plotData2)
 
-  ## calculate landscape average
-  plot3 <- ggplot(data = plotData[dataType == "relativeAbund"],
+  ## average across landscape (so that the plot show variation across reps, not stands)
+  plotData2 <- plotData[, list(relativeAbund = mean(relativeAbund),
+                              noDoms = sum(noDoms)),
+                       by = .(dataType, rep, year, vegType)]
+
+  plot3 <- ggplot(data = plotData2[dataType == "relativeAbund"],
                   aes(x = vegType, y = relativeAbund)) +
     stat_summary(fun = "mean", geom = "bar") +
     stat_summary(fun.data = "mean_sd", geom = "linerange", size = 1) +
-    stat_summary(data = plotData[dataType == "relativeAbundObsrvd"],
+    stat_summary(data = plotData2[dataType == "relativeAbundObsrvd"],
                  aes(x = vegType, y = relativeAbund, colour = "observed"),
                  fun = "mean", geom = "point", size = 2) +
     scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
