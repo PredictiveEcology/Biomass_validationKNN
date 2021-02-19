@@ -793,10 +793,11 @@ landscapeWidePlotsEvent <- function(sim) {
     labs(title = "Dominant species presences", x = "",
          y = "proportion of pixels", fill = "")
 
+  maxPixels <- sum(!is.na(getValues(sim$biomassMap)))
   plotLandscapeComp <- ggarrange(plot1 + scale_y_continuous(limits = c(0,1)),
-                                 plot2 + scale_y_continuous(limits = c(0,2000)),
+                                 plot2 + scale_y_continuous(limits = c(0, maxPixels)),
                                  plot3 + scale_y_continuous(limits = c(0,1)),
-                                 plot4 + scale_y_continuous(limits = c(0,2000)),
+                                 plot4 + scale_y_continuous(limits = c(0, maxPixels)),
                                  common.legend = TRUE, legend = "bottom",
                                  nrow = 2, ncol = 2)
 
