@@ -255,7 +255,7 @@ Init <- function(sim) {
   }
 
   ## make internal module reps variable
-  mod$validationReps <- if (!is.na(P(sim)$validationReps))
+  mod$validationReps <- if (!any(is.na(P(sim)$validationReps)))
     P(sim)$validationReps else
       1L
 
@@ -1423,7 +1423,7 @@ deltaBComparisonsEvent <- function(sim) {
       pixelGroupMapOutputs <- sim$simulationOutputs[objectName == "pixelGroupMap"]
 
       ## check that the selected years and reps exist in outputs table
-      if (!is.na(P(sim)$validationReps)) {
+      if (!any(is.na(P(sim)$validationReps))) {
         out <- lapply(P(sim)$validationYears, FUN = function(y, pixelGroupMapOutputs, reps) {
           fileNames <- pixelGroupMapOutputs[saveTime == y, file]
           reps <- paste("rep", reps, sep = "")
@@ -1445,7 +1445,7 @@ deltaBComparisonsEvent <- function(sim) {
       pixelGroupMapOutputs <- pixelGroupMapOutputs[saveTime %in% P(sim)$validationYears]
 
       ## subset to validation reps and add reps column
-      if (!is.na(P(sim)$validationReps)) {
+      if (!any(is.na(P(sim)$validationReps))) {
         repsStr <- paste("rep", P(sim)$validationReps, sep = "")
         repsStr <- sub("(rep)([[:digit:]])$", "\\10\\2", repsStr)
         repsStr <- paste(repsStr, sep = "", collapse = "|" )
