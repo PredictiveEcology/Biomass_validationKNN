@@ -49,7 +49,7 @@ defineModule(sim, list(
                     desc =  "The column in sim$specieEquivalency data.table to use as a naming convention"),
     defineParameter("validationReps", "integer", 1:10, NA, NA,
                     desc = paste("The simulation repetitions for the validation. Defaults to 1:10. Set to NA if not using repetitions",
-                    "(i.e. only one run)")),
+                                 "(i.e. only one run)")),
     defineParameter("validationYears", "integer", c(2001, 2011), NA, NA,
                     desc = "The simulation years for the validation. Defaults to 2001 and 2011. Must select two years"),
     defineParameter(".plotInitialTime", "numeric", 0, NA, NA,
@@ -376,6 +376,7 @@ Init <- function(sim) {
   ## check that starting conditions are the same
   assertRepsAllCohortData(allCohortData = sim$allCohortData, reps = mod$validationReps,
                           years = P(sim)$validationYears)
+
   allPixelCohortData <- rbindlist(fill = TRUE, use.names = TRUE,
                                   l = lapply(unstack(sim$pixelGroupMapStk), FUN = function(pixelGroupMap, allCohortData) {
                                     yr <- as.numeric(sub("year([[:digit:]]*)_rep.*", "\\1", names(pixelGroupMap)))
@@ -754,7 +755,7 @@ landscapeWidePlotsEvent <- function(sim) {
 
 
   plotData <- plotData[, list(count = length(pixelIndex)),
-                        by = .(rep, year, dataType, vegType)]
+                       by = .(rep, year, dataType, vegType)]
   plot3 <- ggplot(data = plotData[dataType == "simulated"],
                   aes(x = vegType, y = count)) +
     stat_summary(fun = "mean", geom = "bar") +
