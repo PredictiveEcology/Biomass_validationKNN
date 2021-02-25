@@ -752,37 +752,14 @@ landscapeWidePlotsEvent <- function(sim) {
   plotData <- rbind(plotData1, plotData2)
   rm(plotData1, plotData2)
 
-  ## average across landscape (so that the plot show variation across reps, not stands)
-  plotData2 <- plotData[, list(relativeAbund = mean(relativeAbund),
-                              noDoms = sum(noDoms)),
-                       by = .(dataType, rep, year, vegType)]
 
-  plot3 <- ggplot(data = plotData2[dataType == "relativeAbund"],
-                  aes(x = vegType, y = relativeAbund)) +
-    stat_summary(fun = "mean", geom = "bar") +
-    stat_summary(fun.data = "mean_sd", geom = "linerange", size = 1) +
-    stat_summary(data = plotData2[dataType == "relativeAbundObsrvd"],
-                 aes(x = vegType, y = relativeAbund, colour = "observed"),
-                 fun = "mean", geom = "point", size = 2) +
-    scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
-    scale_color_manual(values = c("observed" = "red3")) +
-    theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45) +
-    theme(legend.position = "right") +
-    facet_wrap(~ year) +
-    labs(title = "Dominant species' relative abundances\nlandscape-wide",
-         x = "", y = expression(over("species B", "total B")),
-         colour = "")
-
-  ## no. pixels with a certain dominant species
-  ## simulated and observed differ in no. of pixels in year 1...
-  ## this is because B is adjusted using a statistical model
-  plotData1 <- plotData[, list(count = length(pixelIndex)),
+  plotData <- plotData[, list(count = length(pixelIndex)),
                         by = .(rep, year, dataType, vegType)]
-  plot4 <- ggplot(data = plotData1[dataType == "relativeAbund"],
+  plot3 <- ggplot(data = plotData[dataType == "simulated"],
                   aes(x = vegType, y = count)) +
     stat_summary(fun = "mean", geom = "bar") +
     stat_summary(fun.data = "mean_sd", geom = "linerange", size = 1) +
-    geom_point(data = plotData1[dataType == "relativeAbundObsrvd"],
+    geom_point(data = plotData[dataType == "observed"],
                aes(x = vegType, y = count, colour = "observed"), size = 2) +
     scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
     scale_color_manual(values = c("observed" = "red3")) +
@@ -795,8 +772,7 @@ landscapeWidePlotsEvent <- function(sim) {
   maxPixels <- sum(!is.na(getValues(sim$biomassMap)))
   plotLandscapeComp <- ggarrange(plot1 + scale_y_continuous(limits = c(0,1)),
                                  plot2 + scale_y_continuous(limits = c(0, maxPixels)),
-                                 plot3 + scale_y_continuous(limits = c(0,1)),
-                                 plot4 + scale_y_continuous(limits = c(0, maxPixels)),
+                                 plot3 + scale_y_continuous(limits = c(0, maxPixels)),
                                  common.legend = TRUE, legend = "bottom",
                                  nrow = 2, ncol = 2)
 
