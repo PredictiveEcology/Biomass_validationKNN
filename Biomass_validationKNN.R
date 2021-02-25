@@ -440,6 +440,9 @@ Init <- function(sim) {
   standCohortData <- standCohortData[sim$validationData,
                                      on = c("rep", "year", "pixelIndex", "speciesCode")]
 
+  ## remove disturbed pixels
+  standCohortData <- standCohortData[!pixelIndex %in% sim$disturbedIDs]
+
   ## convert NAs to 0s
   cols <- c("standAge", "B")
   standCohortData[, (cols) := lapply(.SD, replaceNAs), .SDcols = cols]
@@ -464,8 +467,6 @@ Init <- function(sim) {
             grep("Obsrvd", names(standCohortData), value = TRUE))
   standCohortData <- standCohortData[, ..cols]
 
-  ## remove disturbed pixels
-  standCohortData <- standCohortData[!pixelIndex %in% sim$disturbedIDs]
 
   ## calculate some landscape metrics
   standCohortData[, `:=`(landscapeB = sum(B),
