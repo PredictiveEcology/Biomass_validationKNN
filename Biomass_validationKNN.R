@@ -462,20 +462,42 @@ Init <- function(sim) {
   standCohortData[, relativeAbundObsrvd := BObsrvd/standBObsrvd]
   standCohortData[standBObsrvd == 0, relativeAbundObsrvd := 0]
 
-  ## reorder column names
-  cols <- c(grep("Obsrvd", names(standCohortData), value = TRUE, invert = TRUE),
-            grep("Obsrvd", names(standCohortData), value = TRUE))
-  standCohortData <- standCohortData[, ..cols]
+  ## classify pixels by dominant species (i,e, veg type) - will need to be corrected for compeeting dominants
+  ## these match with model outputs, I checked
+  ## note2: mixed pixels get a "mixed" type
+  standCohortData[standB > 0, vegType := speciesCode[which.max(relativeAbund)],
+                  by = .(year, rep, pixelIndex)]
+  standCohortData[standBObsrvd > 0, vegTypeObsrvd := speciesCode[which.max(relativeAbundObsrvd)],
+                  by = .(year, rep, pixelIndex)]
 
+
+  ## get number of dominant species -- note that stands with 0 B will appear as mixed initially, but are fixed below
+  tempDT <- standCohortData[, list(noDoms = sum(relativeAbund == max(relativeAbund)),
+                                   noDomsObsrvd = sum(relativeAbundObsrvd == max(relativeAbundObsrvd))),
+                            by = .(year, rep, pixelIndex)]
+
+  standCohortData <- tempDT[standCohortData, on = .(year, rep, pixelIndex)]
+  standCohortData[standB == 0, noDoms := 0]
+  standCohortData[standBObsrvd == 0, noDomsObsrvd := 0]
+
+  standCohortData[noDoms > 1, vegType := "Mixed"]
+  standCohortData[noDomsObsrvd > 1, vegTypeObsrvd := "Mixed"]
+
+  standCohortData[is.na(vegType), vegType := "No veg."]
+  standCohortData[is.na(vegTypeObsrvd), vegTypeObsrvd := "No veg."]
 
   ## calculate some landscape metrics
   standCohortData[, `:=`(landscapeB = sum(B),
                          landscapeBObsrvd = sum(BObsrvd)),
                   by = .(rep, year)]
 
-  assertStandCohortData(standCohortData)
+  ## reorder column names
+  cols <- c(grep("Obsrvd", names(standCohortData), value = TRUE, invert = TRUE),
+            grep("Obsrvd", names(standCohortData), value = TRUE))
+  standCohortData <- standCohortData[, ..cols]
 
-  ## export to sim
+  ## assert and export to sim -- vegType cols can have NAs
+  assertStandCohortData(standCohortData)
   sim$standCohortData <- standCohortData
 
   ## make labels for plots
@@ -717,33 +739,17 @@ landscapeWidePlotsEvent <- function(sim) {
     labs(title = "Species presences", x = "", y = "no. pixels",
          colour = "", fill = "")
 
-  ## landscape-wide relative abundance per dominant species
-  ## get dominant species - these match with model outputs, I checked
+  ## no. pixels with a certain dominant species
   ## note: don't use melt, because dominant spp differ between valid and simul data.
-  ## note2: mixed pixels get a "mixed" type
-  ## calculate the no. of "dominant" species so that pixels with more than one dominant spp are considered "mixed"
-  tempDT <- sim$standCohortData
-  tempDT <- tempDT[, list(noDoms = sum(relativeAbund == max(relativeAbund)),
-                          noDomsObsrvd = sum(relativeAbundObsrvd == max(relativeAbundObsrvd))),
-                   by = .(year, rep, pixelIndex)]
-
-  plotData <- sim$standCohortData
-  plotData <- unique(plotData[, list(vegType = speciesCode[which.max(relativeAbund)],
-                                     relativeAbund = max(relativeAbund),
-                                     vegTypeObsrvd = speciesCode[which.max(relativeAbundObsrvd)],
-                                     relativeAbundObsrvd = max(relativeAbundObsrvd)),
-                              by = .(year, rep, pixelIndex)])
-  plotData <- tempDT[plotData, on = .(year, rep, pixelIndex)]
-
-  plotData1 <- unique(plotData[, .(year, rep, pixelIndex, vegType, relativeAbund, noDoms)])
-  plotData1[, dataType := "relativeAbund"]
-  plotData2 <- unique(plotData[, .(year, rep, pixelIndex, vegTypeObsrvd, relativeAbundObsrvd, noDomsObsrvd)])
-  plotData2[, dataType := "relativeAbundObsrvd"]
-  setnames(plotData2, c("vegTypeObsrvd", "relativeAbundObsrvd", "noDomsObsrvd"),
-           c("vegType", "relativeAbund", "noDoms"))
+  ## simulated and observed differ in no. of pixels in year 1...
+  ## this is because B is adjusted using a statistical model
+  plotData1 <- unique(sim$standCohortData[, .(year, rep, pixelIndex, vegType)])
+  plotData1[, dataType := "simulated"]
+  plotData2 <- unique(sim$standCohortData[, .(year, rep, pixelIndex, vegTypeObsrvd)])
+  plotData2[, dataType := "observed"]
+  setnames(plotData2, "vegTypeObsrvd", "vegType")
 
   plotData <- rbind(plotData1, plotData2)
-  plotData[noDoms > 1, vegType := "Mixed"]
   rm(plotData1, plotData2)
 
   ## average across landscape (so that the plot show variation across reps, not stands)
