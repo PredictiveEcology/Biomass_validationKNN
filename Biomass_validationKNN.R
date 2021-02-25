@@ -17,9 +17,9 @@ defineModule(sim, list(
   documentation = list("README.txt", "Biomass_validationKNN.Rmd"),
   reqdPkgs = list("crayon", "raster", "achubaty/amc",
                   "sf", "XML", "RCurl", "ggplot2", "ggpubr",
-                  "PredictiveEcology/LandR@development (>=0.0.12.002)",
+                  "PredictiveEcology/LandR@modelBiomass (>=0.0.12.9003)",
                   "PredictiveEcology/pemisc@development",
-                  "PredictiveEcology/reproducible@development",
+                  "PredictiveEcology/reproducible@development (>= 1.2.6.9005)",
                   "PredictiveEcology/SpaDES.core@development",
                   "PredictiveEcology/SpaDES.tools@development"),
   parameters = rbind(
