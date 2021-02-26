@@ -866,12 +866,12 @@ deltaBComparisonsEvent <- function(sim) {
                    aes(x = speciesCode, y = deltaB, group = rep)) +
     stat_summary(fun = "mean", geom = "bar") +
     stat_summary(fun.data = "mean_sd", geom = "linerange", size = 1) +
-    stat_summary(data = plotData[dataType == "deltaBObsrvd"],
-                 aes(x = speciesCode, y = deltaB, group = rep),
-                 fun = "mean", geom = "point", size = 2, colour = "red3") +
+    geom_point(data = plotData[dataType == "deltaBObsrvd"],
+               aes(x = speciesCode, y = deltaB, colour = "observed"), size = 2) +
     scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
-    theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45) +
-    labs(title = "Landscape-level",
+    scale_color_manual(values = c("observed" = "red3")) +
+    theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
+    labs(title = "Landscape-level", colour = "",
          x = "", y = expression(paste(Delta, "B")))
 
   ## stand-level
@@ -903,12 +903,11 @@ deltaBComparisonsEvent <- function(sim) {
     scale_fill_discrete(labels = c("deltaB" = "simulated",
                                    "deltaBObsrvd" = "observed")) +
     scale_alpha_manual(values = c("TRUE" = 0.3, "FALSE" = 1.0), guide = FALSE) +
-    theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45) +
+    theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
     labs(title = "Stand-level", fill = "",
          x = "", y = expression(paste(Delta, "B")))
 
   simObsDeltaBPlot <- ggarrange(plot1, plot2 + labs(y = " \n "),
-                                common.legend = TRUE, legend = "bottom",
                                 ncol = 2)
 
   if (!is.na(P(sim)$.plotInitialTime)) {
