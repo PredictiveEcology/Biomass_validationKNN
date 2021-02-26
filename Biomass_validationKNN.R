@@ -814,60 +814,17 @@ standLevelPlotsEvent <- function(sim) {
     labs(title = "Species relative abundances", fill = "",
          x = "", y = expression(over("species B", "stand B")))
 
-  ## stand/pixel-level relative abundance per dominant species
-  ## get dominant species (those with maxB) - these match with model outputs, I checked
-  tempDT <- sim$standCohortData
-  tempDT <- tempDT[, list(noDoms = sum(relativeAbund == max(relativeAbund)),
-                          noDomsObsrvd = sum(relativeAbundObsrvd == max(relativeAbundObsrvd))),
-                   by = .(year, rep, pixelIndex)]
-
-  plotData <- sim$standCohortData
-  plotData <- unique(plotData[, list(vegType = speciesCode[which.max(relativeAbund)],
-                                     relativeAbund = max(relativeAbund),
-                                     vegTypeObsrvd = speciesCode[which.max(relativeAbundObsrvd)],
-                                     relativeAbundObsrvd = max(relativeAbundObsrvd)),
-                              by = .(year, rep, pixelIndex)])
-  plotData <- tempDT[plotData, on = .(year, rep, pixelIndex)]
-
-  plotData1 <- unique(plotData[, .(year, rep, pixelIndex, vegType, relativeAbund, noDoms)])
-  plotData1[, dataType := "relativeAbund"]
-  plotData2 <- unique(plotData[, .(year, rep, pixelIndex, vegTypeObsrvd, relativeAbundObsrvd, noDomsObsrvd)])
-  plotData2[, dataType := "relativeAbundObsrvd"]
-  setnames(plotData2, c("vegTypeObsrvd", "relativeAbundObsrvd", "noDomsObsrvd"),
-           c("vegType", "relativeAbund", "noDoms"))
-
-  plotData <- rbind(plotData1, plotData2)
-  plotData[noDoms > 1, vegType := "Mixed"]
-  rm(plotData1, plotData2)
-
-  plot2 <- ggplot(data = plotData,
-                  aes(x = vegType, y = relativeAbund, fill = dataType)) +
-    geom_boxplot() +
-    scale_fill_discrete(labels = c("relativeAbund" = "simulated",
-                                   "relativeAbundObsrvd" = "observed")) +
-    scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
-    theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45) +
-    facet_wrap(~ year) +
-    labs(title = "Dominant species' relative abundances",
-         x = "", y = expression(over("species B", "total B")),
-         fill = "")
-
-  standCompPlot <- ggarrange(plot1,
-                             plot2 + labs(y = " \n "),
-                             common.legend = TRUE, legend = "bottom",
-                             ncol = 2)
-
   if (!is.na(P(sim)$.plotInitialTime)) {
     dev(mod$standWindow)
     clearPlot()
-    Plot(standCompPlot, title = "Stand-level comparisons", new = TRUE)
+    Plot(plot1, title = "Stand-level comparisons", new = TRUE)
   }
 
   if (P(sim)$.savePlots) {
-    standCompPlot2 <- annotate_figure(standCompPlot,
-                                      top = text_grob("Stand-level comparisons", size = 16))
+    plot1 <- annotate_figure(plot1,
+                             top = text_grob("Stand-level comparisons", size = 16))
     ggsave(filename = file.path(mod$plotPath, "StandComparisons_relB.png"),
-           plot = standCompPlot2, width = 12, height = 6, units = "in")
+           plot = plot1, width = 12, height = 6, units = "in")
   }
 
   return(invisible(sim))
