@@ -918,7 +918,7 @@ deltaBComparisonsEvent <- function(sim) {
 
   if (P(sim)$.savePlots) {
     ggsave(filename = file.path(mod$plotPath, "LandscapeStandComparisons_deltaB.png"),
-           plot = simObsDeltaBPlot2, width = 10, height = 6, units = "in")
+           plot = simObsDeltaBPlot, width = 10, height = 6, units = "in")
   }
   return(invisible(sim))
 }
