@@ -836,6 +836,45 @@ deltaBComparisonsEvent <- function(sim) {
   year1 <- P(sim)$validationYears[1]
   year2 <- P(sim)$validationYears[2]
 
+  ## across landscape (calculate landscape-wide changes in total B per species/stand)
+  plotData <- sim$standCohortData[, list(B = sum(B),
+                                         landscapeB = unique(landscapeB),
+                                         BObsrvd = sum(BObsrvd),
+                                         landscapeBObsrvd = unique(landscapeBObsrvd)),
+                                  , by = .(rep, year, speciesCode)]
+  plotData <- plotData[, list(deltaB = as.numeric(B[which(year == year2)] - B[which(year == year1)]),
+                              deltaBObsrvd = as.numeric(BObsrvd[which(year == year2)] - BObsrvd[which(year == year1)]),
+                              landDeltaB = as.numeric(landscapeB[which(year == year2)] - landscapeB[which(year == year1)]),
+                              landDeltaBObsrvd = as.numeric(landscapeBObsrvd[which(year == year2)] - landscapeBObsrvd[which(year == year1)])),
+                       by = .(rep, speciesCode)]
+
+  ## melt spp and landscape delta separately and rbind
+  cols <- c("rep", "speciesCode", "deltaB", "deltaBObsrvd")
+  plotData1 <- melt.data.table(plotData[, ..cols], measure.vars = c("deltaB", "deltaBObsrvd"),
+                               variable.name = "dataType", value.name = "deltaB")
+  cols <- c("rep", "speciesCode", "landDeltaB", "landDeltaBObsrvd")
+  plotData2 <- melt.data.table(plotData[, ..cols], measure.vars = c("landDeltaB", "landDeltaBObsrvd"),
+                               variable.name = "dataType", value.name = "deltaB")
+  plotData2[dataType == "landDeltaB", dataType := "deltaB"]
+  plotData2[dataType == "landDeltaBObsrvd", dataType := "deltaBObsrvd"]
+  plotData2 <- unique(plotData2[, speciesCode := "landscape"])
+
+  plotData <- rbind(plotData1, plotData2, use.names = TRUE)
+  rm(plotData1, plotData2)
+
+  plot1 <-  ggplot(data = plotData[dataType == "deltaB"],
+                   aes(x = speciesCode, y = deltaB, group = rep)) +
+    stat_summary(fun = "mean", geom = "bar") +
+    stat_summary(fun.data = "mean_sd", geom = "linerange", size = 1) +
+    stat_summary(data = plotData[dataType == "deltaBObsrvd"],
+                 aes(x = speciesCode, y = deltaB, group = rep),
+                 fun = "mean", geom = "point", size = 2, colour = "red3") +
+    scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
+    theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45) +
+    labs(title = "Landscape-level",
+         x = "", y = expression(paste(Delta, "B")))
+
+  ## stand-level
   plotData <- sim$standCohortData
   plotData <- plotData[, list(deltaB = as.numeric(B[which(year == year2)] - B[which(year == year1)]),
                               deltaBObsrvd = as.numeric(BObsrvd[which(year == year2)] - BObsrvd[which(year == year1)]),
@@ -856,18 +895,6 @@ deltaBComparisonsEvent <- function(sim) {
 
   plotData <- rbind(plotData1, plotData2, use.names = TRUE)
   rm(plotData1, plotData2)
-
-  plot1 <-  ggplot(data = plotData[dataType == "deltaB"],
-                   aes(x = speciesCode, y = deltaB, group = rep)) +
-    stat_summary(fun = "mean", geom = "bar") +
-    stat_summary(fun.data = "mean_sd", geom = "linerange", size = 1) +
-    stat_summary(data = plotData[dataType == "deltaBObsrvd"],
-                 aes(x = speciesCode, y = deltaB, group = rep),
-                 fun = "mean", geom = "point", size = 2, colour = "red3") +
-    scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
-    theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45) +
-    labs(title = "Landscape-averaged",
-         x = "", y = expression(paste(Delta, "B")))
 
   plot2 <- ggplot(data = plotData,
                   aes(x = speciesCode, y = deltaB, fill = dataType)) +
@@ -890,8 +917,6 @@ deltaBComparisonsEvent <- function(sim) {
   }
 
   if (P(sim)$.savePlots) {
-    simObsDeltaBPlot2 <- annotate_figure(simObsDeltaBPlot,
-                                         top = text_grob("Stand-level comparisons", size = 16))
     ggsave(filename = file.path(mod$plotPath, "LandscapeStandComparisons_deltaB.png"),
            plot = simObsDeltaBPlot2, width = 10, height = 6, units = "in")
   }
