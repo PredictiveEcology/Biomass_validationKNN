@@ -113,7 +113,7 @@ defineModule(sim, list(
                               "and all disturbances collapsed (map only has values of 1 and NA). See parameter LCChangeYr",
                               "to change the period of disturbances, and",
                               "https://opendata.nfis.org/mapserver/nfis-change_eng.html for more information."),
-                 sourceURL = "https://opendata.nfis.org/downloads/forest_change/C2C_change_year_1985_2011.zip"),
+                 sourceURL = "https://opendata.nfis.org/downloads/forest_change/C2C_change_type_1985_2011.zip"),
     expectsInput("rstLCChangeYr", "RasterLayer",
                  desc = paste("An OPTIONAL map of land cover change years in the study area used to exclude pixels that have",
                               "been disturbed during the validation period. Defaults to Canada's forest",
