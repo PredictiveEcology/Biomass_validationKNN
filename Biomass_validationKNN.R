@@ -939,6 +939,11 @@ deltaBComparisonsEvent <- function(sim) {
     if (getOption("LandR.verbose", TRUE) > 0)
       message("'studyArea' was not provided by user. Using a polygon (6250000 m^2) in southwestern Alberta, Canada")
     sim$studyArea <- randomStudyArea(seed = 1234, size = (250^2)*100)
+
+  if (is.na(P(sim)$.studyAreaName)) {
+    params(sim)[[currentModule(sim)]][[".studyAreaName"]] <- reproducible::studyAreaName(sim$studyAreaLarge)
+    message("The .studyAreaName is not supplied; derived name from sim$studyAreaLarge: ",
+            params(sim)[[currentModule(sim)]][[".studyAreaName"]])
   }
 
   needRTM <- FALSE
