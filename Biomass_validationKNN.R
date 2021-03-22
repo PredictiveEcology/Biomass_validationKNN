@@ -961,8 +961,8 @@ deltaBComparisonsEvent <- function(sim) {
       sim$rawBiomassMapStart <- Cache(prepInputs,
                                       url = extractURL("rawBiomassMapStart"),
                                       destinationPath = dPath,
-                                      studyArea = sim$studyAreaLarge,   ## Ceres: makePixel table needs same no. pixels for this, RTM rawBiomassMapStart, LCC.. etc
-                                      rasterToMatch = if (!needRTM) sim$rasterToMatchLarge else NULL,
+                                      studyArea = sim$studyArea,   ## Ceres: makePixel table needs same no. pixels for this, RTM rawBiomassMapStart, LCC.. etc
+                                      rasterToMatch = if (!needRTM) sim$rasterToMatch else NULL,
                                       maskWithRTM = if (!needRTM) TRUE else FALSE,
                                       useSAcrs = FALSE,     ## never use SA CRS
                                       method = "bilinear",
@@ -976,7 +976,7 @@ deltaBComparisonsEvent <- function(sim) {
     ## if using custom raster resolution, need to allocate biomass proportionally to each pixel
     ## if no rawBiomassMapStart/RTM/RTMLarge were suppliedElsewhere, the "original" pixel size respects
     ## whatever resolution comes with the rawBiomassMapStart data
-    simPixelSize <- unique(asInteger(res(sim$rasterToMatchLarge)))
+    simPixelSize <- unique(asInteger(res(sim$rasterToMatch)))
     origPixelSize <- 250L # unique(res(sim$rawBiomassMapStart)) ## TODO: figure out a good way to not hardcode this
 
     if (simPixelSize != origPixelSize) { ## make sure we are comparing integers, else else %!=%
@@ -1253,8 +1253,8 @@ deltaBComparisonsEvent <- function(sim) {
       sim$standAgeMapStart <- Cache(LandR::prepInputsStandAgeMap,
                                     destinationPath = dPath,
                                     ageURL = extractURL("standAgeMapStart"),
-                                    studyArea = raster::aggregate(sim$studyAreaLarge),
-                                    rasterToMatch = sim$rasterToMatchLarge,
+                                    studyArea = raster::aggregate(sim$studyArea),
+                                    rasterToMatch = sim$rasterToMatch,
                                     filename2 = .suffix("standAgeMapStart.tif", paste0("_", P(sim)$.studyAreaName)),
                                     overwrite = TRUE,
                                     fireURL = extractURL("fireURL"),
