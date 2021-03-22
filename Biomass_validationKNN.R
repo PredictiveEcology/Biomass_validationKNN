@@ -936,9 +936,10 @@ deltaBComparisonsEvent <- function(sim) {
 
   ## Study area raster and shapefile -------------------------------------------
   if (!suppliedElsewhere("studyArea", sim)) {
-    if (getOption("LandR.verbose", TRUE) > 0)
-      message("'studyArea' was not provided by user. Using a polygon (6250000 m^2) in southwestern Alberta, Canada")
-    sim$studyArea <- randomStudyArea(seed = 1234, size = (250^2)*100)
+    stop("Please provide a 'studyArea' polygon")
+    # message("'studyArea' was not provided by user. Using a polygon (6250000 m^2) in southwestern Alberta, Canada")
+    # sim$studyArea <- randomStudyArea(seed = 1234, size = (250^2)*100)  # Jan 2021 we agreed to force user to provide a SA/SAL
+  }
 
   if (is.na(P(sim)$.studyAreaName)) {
     params(sim)[[currentModule(sim)]][[".studyAreaName"]] <- reproducible::studyAreaName(sim$studyAreaLarge)
