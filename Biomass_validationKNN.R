@@ -60,6 +60,8 @@ defineModule(sim, list(
     defineParameter(".saveInitialTime", "numeric", NA, NA, NA, desc = "This describes the simulation time at which the first save event should occur"),
     defineParameter(".savePlots", "logical", TRUE, NA, NA, desc = "Whether plots should be saved in file.path(outputPath(sim), 'Figs')"),
     defineParameter(".saveInterval", "numeric", NA, NA, NA, desc = "This describes the simulation time interval between save events"),
+    defineParameter(".studyAreaName", "character", NA, NA, NA,
+                    "Human-readable name for the study area used. If NA, a hash of studyArea will be used."),
     defineParameter(".useCache", "logical", "init", NA, NA,
                     desc = "Controls cache; caches the init event by default")
   ),
