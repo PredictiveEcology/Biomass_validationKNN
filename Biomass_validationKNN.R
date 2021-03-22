@@ -992,7 +992,8 @@ deltaBComparisonsEvent <- function(sim) {
     sim$rasterToMatch[!is.na(RTMvals)] <- 1
 
     sim$rasterToMatch <- Cache(writeOutputs, sim$rasterToMatch,
-                               filename2 = file.path(cachePath(sim), "rasters", "rasterToMatch.tif"),
+                               filename2 = .suffix(file.path(dPath, "rasterToMatch.tif"),
+                                                   paste0("_", P(sim)$.studyAreaName)),
                                datatype = "INT2U", overwrite = TRUE,
                                userTags = c(cacheTags, "rasterToMatch"),
                                omitArgs = c("userTags"))
@@ -1023,7 +1024,7 @@ deltaBComparisonsEvent <- function(sim) {
     LCChangeYrFilename <- "C2C_change_year_1985_2011.tif"
     sim$rstLCChange <- Cache(prepInputs,
                              targetFile = LCChangeFilename,
-                             archive = asPath("C2C_change_type_1985_2011.zip"),
+                             archive = file.path(dPath, "C2C_change_type_1985_2011.zip"),
                              url = extractURL("rstLCChange"),
                              destinationPath = dPath,
                              studyArea = sim$studyArea,
@@ -1032,7 +1033,8 @@ deltaBComparisonsEvent <- function(sim) {
                              maskWithRTM = TRUE,
                              method = "ngb",
                              datatype = "INT2U",
-                             filename2 = TRUE, overwrite = TRUE,
+                             filename2 = .suffix("rstLCChange.tif", paste0("_", P(sim)$.studyAreaName)),
+                             overwrite = TRUE,
                              userTags = c("rstLCChange", cacheTags),
                              omitArgs = c("destinationPath", "targetFile", "userTags"))
     ## convert to mask
@@ -1049,7 +1051,8 @@ deltaBComparisonsEvent <- function(sim) {
                                maskWithRTM = TRUE,
                                method = "ngb",
                                datatype = "INT2U",
-                               filename2 = TRUE, overwrite = TRUE,
+                               filename2 = .suffix("rstLCChangeYr.tif", paste0("_", P(sim)$.studyAreaName)),
+                               overwrite = TRUE,
                                userTags = c("rstLCChangeYr", cacheTags),
                                omitArgs = c("destinationPath", "targetFile", "userTags"))
 
@@ -1080,7 +1083,8 @@ deltaBComparisonsEvent <- function(sim) {
                                 rasterToMatch = sim$rasterToMatch,
                                 useSAcrs = FALSE,
                                 datatype = "INT2U",
-                                filename2 = TRUE, overwrite = TRUE,
+                                filename2 = .suffix("firePerimeters.shp", paste0("_", P(sim)$.studyAreaName)),
+                                overwrite = TRUE,
                                 userTags = c("firePerimeters", cacheTags),
                                 omitArgs = c("destinationPath", "targetFile", "userTags"))
     ## convert to sf
@@ -1232,7 +1236,7 @@ deltaBComparisonsEvent <- function(sim) {
                                     useSAcrs = FALSE,
                                     method = "bilinear",
                                     datatype = "INT2U",
-                                    filename2 = TRUE,
+                                    filename2 = .suffix("rawBiomassMapEnd.tif", paste0("_", P(sim)$.studyAreaName)),
                                     overwrite = TRUE,
                                     userTags = c(cacheTags, "rawBiomassMapEnd"),
                                     omitArgs = c("userTags"))
@@ -1276,7 +1280,7 @@ deltaBComparisonsEvent <- function(sim) {
                                   useSAcrs = FALSE,
                                   method = "bilinear",
                                   datatype = "INT2U",
-                                  filename2 = TRUE,
+                                  filename2 = .suffix("standAgeMapEnd.tif", paste0("_", P(sim)$.studyAreaName)),
                                   overwrite = TRUE,
                                   userTags = c(cacheTags, "standAgeMapEnd"),
                                   omitArgs = c("userTags"))
