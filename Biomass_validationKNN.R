@@ -529,7 +529,7 @@ Init <- function(sim) {
   pixToRm <- unique(c(setdiff(unique(sim$standCohortData$pixelIndex), pixToKeep),
                       sim$disturbedIDs))
   excludedPixStats <- data.table(noPixels = length(pixToRm),
-                                 landscapePrc = round(length(pixToRm)/
+                                 landscapePrc = round(length(pixToRm) /
                                                         sum(!is.na(getValues(sim$biomassMap))),
                                                       2) * 100)
   message(blue("Pixels disturbed during the validation period, and pixels that showed decreases in age and biomass
@@ -997,46 +997,6 @@ deltaBComparisonsEvent <- function(sim) {
                                userTags = c(cacheTags, "rasterToMatch"),
                                omitArgs = c("userTags"))
 
-    ## this is old, and potentially not needed anymore
-    if (FALSE) {
-      studyArea <- sim$studyArea # temporary copy because it will be overwritten if it is suppliedElsewhere
-      message("  Rasterizing the studyArea polygon map")
-      if (!is(studyArea, "SpatialPolygonsDataFrame")) {
-        dfData <- if (is.null(rownames(studyArea))) {
-          polyID <- sapply(slot(studyArea, "polygons"), function(x) slot(x, "ID"))
-          data.frame("field" = as.character(seq_along(length(studyArea))), row.names = polyID)
-        } else {
-          polyID <- sapply(slot(studyArea, "polygons"), function(x) slot(x, "ID"))
-          data.frame("field" = rownames(studyArea), row.names = polyID)
-        }
-        studyArea <- SpatialPolygonsDataFrame(studyArea, data = dfData)
-      }
-      if (!identical(crs(studyArea), crs(sim$rasterToMatch))) {
-        studyArea <- spTransform(studyArea, crs(sim$rasterToMatch))
-        studyArea <- fixErrors(studyArea)
-      }
-
-
-      #TODO: review whether this is necessary (or will break LandWeb if removed) see Git Issue #22
-      # layers provided by David Andison sometimes have LTHRC, sometimes LTHFC ... chose whichever
-      LTHxC <- grep("(LTH.+C)", names(studyArea), value = TRUE)
-      fieldName <- if (length(LTHxC)) {
-        LTHxC
-      } else {
-        if (length(names(studyArea)) > 1) {
-          ## study region may be a simple polygon
-          names(studyArea)[1]
-        } else NULL
-      }
-
-      sim$rasterToMatch <- crop(fasterizeFromSp(studyArea, sim$rasterToMatch, fieldName),
-                                studyArea)
-      sim$rasterToMatch <- Cache(writeRaster, sim$rasterToMatch,
-                                 filename = file.path(dPath, "rasterToMatch.tif"),
-                                 datatype = "INT2U", overwrite = TRUE,
-                                 userTags = c(cacheTags, "rasterToMatch"),
-                                 omitArgs = c("userTags"))
-    }
   }
 
   if (!identical(crs(sim$studyArea), crs(sim$rasterToMatch))) {
