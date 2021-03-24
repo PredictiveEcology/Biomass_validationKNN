@@ -524,8 +524,9 @@ Init <- function(sim) {
                      by = .(rep, pixelIndex)]
     pixToKeep <- unique(tempDT[standDeltaBObsrvd >= 0 & standDeltaAgeObsrvd >= 0,
                                pixelIndex])
-  } else
+  } else {
     pixToKeep <- unique(sim$standCohortData$pixelIndex)
+  }
 
   ## return some statistics about excluded pixels
   pixToRm <- unique(c(setdiff(unique(sim$standCohortData$pixelIndex), pixToKeep),
@@ -534,8 +535,8 @@ Init <- function(sim) {
                                  landscapePrc = round(length(pixToRm) /
                                                         sum(!is.na(getValues(sim$biomassMap))),
                                                       2) * 100)
-  message(blue("Pixels disturbed during the validation period, and pixels that showed decreases in age and biomass
-               will be excluded from validation, representing a loss of:", excludedPixStats$noPixels, "pixels or",
+  message(blue("Pixels disturbed during the validation period will be excluded from validation,\n",
+               "representing a loss of:", excludedPixStats$noPixels, "pixels or",
                excludedPixStats$landscapePrc, "% of the initial simulated landscape."))
 
   ## keep aforementioned pixels only
@@ -945,7 +946,7 @@ deltaBComparisonsEvent <- function(sim) {
 
   if (is.na(P(sim)$.studyAreaName)) {
     params(sim)[[currentModule(sim)]][[".studyAreaName"]] <- reproducible::studyAreaName(sim$studyArea)
-    message("The .studyAreaName is not supplied; derived name from sim$studyAreaLarge: ",
+    message("The .studyAreaName is not supplied; derived name from sim$studyArea: ",
             params(sim)[[currentModule(sim)]][[".studyAreaName"]])
   }
 
