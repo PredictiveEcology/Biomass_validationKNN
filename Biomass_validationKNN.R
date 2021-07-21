@@ -193,8 +193,14 @@ defineModule(sim, list(
     createsOutput("standAgeMapEnd", "RasterLayer",
                   desc = paste("observed stand age map in study area, at the last year of the validation period",
                                "Filtered to exclude pixels that were disturbed during the validation period")),
-    createsOutput("standCohortData", "data.table",
-                  desc = paste(""))
+    createsOutput("pixelCohortData", "data.table",
+                  desc = paste("A table containing observed and simulated pixel-level data (by year and repetition, 'rep',",
+                               "in the case of simulated data) on species biomass (summed across cohorts, 'B'),",
+                               "total pixel biomass ('pixelB'), average biomass-weighted pixel age ('pixelAge'),",
+                               "species relative abundance (calculated as B/pixelB, 'relativeAbund'), species dominance",
+                               "(the species with max(B), 'vegType'), and lanscape-wide biomass ('landscapeB').",
+                               "Observed data columns are suffixed with 'Obsrvd'. In species dominance, pixels with >= 2" ,
+                               "species with max(B) (i.e. 'noDoms' >= 2) are classified as 'Mixed'." ))
   )
 ))
 
@@ -213,7 +219,7 @@ doEvent.Biomass_validationKNN = function(sim, eventTime, eventType) {
         } else
           mod$landscapeWindow <- mod$statsWindow + 1
 
-        mod$standWindow <- mod$landscapeWindow + 1
+        mod$pixelWindow <- mod$landscapeWindow + 1
       }
 
       if (P(sim)$obsDeltaAgeB) {
@@ -223,7 +229,7 @@ doEvent.Biomass_validationKNN = function(sim, eventTime, eventType) {
 
       sim <- scheduleEvent(sim, eventType = "landscapeWidePlots", eventTime = times(sim)$start,
                            eventPriority = 2, moduleName = currentModule(sim))
-      sim <- scheduleEvent(sim, eventType = "standLevelPlots", eventTime = times(sim)$start,
+      sim <- scheduleEvent(sim, eventType = "pixelLevelPlots", eventTime = times(sim)$start,
                            eventPriority = 3, moduleName = currentModule(sim))
       sim <- scheduleEvent(sim, eventType = "deltaBComparisons", eventTime = times(sim)$start,
                            eventPriority = 3, moduleName = currentModule(sim))
@@ -234,8 +240,8 @@ doEvent.Biomass_validationKNN = function(sim, eventTime, eventType) {
     landscapeWidePlots = {
       sim <- landscapeWidePlotsEvent(sim)
     },
-    standLevelPlots = {
-      sim <- standLevelPlotsEvent(sim)
+    pixelLevelPlots = {
+      sim <- pixelLevelPlotsEvent(sim)
     },
     deltaBComparisons = {
       sim <- deltaBComparisonsEvent(sim)
@@ -388,31 +394,31 @@ Init <- function(sim) {
                                     pixelCohortData
                                   }, allCohortData = sim$allCohortData))
 
-  ## summarize allPixelCohortData to stand totalB per species and
-  ## and biomass-averaged stand age
-  standCohortData <- allPixelCohortData[, .(B, sum(B), age),
+  ## summarize allPixelCohortData to pixel totalB per species and
+  ## and biomass-averaged pixel age
+  pixelCohortData <- allPixelCohortData[, .(B, sum(B), age),
                                         by = .(rep, year, pixelIndex, speciesCode)]
-  standCohortData <- standCohortData[, standAge := sum(age * B, na.rm = TRUE) / sum(B, na.rm = TRUE),
+  pixelCohortData <- pixelCohortData[, pixelAge := sum(age * B, na.rm = TRUE) / sum(B, na.rm = TRUE),
                                      by = .(rep, year, pixelIndex)]
   ## drop unnecessary columns and remove separate cohorts
-  standCohortData[, B := V2] ## overwrite
-  standCohortData[, `:=`(V2 = NULL, age = NULL)]
-  standCohortData <- unique(standCohortData)
+  pixelCohortData[, B := V2] ## overwrite
+  pixelCohortData[, `:=`(V2 = NULL, age = NULL)]
+  pixelCohortData <- unique(pixelCohortData)
 
   ## MERGE OBSERVED AND SIMULATED DATA TABLES  -----------------------------------
-  ## add observed data to standCohortData
+  ## add observed data to pixelCohortData
   ## note that some pixelIndex X spp combinations are lacking because the observed data
   ## has spp in some pixels that are not found in the simulation data,
   ## and vice-versa. To make sure that the observed pixel X spp combinations are added to each
   ## rep/year the tables need to be extended - otherwise sometimes the observed data
   ## is only joined to some reps/years, making observed averages "vary" across reps/years
-  combinationsStart <- as.data.table(expand.grid(list(speciesCode = unique(standCohortData$speciesCode),
-                                                      pixelIndex = unique(c(validationDataStart$pixelIndex, standCohortData$pixelIndex)),
+  combinationsStart <- as.data.table(expand.grid(list(speciesCode = unique(pixelCohortData$speciesCode),
+                                                      pixelIndex = unique(c(validationDataStart$pixelIndex, pixelCohortData$pixelIndex)),
                                                       rep = mod$validationReps,
                                                       year = P(sim)$validationYears[1])))
 
-  combinationsEnd <- as.data.table(expand.grid(list(speciesCode = unique(standCohortData$speciesCode),
-                                                    pixelIndex = unique(c(validationDataEnd$pixelIndex, standCohortData$pixelIndex)),
+  combinationsEnd <- as.data.table(expand.grid(list(speciesCode = unique(pixelCohortData$speciesCode),
+                                                    pixelIndex = unique(c(validationDataEnd$pixelIndex, pixelCohortData$pixelIndex)),
                                                     rep = mod$validationReps,
                                                     year = P(sim)$validationYears[2])))
   validationDataStart <- validationDataStart[combinationsStart,
@@ -424,7 +430,7 @@ Init <- function(sim) {
                                   use.names = TRUE)
 
   ## exclude pixels that are not simulated
-  sim$validationData <- sim$validationData[pixelIndex %in% standCohortData$pixelIndex]
+  sim$validationData <- sim$validationData[pixelIndex %in% pixelCohortData$pixelIndex]
 
   ## convert NAs to 0s
   cols <- c("cover", "age", "B", "totalBiomass")
@@ -433,103 +439,103 @@ Init <- function(sim) {
   ## change names before joining.
   setnames(sim$validationData,
            old = c("cover", "age", "B", "totalBiomass"),
-           new = c("coverObsrvd", "standAgeObsrvd", "BObsrvd", "standBObsrvd"))
+           new = c("coverObsrvd", "pixelAgeObsrvd", "BObsrvd", "pixelBObsrvd"))
   ## reorder columns
   cols <- c("rep", "year", "pixelIndex", "speciesCode", "coverObsrvd",
-            "standAgeObsrvd", "BObsrvd", "standBObsrvd")
+            "pixelAgeObsrvd", "BObsrvd", "pixelBObsrvd")
   sim$validationData <- sim$validationData[, ..cols]
 
   ## merge and keep all combos
-  standCohortData <- standCohortData[sim$validationData,
+  pixelCohortData <- pixelCohortData[sim$validationData,
                                      on = c("rep", "year", "pixelIndex", "speciesCode")]
 
   ## remove disturbed pixels
-  standCohortData <- standCohortData[!pixelIndex %in% sim$disturbedIDs]
+  pixelCohortData <- pixelCohortData[!pixelIndex %in% sim$disturbedIDs]
 
   ## convert NAs to 0s
-  cols <- c("standAge", "B")
-  standCohortData[, (cols) := lapply(.SD, replaceNAs), .SDcols = cols]
+  cols <- c("pixelAge", "B")
+  pixelCohortData[, (cols) := lapply(.SD, replaceNAs), .SDcols = cols]
 
-  ## calculate simulated standAge, standB and relative B
-  standCohortData[, standB := asInteger(sum(B)),
+  ## calculate simulated pixelAge, pixelB and relative B
+  pixelCohortData[, pixelB := asInteger(sum(B)),
                   .(rep, year, pixelIndex)]
-  standCohortData[, relativeAbund := B/standB]
-  standCohortData[standB == 0, relativeAbund := 0]
+  pixelCohortData[, relativeAbund := B/pixelB]
+  pixelCohortData[pixelB == 0, relativeAbund := 0]
 
-  ## replace inserted standB/AgeObsrvd 0s (coming from merge) with actual stand biomass/age
-  standCohortData[, `:=`(standBObsrvd = max(standBObsrvd),
-                         standAgeObsrvd = max(standAgeObsrvd)),
+  ## replace inserted pixelB/AgeObsrvd 0s (coming from merge) with actual pixel biomass/age
+  pixelCohortData[, `:=`(pixelBObsrvd = max(pixelBObsrvd),
+                         pixelAgeObsrvd = max(pixelAgeObsrvd)),
                   by = .(rep, year, pixelIndex)]
 
   ## calculate observed relative B
-  standCohortData[, relativeAbundObsrvd := BObsrvd/standBObsrvd]
-  standCohortData[standBObsrvd == 0, relativeAbundObsrvd := 0]
+  pixelCohortData[, relativeAbundObsrvd := BObsrvd/pixelBObsrvd]
+  pixelCohortData[pixelBObsrvd == 0, relativeAbundObsrvd := 0]
 
   ## classify pixels by dominant species (i,e, veg type) - will need to be corrected for compeeting dominants
   ## these match with model outputs, I checked
   ## note2: mixed pixels get a "mixed" type
-  standCohortData[standB > 0, vegType := speciesCode[which.max(relativeAbund)],
+  pixelCohortData[pixelB > 0, vegType := speciesCode[which.max(relativeAbund)],
                   by = .(year, rep, pixelIndex)]
-  standCohortData[standBObsrvd > 0, vegTypeObsrvd := speciesCode[which.max(relativeAbundObsrvd)],
+  pixelCohortData[pixelBObsrvd > 0, vegTypeObsrvd := speciesCode[which.max(relativeAbundObsrvd)],
                   by = .(year, rep, pixelIndex)]
 
 
-  ## get number of dominant species -- note that stands with 0 B will appear as mixed initially, but are fixed below
-  tempDT <- standCohortData[, list(noDoms = sum(relativeAbund == max(relativeAbund)),
+  ## get number of dominant species -- note that pixels with 0 B will appear as mixed initially, but are fixed below
+  tempDT <- pixelCohortData[, list(noDoms = sum(relativeAbund == max(relativeAbund)),
                                    noDomsObsrvd = sum(relativeAbundObsrvd == max(relativeAbundObsrvd))),
                             by = .(year, rep, pixelIndex)]
 
-  standCohortData <- tempDT[standCohortData, on = .(year, rep, pixelIndex)]
-  standCohortData[standB == 0, noDoms := 0]
-  standCohortData[standBObsrvd == 0, noDomsObsrvd := 0]
+  pixelCohortData <- tempDT[pixelCohortData, on = .(year, rep, pixelIndex)]
+  pixelCohortData[pixelB == 0, noDoms := 0]
+  pixelCohortData[pixelBObsrvd == 0, noDomsObsrvd := 0]
 
-  standCohortData[noDoms > 1, vegType := "Mixed"]
-  standCohortData[noDomsObsrvd > 1, vegTypeObsrvd := "Mixed"]
+  pixelCohortData[noDoms > 1, vegType := "Mixed"]
+  pixelCohortData[noDomsObsrvd > 1, vegTypeObsrvd := "Mixed"]
 
-  standCohortData[is.na(vegType), vegType := "No veg."]
-  standCohortData[is.na(vegTypeObsrvd), vegTypeObsrvd := "No veg."]
+  pixelCohortData[is.na(vegType), vegType := "No veg."]
+  pixelCohortData[is.na(vegTypeObsrvd), vegTypeObsrvd := "No veg."]
 
   ## calculate some landscape metrics
-  standCohortData[, `:=`(landscapeB = sum(B),
+  pixelCohortData[, `:=`(landscapeB = sum(B),
                          landscapeBObsrvd = sum(BObsrvd)),
                   by = .(rep, year)]
 
   ## reorder column names
-  cols <- c(grep("Obsrvd", names(standCohortData), value = TRUE, invert = TRUE),
-            grep("Obsrvd", names(standCohortData), value = TRUE))
-  standCohortData <- standCohortData[, ..cols]
+  cols <- c(grep("Obsrvd", names(pixelCohortData), value = TRUE, invert = TRUE),
+            grep("Obsrvd", names(pixelCohortData), value = TRUE))
+  pixelCohortData <- pixelCohortData[, ..cols]
 
   ## assert and export to sim -- vegType cols can have NAs
-  assertStandCohortData(standCohortData)
-  sim$standCohortData <- standCohortData
+  assertpixelCohortData(pixelCohortData)
+  sim$pixelCohortData <- pixelCohortData
 
   ## make labels for plots
-  sim$speciesLabels <- equivalentName(unique(sim$standCohortData$speciesCode), sim$sppEquiv,
+  sim$speciesLabels <- equivalentName(unique(sim$pixelCohortData$speciesCode), sim$sppEquiv,
                                       column = "EN_generic_short")
-  names(sim$speciesLabels) <- unique(sim$standCohortData$speciesCode)
+  names(sim$speciesLabels) <- unique(sim$pixelCohortData$speciesCode)
 
-  ## EXCLUDE PIXELS WHERE OBSERVED STAND B OR STAND AGE DECREASED -----------------
-  ## Only keep pixels where stand age AND stand B increased, or remained the same,
+  ## EXCLUDE PIXELS WHERE OBSERVED PIXEL B OR PIXEL AGE DECREASED -----------------
+  ## Only keep pixels where pixel age AND pixel B increased, or remained the same,
   ## as we cannot account for disturbances that may not have been captured from sat data
   ## or measurement errors that yielded too high B in 2001. It is unlikely that in 10 years we have a large proportion
-  ## of stands seeing reduced stand age and B due to death from long-age.
+  ## of pixels seeing reduced pixel age and B due to death from long-age.
   ## THIS HAS BEEN DESACTIVATED FOR NOW.
 
   if (FALSE) {
     year1 <- P(sim)$validationYears[1]
     year2 <- P(sim)$validationYears[2]
-    tempDT <- unique(sim$standCohortData[, .(year, rep, pixelIndex, standAgeObsrvd, standBObsrvd)])
-    tempDT <- tempDT[, .(standDeltaAgeObsrvd = standAgeObsrvd[year == year2] - standAgeObsrvd[year == year1],
-                         standDeltaBObsrvd = standBObsrvd[year == year2] - standBObsrvd[year == year1]),
+    tempDT <- unique(sim$pixelCohortData[, .(year, rep, pixelIndex, pixelAgeObsrvd, pixelBObsrvd)])
+    tempDT <- tempDT[, .(pixelDeltaAgeObsrvd = pixelAgeObsrvd[year == year2] - pixelAgeObsrvd[year == year1],
+                         pixelDeltaBObsrvd = pixelBObsrvd[year == year2] - pixelBObsrvd[year == year1]),
                      by = .(rep, pixelIndex)]
-    pixToKeep <- unique(tempDT[standDeltaBObsrvd >= 0 & standDeltaAgeObsrvd >= 0,
+    pixToKeep <- unique(tempDT[pixelDeltaBObsrvd >= 0 & pixelDeltaAgeObsrvd >= 0,
                                pixelIndex])
   } else {
-    pixToKeep <- unique(sim$standCohortData$pixelIndex)
+    pixToKeep <- unique(sim$pixelCohortData$pixelIndex)
   }
 
   ## return some statistics about excluded pixels
-  pixToRm <- unique(c(setdiff(unique(sim$standCohortData$pixelIndex), pixToKeep),
+  pixToRm <- unique(c(setdiff(unique(sim$pixelCohortData$pixelIndex), pixToKeep),
                       sim$disturbedIDs))
   excludedPixStats <- data.table(noPixels = length(pixToRm),
                                  landscapePrc = round(length(pixToRm) /
@@ -540,45 +546,45 @@ Init <- function(sim) {
                excludedPixStats$landscapePrc, "% of the initial simulated landscape."))
 
   ## keep aforementioned pixels only
-  sim$standCohortData <- sim$standCohortData[pixelIndex %in% pixToKeep]
+  sim$pixelCohortData <- sim$pixelCohortData[pixelIndex %in% pixToKeep]
 
   ## clean up and free memory
-  rm(pixelTable, standCohortData, combinationsStart, combinationsEnd, validationDataStart, validationDataEnd)
+  rm(pixelTable, pixelCohortData, combinationsStart, combinationsEnd, validationDataStart, validationDataEnd)
   .gc()
 
   return(invisible(sim))
 }
 
 obsrvdDeltaMapsEvent <- function(sim) {
-  ## MAPS OF OBSERVED CHANGES IN STAND B AND AGE - RAW DATA -------------------
-  standDeltaBObsrvdRas <- (sim$rawBiomassMapEnd - sim$rawBiomassMapStart) * 100 ## to rescale to to/ha
-  pixToNA <- setdiff(1:ncell(standDeltaBObsrvdRas), sim$standCohortData$pixelIndex)
-  standDeltaBObsrvdRas[pixToNA] <- NA
+  ## MAPS OF OBSERVED CHANGES IN PIXEL B AND AGE - RAW DATA -------------------
+  pixelDeltaBObsrvdRas <- (sim$rawBiomassMapEnd - sim$rawBiomassMapStart) * 100 ## to rescale to to/ha
+  pixToNA <- setdiff(1:ncell(pixelDeltaBObsrvdRas), sim$pixelCohortData$pixelIndex)
+  pixelDeltaBObsrvdRas[pixToNA] <- NA
 
-  standDeltaAgeObsrvdRas <- sim$standAgeMapEnd - sim$standAgeMapStart
-  standDeltaAgeObsrvdRas[pixToNA] <- NA
+  pixelDeltaAgeObsrvdRas <- sim$standAgeMapEnd - sim$standAgeMapStart
+  pixelDeltaAgeObsrvdRas[pixToNA] <- NA
 
   ## what is the relationship between the two?
-  standDeltaObsrvdData <- na.omit(data.table(pixelIndex = 1:ncell(standDeltaBObsrvdRas),
-                                             standDeltaBObsrvd = getValues(standDeltaBObsrvdRas),
-                                             standDeltaAgeObsrvd = getValues(standDeltaAgeObsrvdRas)))
+  pixelDeltaObsrvdData <- na.omit(data.table(pixelIndex = 1:ncell(pixelDeltaBObsrvdRas),
+                                             pixelDeltaBObsrvd = getValues(pixelDeltaBObsrvdRas),
+                                             pixelDeltaAgeObsrvd = getValues(pixelDeltaAgeObsrvdRas)))
 
-  plot1 <- ggplot(standDeltaObsrvdData,
-                  aes(x = standDeltaAgeObsrvd, y = standDeltaBObsrvd)) +
+  plot1 <- ggplot(pixelDeltaObsrvdData,
+                  aes(x = pixelDeltaAgeObsrvd, y = pixelDeltaBObsrvd)) +
     geom_point() +
     stat_smooth(method = "lm") +
     theme_pubr(base_size = 12, margin = FALSE) +
     labs(y = expression(paste("observed ", Delta, "B"))) +
     theme(axis.title.x = element_blank(), axis.text.x = element_blank())
 
-  plot2 <- ggplot(standDeltaObsrvdData,
-                  aes(y = standDeltaBObsrvd)) +
+  plot2 <- ggplot(pixelDeltaObsrvdData,
+                  aes(y = pixelDeltaBObsrvd)) +
     geom_boxplot() +
     theme_pubr(base_size = 12, margin = FALSE) +
     theme(axis.title.y = element_blank(), axis.text = element_blank())
 
-  plot3 <- ggplot(standDeltaObsrvdData,
-                  aes(y = standDeltaAgeObsrvd)) +
+  plot3 <- ggplot(pixelDeltaObsrvdData,
+                  aes(y = pixelDeltaAgeObsrvd)) +
     geom_boxplot() +
     coord_flip() +
     labs(y = expression(paste("observed ", Delta, "age"))) +
@@ -592,47 +598,47 @@ obsrvdDeltaMapsEvent <- function(sim) {
   year1 <- P(sim)$validationYears[1]
   year2 <- P(sim)$validationYears[2]
   yearGap <- year2 - year1
-  plot5 <- ggplot(standDeltaObsrvdData[standDeltaAgeObsrvd == yearGap],
-                  aes(y = standDeltaBObsrvd)) +
+  plot5 <- ggplot(pixelDeltaObsrvdData[pixelDeltaAgeObsrvd == yearGap],
+                  aes(y = pixelDeltaBObsrvd)) +
     geom_boxplot() +
     coord_flip() +
     labs(y = expression(paste("observed ", Delta, "B")),
          title = bquote(atop("observed" ~ Delta ~ "B", "in pixels that aged" ~ .(yearGap)))) +
     theme_pubr(base_size = 12, margin = FALSE)
 
-  ## MAPS OF OBSERVED CHANGES IN STAND B AND AGE - AFTER ADJUSTMENTS -------
+  ## OBSERVED CHANGES IN PIXEL B AND AGE - AFTER ADJUSTMENTS -------
   ## by adjustments we mean, the data cleanup that we replicate from Biomass_borealDataPrep
-  plotData <- unique(sim$standCohortData[, .(year, pixelIndex, standBObsrvd, standAgeObsrvd)])
-  plotData <- plotData[, list(standDeltaBObsrvd = unique(standBObsrvd[which(year == year2)]) - unique(standBObsrvd[which(year == year1)]),
-                              standDeltaAgeObsrvd = unique(standAgeObsrvd[which(year == year2)]) - unique(standAgeObsrvd[which(year == year1)])),
+  plotData <- unique(sim$pixelCohortData[, .(year, pixelIndex, pixelBObsrvd, pixelAgeObsrvd)])
+  plotData <- plotData[, list(pixelDeltaBObsrvd = unique(pixelBObsrvd[which(year == year2)]) - unique(pixelBObsrvd[which(year == year1)]),
+                              pixelDeltaAgeObsrvd = unique(pixelAgeObsrvd[which(year == year2)]) - unique(pixelAgeObsrvd[which(year == year1)])),
                        , by = pixelIndex]
 
   if (any(duplicated(plotData$pixelIndex)))
     stop("There should not be duplicated pixels in observed data")
 
-  standDeltaBObsrvdAdj <- setValues(sim$rasterToMatch, NA)
-  standDeltaBObsrvdAdj[plotData[, pixelIndex]] <- plotData[, standDeltaBObsrvd]
+  pixelDeltaBObsrvdAdj <- setValues(sim$rasterToMatch, NA)
+  pixelDeltaBObsrvdAdj[plotData[, pixelIndex]] <- plotData[, pixelDeltaBObsrvd]
 
-  standDeltaAgeObsrvdAdj <- setValues(sim$rasterToMatch, NA)
-  standDeltaAgeObsrvdAdj[plotData[, pixelIndex]] <- plotData[, standDeltaAgeObsrvd]
+  pixelDeltaAgeObsrvdAdj <- setValues(sim$rasterToMatch, NA)
+  pixelDeltaAgeObsrvdAdj[plotData[, pixelIndex]] <- plotData[, pixelDeltaAgeObsrvd]
 
 
   plot6 <- ggplot(plotData,
-                  aes(x = standDeltaAgeObsrvd, y = standDeltaBObsrvd)) +
+                  aes(x = pixelDeltaAgeObsrvd, y = pixelDeltaBObsrvd)) +
     geom_point() +
     stat_smooth(method = "lm") +
     theme_pubr(base_size = 12, margin = FALSE) +
     labs(y = expression(paste("observed ", Delta, "B", " - adjusted"))) +
     theme(axis.title.x = element_blank(), axis.text.x = element_blank())
 
-  plot7 <- ggplot(standDeltaObsrvdData,
-                  aes(y = standDeltaBObsrvd)) +
+  plot7 <- ggplot(pixelDeltaObsrvdData,
+                  aes(y = pixelDeltaBObsrvd)) +
     geom_boxplot() +
     theme_pubr(base_size = 12, margin = FALSE) +
     theme(axis.title.y = element_blank(), axis.text = element_blank())
 
-  plot8 <- ggplot(standDeltaObsrvdData,
-                  aes(y = standDeltaAgeObsrvd)) +
+  plot8 <- ggplot(pixelDeltaObsrvdData,
+                  aes(y = pixelDeltaAgeObsrvd)) +
     geom_boxplot() +
     coord_flip() +
     labs(y = expression(paste("observed ", Delta, "age", " - adjusted"))) +
@@ -643,8 +649,8 @@ obsrvdDeltaMapsEvent <- function(sim) {
                      widths = c(1, 0.5), heights = c(1, 0.5))
 
   ## delta biomass for the "supposed" age increment - all over the place
-  plot10 <- ggplot(plotData[standDeltaAgeObsrvd == yearGap],
-                   aes(y = standDeltaBObsrvd)) +
+  plot10 <- ggplot(plotData[pixelDeltaAgeObsrvd == yearGap],
+                   aes(y = pixelDeltaBObsrvd)) +
     geom_boxplot() +
     coord_flip() +
     labs(y = expression(paste("observed ", Delta, "B", " - adjusted")),
@@ -654,10 +660,10 @@ obsrvdDeltaMapsEvent <- function(sim) {
   if (!is.na(P(sim)$.plotInitialTime)) {
     dev(mod$mapWindow)
     clearPlot()
-    Plot(standDeltaBObsrvdRas, standDeltaAgeObsrvdRas, new = TRUE,
-         title = c("stand delta-B", "stand delta-Age"))
-    Plot(standDeltaBObsrvdAdj, standDeltaAgeObsrvdAdj, new = TRUE,
-         title = c("stand delta-B - adjusted", "stand delta-Age - adjusted"))
+    Plot(pixelDeltaBObsrvdRas, pixelDeltaAgeObsrvdRas, new = TRUE,
+         title = c("pixel delta-B", "pixel delta-Age"))
+    Plot(pixelDeltaBObsrvdAdj, pixelDeltaAgeObsrvdAdj, new = TRUE,
+         title = c("pixel delta-B - adjusted", "pixel delta-Age - adjusted"))
 
     dev(mod$statsWindow)
     clearPlot()
@@ -685,10 +691,10 @@ obsrvdDeltaMapsEvent <- function(sim) {
     } else {
       pdf(file = file.path(mod$plotPath, 'deltaB_Age_Maps.pdf'))
       layout(matrix(1:4, ncol=2))
-      raster::plot(standDeltaBObsrvdRas, main = "stand delta-B")
-      raster::plot(standDeltaAgeObsrvdRas, main = "stand delta-Age")
-      raster::plot(standDeltaBObsrvdAdj, main = "stand delta-B - adjusted")
-      raster::plot(standDeltaAgeObsrvdAdj, main = "stand delta-Age - adjusted")
+      raster::plot(pixelDeltaBObsrvdRas, main = "pixel delta-B")
+      raster::plot(pixelDeltaAgeObsrvdRas, main = "pixel delta-Age")
+      raster::plot(pixelDeltaBObsrvdAdj, main = "pixel delta-B - adjusted")
+      raster::plot(pixelDeltaAgeObsrvdAdj, main = "pixel delta-Age - adjusted")
       dev.off()
     }
 
@@ -698,9 +704,9 @@ obsrvdDeltaMapsEvent <- function(sim) {
 }
 
 landscapeWidePlotsEvent <- function(sim) {
-  assertStandCohortData(sim$standCohortData)
+  assertpixelCohortData(sim$pixelCohortData)
 
-  plotData <- sim$standCohortData
+  plotData <- sim$pixelCohortData
   plotData <- plotData[, list(landRelativeAbund = sum(B)/unique(landscapeB),
                               landRelativeAbundObsrvd = sum(BObsrvd)/unique(landscapeBObsrvd)),
                        by = .(rep, year, speciesCode)]
@@ -721,7 +727,7 @@ landscapeWidePlotsEvent <- function(sim) {
          colour = "")
 
   ## no. pixels with a species
-  plotData <- sim$standCohortData
+  plotData <- sim$pixelCohortData
   plotData <- plotData[,  list(count = sum(B > 0),
                                countObsrvd = sum(BObsrvd > 0)),
                        by = .(rep, year, speciesCode)]
@@ -747,9 +753,9 @@ landscapeWidePlotsEvent <- function(sim) {
   ## note: don't use melt, because dominant spp differ between valid and simul data.
   ## simulated and observed differ in no. of pixels in year 1...
   ## this is because B is adjusted using a statistical model
-  plotData1 <- unique(sim$standCohortData[, .(year, rep, pixelIndex, vegType)])
+  plotData1 <- unique(sim$pixelCohortData[, .(year, rep, pixelIndex, vegType)])
   plotData1[, dataType := "simulated"]
-  plotData2 <- unique(sim$standCohortData[, .(year, rep, pixelIndex, vegTypeObsrvd)])
+  plotData2 <- unique(sim$pixelCohortData[, .(year, rep, pixelIndex, vegTypeObsrvd)])
   plotData2[, dataType := "observed"]
   setnames(plotData2, "vegTypeObsrvd", "vegType")
 
@@ -796,12 +802,12 @@ landscapeWidePlotsEvent <- function(sim) {
   return(invisible(sim))
 }
 
-standLevelPlotsEvent <- function(sim) {
-  ## STAND/PIXEL-LEVEL COMPARISONS IN A GIVEN YEAR --------------------
-  assertStandCohortData(sim$standCohortData)
+pixelLevelPlotsEvent <- function(sim) {
+  ## PIXEL-LEVEL COMPARISONS IN A GIVEN YEAR --------------------
+  assertpixelCohortData(sim$pixelCohortData)
 
-  ## stand/pixel-level relative abundances per species
-  plotData <- sim$standCohortData
+  ## pixel-level relative abundances per species
+  plotData <- sim$pixelCohortData
   plotData <- plotData[, .(rep, year, pixelIndex, speciesCode,
                            relativeAbund, relativeAbundObsrvd)]
   plotData <- melt.data.table(plotData,
@@ -815,18 +821,18 @@ standLevelPlotsEvent <- function(sim) {
     theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45) +
     facet_wrap(~ year) +
     labs(title = "Species relative abundances", fill = "",
-         x = "", y = expression(over("species B", "stand B")))
+         x = "", y = expression(over("species B", "pixel B")))
 
   if (!is.na(P(sim)$.plotInitialTime)) {
-    dev(mod$standWindow)
+    dev(mod$pixelWindow)
     clearPlot()
-    Plot(plot1, title = "Stand-level comparisons", new = TRUE)
+    Plot(plot1, title = "Pixel-level comparisons", new = TRUE)
   }
 
   if (P(sim)$.savePlots) {
     plot1 <- annotate_figure(plot1,
-                             top = text_grob("Stand-level comparisons", size = 16))
-    ggsave(filename = file.path(mod$plotPath, "StandComparisons_relB.png"),
+                             top = text_grob("Pixel-level comparisons", size = 16))
+    ggsave(filename = file.path(mod$plotPath, "PixelComparisons_relB.png"),
            plot = plot1, width = 12, height = 6, units = "in")
   }
 
@@ -839,8 +845,8 @@ deltaBComparisonsEvent <- function(sim) {
   year1 <- P(sim)$validationYears[1]
   year2 <- P(sim)$validationYears[2]
 
-  ## across landscape (calculate landscape-wide changes in total B per species/stand)
-  plotData <- sim$standCohortData[, list(B = sum(B),
+  ## across landscape (calculate landscape-wide changes in total B per species/pixel)
+  plotData <- sim$pixelCohortData[, list(B = sum(B),
                                          landscapeB = unique(landscapeB),
                                          BObsrvd = sum(BObsrvd),
                                          landscapeBObsrvd = unique(landscapeBObsrvd)),
@@ -877,37 +883,37 @@ deltaBComparisonsEvent <- function(sim) {
     labs(title = "Landscape-level", colour = "",
          x = "", y = expression(paste(Delta, "B")))
 
-  ## stand-level
-  plotData <- sim$standCohortData
+  ## pixel-level
+  plotData <- sim$pixelCohortData
   plotData <- plotData[, list(deltaB = as.numeric(B[which(year == year2)] - B[which(year == year1)]),
                               deltaBObsrvd = as.numeric(BObsrvd[which(year == year2)] - BObsrvd[which(year == year1)]),
-                              standDeltaB = as.numeric(standB[which(year == year2)] - standB[which(year == year1)]),
-                              standDeltaBObsrvd = as.numeric(standBObsrvd[which(year == year2)] - standBObsrvd[which(year == year1)])),
+                              pixelDeltaB = as.numeric(pixelB[which(year == year2)] - pixelB[which(year == year1)]),
+                              pixelDeltaBObsrvd = as.numeric(pixelBObsrvd[which(year == year2)] - pixelBObsrvd[which(year == year1)])),
                        by = .(rep, pixelIndex, speciesCode)]
 
-  ## melt spp and stand delta separately and rbind
+  ## melt spp and pixel delta separately and rbind
   cols <- c("rep", "pixelIndex", "speciesCode", "deltaB", "deltaBObsrvd")
   plotData1 <- melt.data.table(plotData[, ..cols], measure.vars = c("deltaB", "deltaBObsrvd"),
                                variable.name = "dataType", value.name = "deltaB")
-  cols <- c("rep", "pixelIndex", "speciesCode", "standDeltaB", "standDeltaBObsrvd")
-  plotData2 <- melt.data.table(plotData[, ..cols], measure.vars = c("standDeltaB", "standDeltaBObsrvd"),
+  cols <- c("rep", "pixelIndex", "speciesCode", "pixelDeltaB", "pixelDeltaBObsrvd")
+  plotData2 <- melt.data.table(plotData[, ..cols], measure.vars = c("pixelDeltaB", "pixelDeltaBObsrvd"),
                                variable.name = "dataType", value.name = "deltaB")
-  plotData2[dataType == "standDeltaB", dataType := "deltaB"]
-  plotData2[dataType == "standDeltaBObsrvd", dataType := "deltaBObsrvd"]
-  plotData2 <- unique(plotData2[, speciesCode := "stand"])
+  plotData2[dataType == "pixelDeltaB", dataType := "deltaB"]
+  plotData2[dataType == "pixelDeltaBObsrvd", dataType := "deltaBObsrvd"]
+  plotData2 <- unique(plotData2[, speciesCode := "pixel"])
 
   plotData <- rbind(plotData1, plotData2, use.names = TRUE)
   rm(plotData1, plotData2)
 
   plot2 <- ggplot(data = plotData,
                   aes(x = speciesCode, y = deltaB, fill = dataType)) +
-    geom_boxplot(aes(alpha = speciesCode == "stand")) +
-    scale_x_discrete(labels = c(sim$speciesLabels, "stand" = "Stand")) +
+    geom_boxplot(aes(alpha = speciesCode == "pixel")) +
+    scale_x_discrete(labels = c(sim$speciesLabels, "pixel" = "Pixel")) +
     scale_fill_discrete(labels = c("deltaB" = "simulated",
                                    "deltaBObsrvd" = "observed")) +
     scale_alpha_manual(values = c("TRUE" = 0.3, "FALSE" = 1.0), guide = FALSE) +
     theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
-    labs(title = "Stand-level", fill = "",
+    labs(title = "Pixel-level", fill = "",
          x = "", y = expression(paste(Delta, "B")))
 
   simObsDeltaBPlot <- ggarrange(plot1, plot2 + labs(y = " \n "),
@@ -919,7 +925,7 @@ deltaBComparisonsEvent <- function(sim) {
   }
 
   if (P(sim)$.savePlots) {
-    ggsave(filename = file.path(mod$plotPath, "LandscapeStandComparisons_deltaB.png"),
+    ggsave(filename = file.path(mod$plotPath, "LandscapePixelComparisons_deltaB.png"),
            plot = simObsDeltaBPlot, width = 10, height = 6, units = "in")
   }
   return(invisible(sim))
