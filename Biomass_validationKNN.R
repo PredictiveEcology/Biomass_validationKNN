@@ -52,13 +52,11 @@ defineModule(sim, list(
                                  "(i.e. only one run)")),
     defineParameter("validationYears", "integer", c(2001, 2011), NA, NA,
                     desc = "The simulation years for the validation. Defaults to 2001 and 2011. Must select two years"),
-    defineParameter(".plotInitialTime", "numeric", 0, NA, NA,
-                    desc = paste("Vector of length = 1, describing the simulation time at",
-                                 "which the first plot event should occur. Set to NA to turn plotting off.")),
-    defineParameter(".plotInterval", "numeric", NA, NA, NA,
-                    desc = "This describes the simulation time interval between plot events"),
+    defineParameter(".plots", "character", default = c("object", "png"),
+                    desc = paste("Passed to `types` in Plots (see ?Plots). There are a few plots that are made within this module, if set.",
+                                 "Note that plots (or their data) are saved in file.path(outputPath(sim), 'figures').",
+                                 "If NA plotting is off completely (this includes saving).")),
     defineParameter(".saveInitialTime", "numeric", NA, NA, NA, desc = "This describes the simulation time at which the first save event should occur"),
-    defineParameter(".savePlots", "logical", TRUE, NA, NA, desc = "Whether plots should be saved in file.path(outputPath(sim), 'Figs')"),
     defineParameter(".saveInterval", "numeric", NA, NA, NA, desc = "This describes the simulation time interval between save events"),
     defineParameter(".studyAreaName", "character", NA, NA, NA,
                     "Human-readable name for the study area used. If NA, a hash of studyArea will be used."),
@@ -210,7 +208,7 @@ doEvent.Biomass_validationKNN = function(sim, eventTime, eventType) {
     init = {
       sim <- Init(sim)
 
-      if (!is.na(P(sim)$.plotInitialTime)) {
+      if (anyPlotting(P(sim)$.plots)) {
         dev(height = 7, width = 12)   ## don't overwrite other plots, open new window
         mod$statsWindow <- dev.cur()
         if (P(sim)$obsDeltaAgeB) {
@@ -255,12 +253,9 @@ doEvent.Biomass_validationKNN = function(sim, eventTime, eventType) {
 ## event functions
 Init <- function(sim) {
   ## MAKE PLOT SAVING DIRECTORY IF NEEDED
-  if (P(sim)$.savePlots) {
-    plotPath <- file.path(outputPath(sim), "Figs")
-    if (!dir.exists(plotPath))
-      dir.create(plotPath, recursive = TRUE)
-    mod$plotPath <- plotPath
-  }
+  mod$plotPath <- file.path(outputPath(sim), "figures")
+  if (!dir.exists(mod$plotPath))
+    dir.create(mod$plotPath, recursive = TRUE)
 
   ## make internal module reps variable
   mod$validationReps <- if (!any(is.na(P(sim)$validationReps)))
@@ -506,7 +501,7 @@ Init <- function(sim) {
   pixelCohortData <- pixelCohortData[, ..cols]
 
   ## assert and export to sim -- vegType cols can have NAs
-  assertpixelCohortData(pixelCohortData)
+  assertStandCohortData(pixelCohortData)
   sim$pixelCohortData <- pixelCohortData
 
   ## make labels for plots
@@ -657,54 +652,50 @@ obsrvdDeltaMapsEvent <- function(sim) {
          title = bquote(atop("observed" ~ Delta ~ "B - adjusted", "in pixels that aged" ~ .(yearGap)))) +
     theme_pubr(base_size = 12, margin = FALSE)
 
-  if (!is.na(P(sim)$.plotInitialTime)) {
-    dev(mod$mapWindow)
-    clearPlot()
-    Plot(pixelDeltaBObsrvdRas, pixelDeltaAgeObsrvdRas, new = TRUE,
-         title = c("pixel delta-B", "pixel delta-Age"))
-    Plot(pixelDeltaBObsrvdAdj, pixelDeltaAgeObsrvdAdj, new = TRUE,
-         title = c("pixel delta-B - adjusted", "pixel delta-Age - adjusted"))
+  ## stack rasters for plotting
+  plotStack <- stack(pixelDeltaBObsrvdRas, pixelDeltaAgeObsrvdRas,
+                     pixelDeltaBObsrvdAdj, pixelDeltaAgeObsrvdAdj)
+  names(plotStack) <- c("pixel_deltaB", "pixel_deltaAge",
+                        "pixel_deltaB_adjusted", "pixel_deltaAge_adjusted")
 
-    dev(mod$statsWindow)
-    clearPlot()
-    plotDeltaStats <- ggarrange(plot4, plot5, plot9, plot10)
-    Plot(plotDeltaStats, new = TRUE, title = "") ## title = FALSE not working
-  }
-
-  if (P(sim)$.savePlots) {
-    ggsave(filename = file.path(mod$plotPath, "observedDeltaBDeltaAge_lm.png"),
-           plot = plot4, width = 7, height = 5, units = "in")
-
-    ggsave(filename = file.path(mod$plotPath, "observedDeltaB_yearGap.png"),
-           plot = plot5, width = 5, height = 4, units = "in")
-
-    ggsave(filename = file.path(mod$plotPath, "observedDeltaBDeltaAge_lmADJ.png"),
-           plot = plot9, width = 7, height = 5, units = "in")
-
-    ggsave(filename = file.path(mod$plotPath, "observedDeltaB_yearGapADJ.png"),
-           plot = plot10, width = 5, height = 4, units = "in")
-
-    if (!is.na(P(sim)$.plotInitialTime)) {
-      dev.set(mod$mapWindow)
-      dev.copy(pdf, file = file.path(mod$plotPath, 'deltaB_Age_Maps.pdf'))
-      dev.off()
-    } else {
-      pdf(file = file.path(mod$plotPath, 'deltaB_Age_Maps.pdf'))
-      layout(matrix(1:4, ncol=2))
-      raster::plot(pixelDeltaBObsrvdRas, main = "pixel delta-B")
-      raster::plot(pixelDeltaAgeObsrvdRas, main = "pixel delta-Age")
-      raster::plot(pixelDeltaBObsrvdAdj, main = "pixel delta-B - adjusted")
-      raster::plot(pixelDeltaAgeObsrvdAdj, main = "pixel delta-Age - adjusted")
-      dev.off()
+  if (anyPlotting(P(sim)$.plots)) {
+    if (any(grepl("screen", P(sim)$.plots))) {
+      dev(mod$mapWindow)
+      clearPlot()
     }
+    Plots(plotStack, new = TRUE,
+          filename = "deltaB_Age_Maps", path = file.path(mod$plotPath),
+          deviceArgs = llist(width = 7, height = 7, units = "in", res = 300))
 
+    if (any(grepl("screen", P(sim)$.plots))) {
+      dev(mod$statsWindow)
+      clearPlot()
+    }
+    plotDeltaStats <- ggarrange(plot4, plot5, plot9, plot10)
+    Plots(plotDeltaStats, type = "screen", new = TRUE, title = "Delta_stats") ## save as separate graphs bellow
+
+    noScreenTypes <- setdiff(P(sim)$.plots, "screen")
+    if (length(noScreenTypes)) {
+      Plots(plot4, types = noScreenTypes, filename = "observedDeltaBDeltaAge_lm",
+            path = file.path(mod$plotPath),
+            deviceArgs = list(width = 7, height = 5, units = "in", res = 300))
+      Plots(plot5, types = noScreenTypes, filename = "observedDeltaB_yearGap",
+            path = file.path(mod$plotPath),
+            deviceArgs = list(width = 5, height = 4, units = "in", res = 300))
+      Plots(plot9, types = noScreenTypes, filename = "observedDeltaBDeltaAge_lmADJ",
+            path = file.path(mod$plotPath),
+            deviceArgs = list(width = 7, height = 5, units = "in", res = 300))
+      Plots(plot10, types = noScreenTypes, filename = "observedDeltaB_yearGapADJ",
+            path = file.path(mod$plotPath),
+            deviceArgs = list(width = 5, height = 4, units = "in", res = 300))
+    }
   }
 
   return(invisible(sim))
 }
 
 landscapeWidePlotsEvent <- function(sim) {
-  assertpixelCohortData(sim$pixelCohortData)
+  assertStandCohortData(sim$pixelCohortData)
 
   plotData <- sim$pixelCohortData
   plotData <- plotData[, list(landRelativeAbund = sum(B)/unique(landscapeB),
@@ -746,7 +737,7 @@ landscapeWidePlotsEvent <- function(sim) {
     theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45) +
     theme(legend.position = "right") +
     facet_wrap(~ year) +
-    labs(title = "Species presences", x = "", y = "no. pixels",
+    labs(title = "Species presences", x = "", y = "Count",
          colour = "", fill = "")
 
   ## no. pixels with a certain dominant species
@@ -777,26 +768,23 @@ landscapeWidePlotsEvent <- function(sim) {
     theme(legend.position = "right") +
     facet_wrap(~ year) +
     labs(title = "Dominant species' presences",
-         x = "", y = "no. pixels", fill = "", colour = "")
+         x = "", y = "Count", fill = "", colour = "")
 
   maxPixels <- sum(!is.na(getValues(sim$biomassMap)))
   plotLandscapeComp <- ggarrange(plot1 + scale_y_continuous(limits = c(0,1)),
                                  plot2 + scale_y_continuous(limits = c(0, maxPixels)),
                                  plot3 + scale_y_continuous(limits = c(0, maxPixels)),
-                                 common.legend = TRUE, legend = "bottom",
+                                 common.legend = TRUE, legend = "bottom", align = "v",
                                  nrow = 2, ncol = 2)
 
-  if (!is.na(P(sim)$.plotInitialTime)) {
+  if (anyPlotting(P(sim)$.plots)) {
     dev(mod$landscapeWindow)
     clearPlot()
-    Plot(plotLandscapeComp, title = "Landscape-averaged comparisons", new = TRUE)
-  }
-
-  if (P(sim)$.savePlots) {
-    plotLandscapeComp2 <- annotate_figure(plotLandscapeComp,
-                                          top = text_grob("Landscape-averaged comparisons", size = 16))
-    ggsave(filename = file.path(mod$plotPath, "LandscapeComparisons_relB_PresAbs.png"),
-           plot = plotLandscapeComp2, width = 12, height = 7, units = "in")
+    Plots(plotLandscapeComp,
+          title = "Landscape_averaged_comparisons", new = TRUE,
+          filename = "LandscapeComparisons_relB_PresAbs",
+          path = file.path(mod$plotPath),
+          deviceArgs = list(width = 12, height = 7, units = "in", res = 300))
   }
 
   return(invisible(sim))
@@ -804,7 +792,7 @@ landscapeWidePlotsEvent <- function(sim) {
 
 pixelLevelPlotsEvent <- function(sim) {
   ## PIXEL-LEVEL COMPARISONS IN A GIVEN YEAR --------------------
-  assertpixelCohortData(sim$pixelCohortData)
+  assertStandCohortData(sim$pixelCohortData)
 
   ## pixel-level relative abundances per species
   plotData <- sim$pixelCohortData
@@ -818,22 +806,20 @@ pixelLevelPlotsEvent <- function(sim) {
     scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
     scale_fill_discrete(labels = c("relativeAbund" = "simulated",
                                    "relativeAbundObsrvd" = "observed")) +
-    theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45) +
+    theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
     facet_wrap(~ year) +
     labs(title = "Species relative abundances", fill = "",
          x = "", y = expression(over("species B", "pixel B")))
 
-  if (!is.na(P(sim)$.plotInitialTime)) {
+
+  if (anyPlotting(P(sim)$.plots)) {
     dev(mod$pixelWindow)
     clearPlot()
-    Plot(plot1, title = "Pixel-level comparisons", new = TRUE)
-  }
-
-  if (P(sim)$.savePlots) {
-    plot1 <- annotate_figure(plot1,
-                             top = text_grob("Pixel-level comparisons", size = 16))
-    ggsave(filename = file.path(mod$plotPath, "PixelComparisons_relB.png"),
-           plot = plot1, width = 12, height = 6, units = "in")
+    Plots(plot1,
+          title = "Pixel_level_comparisons", new = TRUE,
+          filename = "PixelComparisons_relB",
+          path = file.path(mod$plotPath),
+          deviceArgs = list(width = 10, height = 5, units = "in", res = 300))
   }
 
   return(invisible(sim))
@@ -908,7 +894,7 @@ deltaBComparisonsEvent <- function(sim) {
   plot2 <- ggplot(data = plotData,
                   aes(x = speciesCode, y = deltaB, fill = dataType)) +
     geom_boxplot(aes(alpha = speciesCode == "pixel")) +
-    scale_x_discrete(labels = c(sim$speciesLabels, "pixel" = "Pixel")) +
+    scale_x_discrete(labels = c(sim$speciesLabels, "pixel" = "pixel")) +
     scale_fill_discrete(labels = c("deltaB" = "simulated",
                                    "deltaBObsrvd" = "observed")) +
     scale_alpha_manual(values = c("TRUE" = 0.3, "FALSE" = 1.0), guide = FALSE) +
@@ -919,15 +905,15 @@ deltaBComparisonsEvent <- function(sim) {
   simObsDeltaBPlot <- ggarrange(plot1, plot2 + labs(y = " \n "),
                                 ncol = 2)
 
-  if (!is.na(P(sim)$.plotInitialTime)) {
+  if (anyPlotting(P(sim)$.plots)) {
     dev.set(mod$statsWindow)
-    Plot(simObsDeltaBPlot, title = "", new = TRUE)
+    Plots(simObsDeltaBPlot,
+          title = "observedDelta", new = TRUE,
+          filename = "LandscapePixelComparisons_deltaB",
+          path = file.path(mod$plotPath),
+          deviceArgs = list(width = 10, height = 5, units = "in", res = 300))
   }
 
-  if (P(sim)$.savePlots) {
-    ggsave(filename = file.path(mod$plotPath, "LandscapePixelComparisons_deltaB.png"),
-           plot = simObsDeltaBPlot, width = 10, height = 6, units = "in")
-  }
   return(invisible(sim))
 }
 
