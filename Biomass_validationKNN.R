@@ -665,7 +665,7 @@ obsrvdDeltaMapsEvent <- function(sim) {
     }
     Plots(plotStack, new = TRUE,
           filename = "deltaB_Age_Maps", path = file.path(mod$plotPath),
-          deviceArgs = llist(width = 7, height = 7, units = "in", res = 300))
+          deviceArgs = list(width = 7, height = 7, units = "in", res = 300))
 
     if (any(grepl("screen", P(sim)$.plots))) {
       dev(mod$statsWindow)
