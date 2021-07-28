@@ -957,22 +957,22 @@ deltaBComparisonsEvent <- function(sim) {
 
   if (!suppliedElsewhere("rawBiomassMapStart", sim) || needRTM) {
     rawBiomassMapFilename <- "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
-    httr::with_config(config = httr::config(ssl_verifypeer = 0L), { ## TODO: re-enable verify
-      #necessary for KNN
-      sim$rawBiomassMapStart <- Cache(prepInputs,
-                                      url = extractURL("rawBiomassMapStart"),
-                                      destinationPath = dPath,
-                                      studyArea = sim$studyArea,   ## Ceres: makePixel table needs same no. pixels for this, RTM rawBiomassMapStart, LCC.. etc
-                                      rasterToMatch = if (!needRTM) sim$rasterToMatch else NULL,
-                                      maskWithRTM = if (!needRTM) TRUE else FALSE,
-                                      useSAcrs = FALSE,     ## never use SA CRS
-                                      method = "bilinear",
-                                      datatype = "INT2U",
-                                      filename2 = .suffix("rawBiomassMapStart.tif", paste0("_", P(sim)$.studyAreaName)),
-                                      overwrite = TRUE,
-                                      userTags = c(cacheTags, "rawBiomassMapStart"),
-                                      omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
-    })
+    # httr::with_config(config = httr::config(ssl_verifypeer = 0L), { ## TODO: re-enable verify
+    #necessary for KNN
+    sim$rawBiomassMapStart <- Cache(prepInputs,
+                                    url = extractURL("rawBiomassMapStart"),
+                                    destinationPath = dPath,
+                                    studyArea = sim$studyArea,   ## Ceres: makePixel table needs same no. pixels for this, RTM rawBiomassMapStart, LCC.. etc
+                                    rasterToMatch = if (!needRTM) sim$rasterToMatch else NULL,
+                                    maskWithRTM = if (!needRTM) TRUE else FALSE,
+                                    useSAcrs = FALSE,     ## never use SA CRS
+                                    method = "bilinear",
+                                    datatype = "INT2U",
+                                    filename2 = .suffix("rawBiomassMapStart.tif", paste0("_", P(sim)$.studyAreaName)),
+                                    overwrite = TRUE,
+                                    userTags = c(cacheTags, "rawBiomassMapStart"),
+                                    omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
+    # })
 
     ## if using custom raster resolution, need to allocate biomass proportionally to each pixel
     ## if no rawBiomassMapStart/RTM/RTMLarge were suppliedElsewhere, the "original" pixel size respects
@@ -1225,23 +1225,23 @@ deltaBComparisonsEvent <- function(sim) {
   ## Biomass layers ----------------------------------------------------
   if (!suppliedElsewhere("rawBiomassMapEnd", sim)) {
     rawBiomassValFileName <- "NFI_MODIS250m_2011_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
-    httr::with_config(config = httr::config(ssl_verifypeer = 0L), { ## TODO: re-enable verify
-      #necessary for KNN
-      sim$rawBiomassMapEnd <- Cache(prepInputs,
-                                    targetFile = rawBiomassValFileName,
-                                    url = extractURL("rawBiomassMapEnd"),
-                                    destinationPath = asPath(dPath),
-                                    fun = "raster::raster",
-                                    studyArea = sim$studyArea,
-                                    rasterToMatch = sim$rasterToMatch,
-                                    useSAcrs = FALSE,
-                                    method = "bilinear",
-                                    datatype = "INT2U",
-                                    filename2 = .suffix("rawBiomassMapEnd.tif", paste0("_", P(sim)$.studyAreaName)),
-                                    overwrite = TRUE,
-                                    userTags = c(cacheTags, "rawBiomassMapEnd"),
-                                    omitArgs = c("userTags"))
-    })
+    # httr::with_config(config = httr::config(ssl_verifypeer = 0L), { ## TODO: re-enable verify
+    #necessary for KNN
+    sim$rawBiomassMapEnd <- Cache(prepInputs,
+                                  targetFile = rawBiomassValFileName,
+                                  url = extractURL("rawBiomassMapEnd"),
+                                  destinationPath = asPath(dPath),
+                                  fun = "raster::raster",
+                                  studyArea = sim$studyArea,
+                                  rasterToMatch = sim$rasterToMatch,
+                                  useSAcrs = FALSE,
+                                  method = "bilinear",
+                                  datatype = "INT2U",
+                                  filename2 = .suffix("rawBiomassMapEnd.tif", paste0("_", P(sim)$.studyAreaName)),
+                                  overwrite = TRUE,
+                                  userTags = c(cacheTags, "rawBiomassMapEnd"),
+                                  omitArgs = c("userTags"))
+    # })
   }
 
   if (!suppliedElsewhere("biomassMap", sim)) {
@@ -1250,7 +1250,7 @@ deltaBComparisonsEvent <- function(sim) {
 
   ## Age layers ----------------------------------------------------
   if (!suppliedElsewhere("standAgeMapStart", sim)) {
-    httr::with_config(config = httr::config(ssl_verifypeer = 0L), {
+    # httr::with_config(config = httr::config(ssl_verifypeer = 0L), {
       sim$standAgeMapStart <- Cache(LandR::prepInputsStandAgeMap,
                                     destinationPath = dPath,
                                     ageURL = extractURL("standAgeMapStart"),
@@ -1264,28 +1264,28 @@ deltaBComparisonsEvent <- function(sim) {
                                     userTags = c("prepInputsStandAge_rtm", currentModule(sim), cacheTags),
                                     omitArgs = c("destinationPath", "targetFile", "overwrite",
                                                  "alsoExtract", "userTags"))
-    })
+    # })
   }
 
   if (!suppliedElsewhere("standAgeMapEnd", sim)) {
     standAgeValFileName <- "NFI_MODIS250m_2011_kNN_Structure_Stand_Age_v1.tif"
-    httr::with_config(config = httr::config(ssl_verifypeer = 0L), { ## TODO: re-enable verify
-      #necessary for KNN
-      sim$standAgeMapEnd <- Cache(prepInputs,
-                                  targetFile = standAgeValFileName,
-                                  url = extractURL("standAgeMapEnd"),
-                                  destinationPath = asPath(dPath),
-                                  fun = "raster::raster",
-                                  studyArea = sim$studyArea,
-                                  rasterToMatch = sim$rasterToMatch,
-                                  useSAcrs = FALSE,
-                                  method = "bilinear",
-                                  datatype = "INT2U",
-                                  filename2 = .suffix("standAgeMapEnd.tif", paste0("_", P(sim)$.studyAreaName)),
-                                  overwrite = TRUE,
-                                  userTags = c(cacheTags, "standAgeMapEnd"),
-                                  omitArgs = c("userTags"))
-    })
+    # httr::with_config(config = httr::config(ssl_verifypeer = 0L), { ## TODO: re-enable verify
+    #necessary for KNN
+    sim$standAgeMapEnd <- Cache(prepInputs,
+                                targetFile = standAgeValFileName,
+                                url = extractURL("standAgeMapEnd"),
+                                destinationPath = asPath(dPath),
+                                fun = "raster::raster",
+                                studyArea = sim$studyArea,
+                                rasterToMatch = sim$rasterToMatch,
+                                useSAcrs = FALSE,
+                                method = "bilinear",
+                                datatype = "INT2U",
+                                filename2 = .suffix("standAgeMapEnd.tif", paste0("_", P(sim)$.studyAreaName)),
+                                overwrite = TRUE,
+                                userTags = c(cacheTags, "standAgeMapEnd"),
+                                omitArgs = c("userTags"))
+    # })
   }
 
   ## Cohort data -------------------------------------------
