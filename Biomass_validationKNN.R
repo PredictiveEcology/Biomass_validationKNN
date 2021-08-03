@@ -52,6 +52,8 @@ defineModule(sim, list(
                                  "(i.e. only one run)")),
     defineParameter("validationYears", "integer", c(2001, 2011), NA, NA,
                     desc = "The simulation years for the validation. Defaults to 2001 and 2011. Must select two years"),
+    defineParameter(".plotInitialTime", "integer", 1L,
+                    desc = paste("If NA plotting is off completely (this includes saving).")),
     defineParameter(".plots", "character", default = c("object", "png"),
                     desc = paste("Passed to `types` in Plots (see ?Plots). There are a few plots that are made within this module, if set.",
                                  "Note that plots (or their data) are saved in file.path(outputPath(sim), 'figures').",
@@ -231,14 +233,15 @@ doEvent.Biomass_validationKNN = function(sim, eventTime, eventType) {
     init = {
       sim <- Init(sim)
 
-      if (anyPlotting(P(sim)$.plots)) {
+      if (any(grepl("screen", P(sim)$.plots))) {
         dev(height = 7, width = 12)   ## don't overwrite other plots, open new window
         mod$statsWindow <- dev.cur()
         if (P(sim)$obsDeltaAgeB) {
           mod$mapWindow <- mod$statsWindow + 1 ## this window should to be made first if need be
           mod$landscapeWindow <- mod$mapWindow + 1
-        } else
+        } else {
           mod$landscapeWindow <- mod$statsWindow + 1
+        }
 
         mod$pixelWindow <- mod$landscapeWindow + 1
       }
@@ -914,14 +917,14 @@ obsrvdDeltaMapsEvent <- function(sim) {
                   aes(x = pixelDeltaAgeObsrvd, y = pixelDeltaBObsrvd)) +
     geom_point() +
     stat_smooth(method = "lm") +
-    theme_pubr(base_size = 12, margin = FALSE) +
-    labs(y = expression(paste("observed ", Delta, "B"))) +
-    theme(axis.title.x = element_blank(), axis.text.x = element_blank())
+    plotTheme(base_size = 12, margin = FALSE, majorYlines = FALSE) +
+    theme(axis.title.x = element_blank(), axis.text.x = element_blank()) +
+    labs(y = expression(paste("observed ", Delta, "B")))
 
   plot2 <- ggplot(pixelDeltaObsrvdData,
                   aes(y = pixelDeltaBObsrvd)) +
     geom_boxplot() +
-    theme_pubr(base_size = 12, margin = FALSE) +
+    plotTheme(base_size = 12, margin = FALSE, majorYlines = FALSE) +
     theme(axis.title.y = element_blank(), axis.text = element_blank())
 
   plot3 <- ggplot(pixelDeltaObsrvdData,
@@ -929,7 +932,7 @@ obsrvdDeltaMapsEvent <- function(sim) {
     geom_boxplot() +
     coord_flip() +
     labs(y = expression(paste("observed ", Delta, "age"))) +
-    theme_pubr(base_size = 12, margin = FALSE) +
+    plotTheme(base_size = 12, margin = FALSE, majorYlines = FALSE) +
     theme(axis.text.y = element_blank())
 
   plot4 <- ggarrange(plot1, plot2,  plot3, nrow = 2, ncol = 2, align = "hv",
@@ -945,7 +948,7 @@ obsrvdDeltaMapsEvent <- function(sim) {
     coord_flip() +
     labs(y = expression(paste("observed ", Delta, "B")),
          title = bquote(atop("observed" ~ Delta ~ "B", "in pixels that aged" ~ .(yearGap)))) +
-    theme_pubr(base_size = 12, margin = FALSE)
+    plotTheme(base_size = 12, margin = FALSE, majorYlines = FALSE)
 
   ## OBSERVED CHANGES IN PIXEL B AND AGE - AFTER ADJUSTMENTS -------
   ## by adjustments we mean, the data cleanup that we replicate from Biomass_borealDataPrep
@@ -968,14 +971,14 @@ obsrvdDeltaMapsEvent <- function(sim) {
                   aes(x = pixelDeltaAgeObsrvd, y = pixelDeltaBObsrvd)) +
     geom_point() +
     stat_smooth(method = "lm") +
-    theme_pubr(base_size = 12, margin = FALSE) +
-    labs(y = expression(paste("observed ", Delta, "B", " - adjusted"))) +
-    theme(axis.title.x = element_blank(), axis.text.x = element_blank())
+    plotTheme(base_size = 12, margin = FALSE, majorYlines = FALSE) +
+    theme(axis.title.x = element_blank(), axis.text.x = element_blank()) +
+    labs(y = expression(paste("observed ", Delta, "B", " - adjusted")))
 
   plot7 <- ggplot(pixelDeltaObsrvdData,
                   aes(y = pixelDeltaBObsrvd)) +
     geom_boxplot() +
-    theme_pubr(base_size = 12, margin = FALSE) +
+    plotTheme(base_size = 12, margin = FALSE, majorYlines = FALSE) +
     theme(axis.title.y = element_blank(), axis.text = element_blank())
 
   plot8 <- ggplot(pixelDeltaObsrvdData,
@@ -983,7 +986,7 @@ obsrvdDeltaMapsEvent <- function(sim) {
     geom_boxplot() +
     coord_flip() +
     labs(y = expression(paste("observed ", Delta, "age", " - adjusted"))) +
-    theme_pubr(base_size = 12, margin = FALSE) +
+    plotTheme(base_size = 12, margin = FALSE, majorYlines = FALSE) +
     theme(axis.text.y = element_blank())
 
   plot9 <- ggarrange(plot6, plot7,  plot8, nrow = 2, ncol = 2, align = "hv",
@@ -994,9 +997,9 @@ obsrvdDeltaMapsEvent <- function(sim) {
                    aes(y = pixelDeltaBObsrvd)) +
     geom_boxplot() +
     coord_flip() +
+    plotTheme(base_size = 12, margin = FALSE, majorYlines = FALSE) +
     labs(y = expression(paste("observed ", Delta, "B", " - adjusted")),
-         title = bquote(atop("observed" ~ Delta ~ "B - adjusted", "in pixels that aged" ~ .(yearGap)))) +
-    theme_pubr(base_size = 12, margin = FALSE)
+         title = bquote(atop("observed" ~ Delta ~ "B - adjusted", "in pixels that aged" ~ .(yearGap))))
 
   ## stack rasters for plotting
   plotStack <- stack(pixelDeltaBObsrvdRas, pixelDeltaAgeObsrvdRas,
@@ -1016,9 +1019,9 @@ obsrvdDeltaMapsEvent <- function(sim) {
     if (any(grepl("screen", P(sim)$.plots))) {
       dev(mod$statsWindow)
       clearPlot()
+      plotDeltaStats <- ggarrange(plot4, plot5, plot9, plot10)
+      Plots(plotDeltaStats, types = "screen", new = TRUE, title = "Delta_stats") ## save as separate graphs bellow
     }
-    plotDeltaStats <- ggarrange(plot4, plot5, plot9, plot10)
-    Plots(plotDeltaStats, type = "screen", new = TRUE, title = "Delta_stats") ## save as separate graphs bellow
 
     noScreenTypes <- setdiff(P(sim)$.plots, "screen")
     if (length(noScreenTypes)) {
@@ -1047,12 +1050,12 @@ landscapeWidePlotsEvent <- function(sim) {
                    aes(x = speciesCode, y = relAbund)) +
     stat_summary(fun = "mean", geom = "bar") +
     stat_summary(fun.data = "mean_sd", geom = "linerange", size = 1) +
-    stat_summary(aes(y = landRelativeAbundObsrvd, colour = "observed"),
+    stat_summary(data = na.omit(sim$landscapeVars[dataType == "observed", ..cols]),
+                 aes(x = speciesCode, y = relAbund, colour = "observed"),
                  fun = "mean", geom = "point", size = 2) +
-    scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
+    scale_x_discrete(labels = sim$speciesLabels) +
     scale_color_manual(values = c("observed" = "red3")) +
-    theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45) +
-    theme(legend.position = "right") +
+    plotTheme(base_size = 12, margin = FALSE, legend = "bottom", x.text.angle = 45) +
     facet_wrap(~ year) +
     labs(title = "Species relative abundances",
          x = "", y = expression(over("species B", "total B")),
@@ -1067,10 +1070,9 @@ landscapeWidePlotsEvent <- function(sim) {
     stat_summary(data = na.omit(sim$landscapeVars[dataType == "observed", ..cols]),
                  aes(x = speciesCode, y = count, colour = "observed"),
                  fun = "mean", geom = "point", size = 2) +
-    scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
+    scale_x_discrete(labels = sim$speciesLabels) +
     scale_color_manual(values = c("observed" = "red3")) +
-    theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45) +
-    theme(legend.position = "right") +
+    plotTheme(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
     facet_wrap(~ year) +
     labs(title = "Species presences", x = "", y = "Count",
          colour = "", fill = "")
@@ -1085,27 +1087,38 @@ landscapeWidePlotsEvent <- function(sim) {
                aes(x = speciesCode, y = countDom, colour = "observed"), size = 2) +
     scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
     scale_color_manual(values = c("observed" = "red3")) +
-    theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45) +
-    theme(legend.position = "right") +
+    plotTheme(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
     facet_wrap(~ year) +
     labs(title = "Dominant species' presences",
          x = "", y = "Count", fill = "", colour = "")
 
   maxPixels <- sum(!is.na(getValues(sim$biomassMap)))
-  plotLandscapeComp <- ggarrange(plot1 + scale_y_continuous(limits = c(0,1)),
-                                 plot2 + scale_y_continuous(limits = c(0, maxPixels)),
-                                 plot3 + scale_y_continuous(limits = c(0, maxPixels)),
-                                 common.legend = TRUE, legend = "bottom", align = "v",
+  plotLandscapeComp <- ggarrange(plot11 + scale_y_continuous(limits = c(0,1)),
+                                 plot12 + scale_y_continuous(limits = c(0, maxPixels)),
+                                 plot13 + scale_y_continuous(limits = c(0, maxPixels)),
+                                 common.legend = TRUE, legend = "bottom",
                                  nrow = 2, ncol = 2)
 
   if (anyPlotting(P(sim)$.plots)) {
-    dev(mod$landscapeWindow)
-    clearPlot()
-    Plots(plotLandscapeComp,
-          title = "Landscape_averaged_comparisons", new = TRUE,
-          filename = "LandscapeComparisons_relB_PresAbs",
-          path = file.path(mod$plotPath),
-          deviceArgs = list(width = 12, height = 7, units = "in", res = 300))
+    if (any(grepl("screen", P(sim)$.plots))) {
+      dev(mod$landscapeWindow)
+      clearPlot()
+      Plots(plotLandscapeComp, types = "screen",
+            title = "Landscape_averaged_comparisons", new = TRUE)
+    }
+
+    noScreenTypes <- setdiff(P(sim)$.plots, "screen")
+    if (length(noScreenTypes)) {
+      Plots(plot11, types = noScreenTypes, filename = "LandscapeComparisons_relB",
+            path = file.path(mod$plotPath),
+            deviceArgs = list(width = 7, height = 5, units = "in", res = 300))
+      Plots(plot12, types = noScreenTypes, filename = "LandscapeComparisons_PresAbs",
+            path = file.path(mod$plotPath),
+            deviceArgs = list(width = 7, height = 5, units = "in", res = 300))
+      Plots(plot13, types = noScreenTypes, filename = "LandscapeComparisons_Dom",
+            path = file.path(mod$plotPath),
+            deviceArgs = list(width = 7, height = 5, units = "in", res = 300))
+    }
   }
 
   return(invisible(sim))
@@ -1118,18 +1131,18 @@ pixelLevelPlotsEvent <- function(sim) {
                    aes(x = speciesCode, y = relAbund, fill = dataType )) +
     geom_boxplot() +
     scale_x_discrete(labels = sim$speciesLabels) +
-    scale_fill_discrete(labels = c("relativeAbund" = "simulated",
-                                   "relativeAbundObsrvd" = "observed")) +
-    theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
+    plotTheme(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
     facet_wrap(~ year) +
     labs(title = "Species relative abundances", fill = "",
          x = "", y = expression(over("species B", "pixel B")))
 
 
   if (anyPlotting(P(sim)$.plots)) {
-    dev(mod$pixelWindow)
-    clearPlot()
-    Plots(plot1,
+    if (any(grepl("screen", P(sim)$.plots))) {
+      dev(mod$pixelWindow)
+      clearPlot()
+    }
+    Plots(plot14,
           title = "Pixel_level_comparisons", new = TRUE,
           filename = "PixelComparisons_relB",
           path = file.path(mod$plotPath),
@@ -1162,24 +1175,33 @@ deltaBComparisonsEvent <- function(sim) {
     geom_boxplot(aes(alpha = speciesCode == "pixel")) +
     scale_x_discrete(labels = c(sim$speciesLabels, "pixel" = "pixel")) +
     scale_alpha_manual(values = c("TRUE" = 0.3, "FALSE" = 1.0), guide = "none") +
-                                   "deltaBObsrvd" = "observed")) +
-    scale_alpha_manual(values = c("TRUE" = 0.3, "FALSE" = 1.0), guide = FALSE) +
-    theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
+    plotTheme(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
     labs(title = "Pixel-level", fill = "",
          x = "", y = expression(paste(Delta, "B")))
 
-  simObsDeltaBPlot <- ggarrange(plot1, plot2 + labs(y = " \n "),
+  simObsDeltaBPlot <- ggarrange(plot15, plot16 + labs(y = " \n "),
                                 ncol = 2)
 
   if (anyPlotting(P(sim)$.plots)) {
-    dev.set(mod$statsWindow)
-    Plots(simObsDeltaBPlot,
-          title = "observedDelta", new = TRUE,
-          filename = "LandscapePixelComparisons_deltaB",
-          path = file.path(mod$plotPath),
-          deviceArgs = list(width = 10, height = 5, units = "in", res = 300))
-  }
+    if (any(grepl("screen", P(sim)$.plots))) {
+      dev.set(mod$statsWindow)
+      Plots(simObsDeltaBPlot, types = "screen", title = "observedDelta", new = TRUE)
+    }
 
+    noScreenTypes <- setdiff(P(sim)$.plots, "screen")
+    if (length(noScreenTypes)) {
+      Plots(plot15, types = noScreenTypes,
+            title = "observedDeltaLandscape", new = TRUE,
+            filename = "LandscapeComparisons_deltaB",
+            path = file.path(mod$plotPath),
+            deviceArgs = list(width = 5, height = 5, units = "in", res = 300))
+      Plots(plot16, types = noScreenTypes,
+            title = "observedDeltaPixel", new = TRUE,
+            filename = "PixelComparisons_deltaB",
+            path = file.path(mod$plotPath),
+            deviceArgs = list(width = 5, height = 5, units = "in", res = 300))
+    }
+  }
   return(invisible(sim))
 }
 
@@ -1517,19 +1539,19 @@ deltaBComparisonsEvent <- function(sim) {
   ## Age layers ----------------------------------------------------
   if (!suppliedElsewhere("standAgeMapStart", sim)) {
     # httr::with_config(config = httr::config(ssl_verifypeer = 0L), {
-      sim$standAgeMapStart <- Cache(LandR::prepInputsStandAgeMap,
-                                    destinationPath = dPath,
-                                    ageURL = extractURL("standAgeMapStart"),
-                                    studyArea = raster::aggregate(sim$studyArea),
-                                    rasterToMatch = sim$rasterToMatch,
-                                    filename2 = .suffix("standAgeMapStart.tif", paste0("_", P(sim)$.studyAreaName)),
-                                    overwrite = TRUE,
-                                    fireURL = extractURL("fireURL"),
-                                    fireField = "YEAR",
-                                    startTime = start(sim),
-                                    userTags = c("prepInputsStandAge_rtm", currentModule(sim), cacheTags),
-                                    omitArgs = c("destinationPath", "targetFile", "overwrite",
-                                                 "alsoExtract", "userTags"))
+    sim$standAgeMapStart <- Cache(LandR::prepInputsStandAgeMap,
+                                  destinationPath = dPath,
+                                  ageURL = extractURL("standAgeMapStart"),
+                                  studyArea = raster::aggregate(sim$studyArea),
+                                  rasterToMatch = sim$rasterToMatch,
+                                  filename2 = .suffix("standAgeMapStart.tif", paste0("_", P(sim)$.studyAreaName)),
+                                  overwrite = TRUE,
+                                  fireURL = extractURL("fireURL"),
+                                  fireField = "YEAR",
+                                  startTime = start(sim),
+                                  userTags = c("prepInputsStandAge_rtm", currentModule(sim), cacheTags),
+                                  omitArgs = c("destinationPath", "targetFile", "overwrite",
+                                               "alsoExtract", "userTags"))
     # })
   }
 
