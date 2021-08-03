@@ -9,15 +9,15 @@ defineModule(sim, list(
                "forest dynamics", "forest succession", "data", "prediction"),
   authors = c(person("Ceres", "Barros", email = "cbarros@mail.ubc.ca", role = c("aut", "cre"))),
   childModules = character(0),
-  version = list(Biomass_validationKNN = "0.0.1"),
+  version = list(Biomass_validationKNN = "0.0.2"),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("README.txt", "Biomass_validationKNN.Rmd"),
-  reqdPkgs = list("crayon", "raster", "achubaty/amc",
+  reqdPkgs = list("crayon", "raster", "achubaty/amc", "mclust",
                   "sf", "XML", "RCurl", "ggplot2", "ggpubr",
-                  "PredictiveEcology/LandR@modelBiomass (>=0.0.12.9003)",
+                  "PredictiveEcology/LandR@modelBiomass (>=1.0.5)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development (>= 1.2.7.9005)",
                   "PredictiveEcology/SpaDES.core@development",
@@ -168,6 +168,36 @@ defineModule(sim, list(
                               "Defaults to  an area in Southwestern Alberta, Canada.")),
   ),
   outputObjects = bind_rows(
+    createsOutput("logLikelihood", "data.table",
+                  desc = paste("A table of negative sum log-likelihood values calculated for different variables and averaged",
+                               "across repetitions. At the moment, log-likelihood values are calculated for biomass (landscape- and",
+                               "pixel-level), species presences and dominance (lanscape-level) and deltaB (landscape- and pixel-level.",
+                               "For biomass and count data (presences/dominance, we assume an underlying multinomial distribution,",
+                               "and for deltaB a multivariate Gaussian distribution - note that the later is still under development.")),
+    createsOutput("landscapeMAD", "data.table",
+                  desc = paste("Mean absolute deviance values calculated on landscape-level relative abundances, species presences and dominance,",
+                               "and deltaB, per repetition and year (except for deltaB, which is integrated across years)")),
+    createsOutput("landscapeVars", "data.table",
+                  desc = paste("A table containing observed and simulated landscape-averaged variables used for validation",
+                               "(by year and repetition, 'rep', in the case of simulated data), namely: species relative abundances",
+                               "('relAbund'), species presenses ('count'), species dominance (as in no. pixels where a given species,",
+                               "has higher 'relAbund'; 'countDom') and species changes in biomass, as 2011 minus 2001 ('deltaB').",
+                               "Observed data rows are labelled as 'observed' in 'dataType' column. In species dominance, pixels",
+                               "with >= 2 species with max(B) and pixels with no B  are classified as 'Mixed' and 'No veg.',",
+                               "respectively in the 'speciesCode' column - note that this is 'vegType' column in 'pixelCohortData'.")),
+    createsOutput("pixelCohortData", "data.table",
+                  desc = paste("A table containing observed and simulated pixel-level data (by year and repetition, 'rep',",
+                               "in the case of simulated data) on species biomass (summed across cohorts, 'B'),",
+                               "total pixel biomass ('pixelB'), average biomass-weighted pixel age ('pixelAge'),",
+                               "species relative abundance (calculated as B/pixelB, 'relativeAbund'), species dominance",
+                               "(the species with max(B), 'vegType'), and lanscape-wide biomass ('landscapeB').",
+                               "Observed data columns are suffixed with 'Obsrvd'. In species dominance, pixels with >= 2" ,
+                               "species with max(B) (i.e. 'noDoms' >= 2) are classified as 'Mixed'." )),
+    createsOutput("pixelMAD", "data.table",
+                  desc = paste("Mean absolute deviance values calculated on pixel-level relative abundances and deltaB,",
+                               "per repetition and year (except for deltaB, which is integrated across years)")),
+    createsOutput("pixelVars", "data.table",
+                  desc = paste("The same as 'landscapeVars', but variables are calculated at the pixel-level")),
     createsOutput("rstDisturbedPix", "RasterLayer",
                   desc = paste("Raster of pixel IDs (as a mask) that have been disturbed by fire or suffered land-cover",
                                "changes during the validation period. These pixels are excluded form the validation.")),
@@ -190,15 +220,8 @@ defineModule(sim, list(
                                 "Filtered to exclude pixels that were disturbed during the validation period")),
     createsOutput("standAgeMapEnd", "RasterLayer",
                   desc = paste("observed stand age map in study area, at the last year of the validation period",
-                               "Filtered to exclude pixels that were disturbed during the validation period")),
-    createsOutput("pixelCohortData", "data.table",
-                  desc = paste("A table containing observed and simulated pixel-level data (by year and repetition, 'rep',",
-                               "in the case of simulated data) on species biomass (summed across cohorts, 'B'),",
-                               "total pixel biomass ('pixelB'), average biomass-weighted pixel age ('pixelAge'),",
-                               "species relative abundance (calculated as B/pixelB, 'relativeAbund'), species dominance",
-                               "(the species with max(B), 'vegType'), and lanscape-wide biomass ('landscapeB').",
-                               "Observed data columns are suffixed with 'Obsrvd'. In species dominance, pixels with >= 2" ,
-                               "species with max(B) (i.e. 'noDoms' >= 2) are classified as 'Mixed'." ))
+                               "Filtered to exclude pixels that were disturbed during the validation period"))
+
   )
 ))
 
@@ -220,17 +243,31 @@ doEvent.Biomass_validationKNN = function(sim, eventTime, eventType) {
         mod$pixelWindow <- mod$landscapeWindow + 1
       }
 
+      sim <- scheduleEvent(sim, eventType = "calculateValidVars", eventTime = times(sim)$start,
+                           eventPriority = 1, moduleName = currentModule(sim))
+      sim <- scheduleEvent(sim, eventType = "validationStats", eventTime = times(sim)$start,
+                           eventPriority = 2, moduleName = currentModule(sim))
+
+      ## all plotting events have the same priority - they don't depend on each other.
       if (P(sim)$obsDeltaAgeB) {
         sim <- scheduleEvent(sim, eventType = "obsDeltaMaps", eventTime = times(sim)$start,
-                             eventPriority = 1, moduleName = currentModule(sim))
+                             eventPriority = 3, moduleName = currentModule(sim))
       }
 
-      sim <- scheduleEvent(sim, eventType = "landscapeWidePlots", eventTime = times(sim)$start,
-                           eventPriority = 2, moduleName = currentModule(sim))
-      sim <- scheduleEvent(sim, eventType = "pixelLevelPlots", eventTime = times(sim)$start,
-                           eventPriority = 3, moduleName = currentModule(sim))
-      sim <- scheduleEvent(sim, eventType = "deltaBComparisons", eventTime = times(sim)$start,
-                           eventPriority = 3, moduleName = currentModule(sim))
+      if (anyPlotting(P(sim)$.plots)) {
+        sim <- scheduleEvent(sim, eventType = "landscapeWidePlots", eventTime = times(sim)$start,
+                             eventPriority = 3, moduleName = currentModule(sim))
+        sim <- scheduleEvent(sim, eventType = "pixelLevelPlots", eventTime = times(sim)$start,
+                             eventPriority = 3, moduleName = currentModule(sim))
+        sim <- scheduleEvent(sim, eventType = "deltaBComparisons", eventTime = times(sim)$start,
+                             eventPriority = 3, moduleName = currentModule(sim))
+      }
+    },
+    calculateValidVars = {
+      sim <- calculateValidVarsEvent(sim)
+    },
+    validationStats = {
+      sim <- validationStatsEvent(sim)
     },
     obsDeltaMaps = {
       sim <- obsrvdDeltaMapsEvent(sim)
@@ -501,7 +538,7 @@ Init <- function(sim) {
   pixelCohortData <- pixelCohortData[, ..cols]
 
   ## assert and export to sim -- vegType cols can have NAs
-  assertStandCohortData(pixelCohortData)
+  assertPixelCohortDataValid(pixelCohortData)
   sim$pixelCohortData <- pixelCohortData
 
   ## make labels for plots
@@ -546,6 +583,315 @@ Init <- function(sim) {
   ## clean up and free memory
   rm(pixelTable, pixelCohortData, combinationsStart, combinationsEnd, validationDataStart, validationDataEnd)
   .gc()
+
+  return(invisible(sim))
+}
+
+calculateValidVarsEvent <- function(sim)  {
+  assertPixelCohortDataValid(sim$pixelCohortData)
+
+  ## LANDSCAPE-LEVEL COMPARISONS --------------------
+  ## calculate landscape-wide summary variables:
+  ## relative species abundances
+  ## species presences (count)
+  ## dominant species presences (countDom)
+  ## delta biomass
+
+  ## relative abundances and no. pixels with a species
+  landscapeVars <- sim$pixelCohortData
+  landscapeVars <- landscapeVars[, list(B = sum(B),
+                                        BObsrvd = sum(BObsrvd),
+                                        landRelativeAbund = sum(B)/unique(landscapeB),
+                                        landRelativeAbundObsrvd = sum(BObsrvd)/unique(landscapeBObsrvd),
+                                        count = sum(B > 0),
+                                        countObsrvd = sum(BObsrvd > 0)),
+                                 by = .(rep, year, speciesCode)]
+  landscapeVars <- melt.data.table(landscapeVars, measure.vars = list(c("B", "BObsrvd"),
+                                                                      c("landRelativeAbund", "landRelativeAbundObsrvd"),
+                                                                      c("count", "countObsrvd")),
+                                   variable.name = "dataType", value.name = c("B", "relAbund", "count"))
+  landscapeVars[, dataType := ifelse(dataType == "1", "simulated", "observed")]
+
+  ## no. pixels with a certain dominant species
+  ## note: don't use melt, because dominant spp differ between valid and simul data.
+  ## simulated and observed differ in no. of pixels in year 1...
+  ## this is because B is adjusted using a statistical model
+  tempData <- unique(sim$pixelCohortData[, .(year, rep, pixelIndex, vegType)])
+  tempData[, dataType := "simulated"]
+  tempData2 <- unique(sim$pixelCohortData[, .(year, rep, pixelIndex, vegTypeObsrvd)])
+  tempData2[, dataType := "observed"]
+  setnames(tempData2, "vegTypeObsrvd", "vegType")
+
+  tempData3 <- rbind(tempData, tempData2)
+  tempData3 <- tempData3[, list(countDom = length(pixelIndex)),
+                         by = .(rep, year, dataType, vegType)]
+
+  landscapeVars <- landscapeVars[tempData3, on = c("rep", "year", "dataType", "speciesCode==vegType")]
+  rm(tempData, tempData2, tempData3)
+
+  ## delta biomass per species and across the lanscape
+  year1 <- P(sim)$validationYears[1]
+  year2 <- P(sim)$validationYears[2]
+
+  ## across landscape (calculate landscape-wide changes in total B per species/pixel)
+  tempData <- sim$pixelCohortData[, list(B = sum(B),
+                                         landscapeB = unique(landscapeB),
+                                         BObsrvd = sum(BObsrvd),
+                                         landscapeBObsrvd = unique(landscapeBObsrvd)),
+                                  , by = .(rep, year, speciesCode)]
+  tempData <- tempData[, list(deltaB = as.numeric(B[which(year == year2)] - B[which(year == year1)]),
+                              deltaBObsrvd = as.numeric(BObsrvd[which(year == year2)] - BObsrvd[which(year == year1)]),
+                              landDeltaB = as.numeric(landscapeB[which(year == year2)] - landscapeB[which(year == year1)]),
+                              landDeltaBObsrvd = as.numeric(landscapeBObsrvd[which(year == year2)] - landscapeBObsrvd[which(year == year1)])),
+                       by = .(rep, speciesCode)]
+
+  ## melt spp and landscape delta separately and rbind
+  cols <- c("rep", "speciesCode", "deltaB", "deltaBObsrvd")
+  tempData2 <- melt.data.table(tempData[, ..cols], measure.vars = c("deltaB", "deltaBObsrvd"),
+                               variable.name = "dataType", value.name = "deltaB")
+  tempData2[, dataType := ifelse(dataType == "deltaB", "simulated", "observed")]
+
+  cols <- c("rep", "speciesCode", "landDeltaB", "landDeltaBObsrvd")
+  tempData3 <- melt.data.table(tempData[, ..cols], measure.vars = c("landDeltaB", "landDeltaBObsrvd"),
+                               variable.name = "dataType", value.name = "deltaB")
+  tempData3[, dataType := ifelse(dataType == "landDeltaB", "simulated", "observed")]
+  tempData3 <- unique(tempData3[, speciesCode := "landscape"])
+
+  tempData <- rbind(tempData2, tempData3, use.names = TRUE)
+
+  ## rbind as there is no year correspondence
+  landscapeVars <- rbind(landscapeVars, tempData, use.names = TRUE, fill = TRUE)
+  rm(tempData, tempData2, tempData3)
+
+
+  ## PIXEL-LEVEL COMPARISONS --------------------
+  ## relative species abundances
+  ## delta biomass
+  pixelVars <- sim$pixelCohortData
+  pixelVars <- pixelVars[, .(rep, year, pixelIndex, speciesCode, B, BObsrvd,
+                             relativeAbund, relativeAbundObsrvd)]
+  pixelVars <- melt.data.table(pixelVars,
+                               measure.vars = list(c("B", "BObsrvd"),
+                                                   c("relativeAbund", "relativeAbundObsrvd")),
+                               variable.name = "dataType", value.name = c("B", "relAbund"))
+  pixelVars[, dataType := ifelse(dataType == "1", "simulated", "observed")]
+
+  ## delta biomass per species and pixel (i.e. stand)
+  tempData <- sim$pixelCohortData
+  tempData <- tempData[, list(deltaB = as.numeric(B[which(year == year2)] - B[which(year == year1)]),
+                              deltaBObsrvd = as.numeric(BObsrvd[which(year == year2)] - BObsrvd[which(year == year1)]),
+                              pixelDeltaB = as.numeric(pixelB[which(year == year2)] - pixelB[which(year == year1)]),
+                              pixelDeltaBObsrvd = as.numeric(pixelBObsrvd[which(year == year2)] - pixelBObsrvd[which(year == year1)])),
+                       by = .(rep, pixelIndex, speciesCode)]
+
+  ## melt spp and pixel delta separately and rbind
+  cols <- c("rep", "pixelIndex", "speciesCode", "deltaB", "deltaBObsrvd")
+  tempData2 <- melt.data.table(tempData[, ..cols], measure.vars = c("deltaB", "deltaBObsrvd"),
+                               variable.name = "dataType", value.name = "deltaB")
+  tempData2[, dataType := ifelse(dataType == "deltaB", "simulated", "observed")]
+
+  cols <- c("rep", "pixelIndex", "speciesCode", "pixelDeltaB", "pixelDeltaBObsrvd")
+  tempData3 <- melt.data.table(tempData[, ..cols], measure.vars = c("pixelDeltaB", "pixelDeltaBObsrvd"),
+                               variable.name = "dataType", value.name = "deltaB")
+  tempData3[, dataType := ifelse(dataType == "pixelDeltaB", "simulated", "observed")]
+  tempData3 <- unique(tempData3[, speciesCode := "pixel"])
+
+  tempData <- rbind(tempData2, tempData3, use.names = TRUE)
+
+  ## rbind as there is no year correspondence
+  pixelVars <- rbind(pixelVars, tempData, use.names = TRUE, fill = TRUE)
+  rm(tempData, tempData2, tempData3)
+
+  ## export to sim
+  sim$landscapeVars <- landscapeVars
+  sim$pixelVars <- pixelVars
+
+  return(invisible(sim))
+}
+
+validationStatsEvent <- function(sim) {
+  ## MEAN ABSOLUTE DEVIATION -------------------
+  ## for each rep, calculate the mean absolute deviation of each pixel to the observed average
+  ## note that "observed average" is calculated across all pixels
+
+  ## PIXEL-LEVEL
+  ## calculate observed means first
+  pixelMAD <- sim$pixelVars[dataType == "observed",
+                            list(meanRelAbundObs = mean(relAbund),
+                                 meanDeltaBObs = mean(deltaB)),
+                            by = .(year, speciesCode)]
+
+  ## checks
+  if (NROW(pixelMAD[is.na(year) & !is.na(meanRelAbundObs)])) {
+    stop("There should be no relAbund values for 'NA' years (i.e. the deltaB rows)")
+  }
+  if (NROW(pixelMAD[!is.na(year) & is.na(meanRelAbundObs)])) {
+    stop("There are relAbund NAs in non-deltaB rows")
+  }
+
+  ## join simulated data and compute MAD
+  pixelMAD <- pixelMAD[sim$pixelVars[dataType == "simulated"], on = .(year, speciesCode)]
+  pixelMAD <- pixelMAD[, list(meanAbsDevRelAbund = 1/.N * sum(abs(relAbund - meanRelAbundObs)),
+                              meanAbsDevDeltaB = 1/.N * sum(abs(deltaB - meanDeltaBObs))),
+                       by = .(rep, year, pixelIndex, speciesCode)]
+
+  ## LANDSCAPE-LEVEL
+  ## for each rep, calculate the mean absolute deviation of the simulated
+  ## landscape-level variable to the observed value
+  ## note that "observed average" here is not an actual average
+  ## as there is only one observed landscape value
+  landscapeMAD <- sim$landscapeVars[dataType == "observed",
+                                    list(meanRelAbundObs = unique(relAbund),
+                                         meanCountObs = unique(count),
+                                         meanCountDomObs = unique(countDom),
+                                         meanDeltaBObs = unique(deltaB)),
+                                    by = .(year, speciesCode)]
+  ## checks
+  if (any(duplicated(landscapeMAD[, .(year, speciesCode)]))) {
+    stop("There are non-unique observed values for relAbund/count/countDom/deltaB for year X speciesCode combinations")
+  }
+
+  ## join simulated data and compute MAD
+  landscapeMAD <- landscapeMAD[sim$landscapeVars[dataType == "simulated"], on = .(year, speciesCode)]
+  landscapeMAD <- landscapeMAD[, list(meanAbsDevRelAbund = 1/.N * sum(abs(relAbund - meanRelAbundObs)),
+                                      meanAbsDevCount = 1/.N * sum(abs(count - meanCountObs)),
+                                      meanAbsDevCountDom = 1/.N * sum(abs(countDom - meanCountDomObs)),
+                                      meanAbsDevDeltaB = 1/.N * sum(abs(deltaB - meanDeltaBObs))),
+                               by = .(rep, year, speciesCode)]
+
+  ## PLOTS
+  plotData <- melt(pixelMAD, measure.vars = c("meanAbsDevRelAbund", "meanAbsDevDeltaB"),
+                   value.name = "MAD")
+  colLabels <- list("meanAbsDevRelAbund" = "rel. abundance",
+                    "meanAbsDevDeltaB" = bquote(paste(Delta, B)))
+
+  Plots(data = plotData, fn = MADplots,
+        filename = "pixelMAD", path = file.path(mod$plotPath),
+        deviceArgs = list(width = 7, height = 7, units = "in", res = 300),
+        xvar = "speciesCode", yvar = "MAD", colourvar = "variable",
+        xlabs = sim$speciesLabels, collabs = colLabels)
+
+  plotData <- melt(landscapeMAD,
+                   measure.vars = c("meanAbsDevRelAbund", "meanAbsDevCount", "meanAbsDevCountDom", "meanAbsDevDeltaB"),
+                   value.name = "MAD")
+  colLabels <- list("meanAbsDevRelAbund" = "rel. abundance",
+                    "meanAbsDevCount" = "presences",
+                    "meanAbsDevCountDom" = "dominance",
+                    "meanAbsDevDeltaB" = bquote(paste(Delta, B)))
+
+  Plots(data = plotData, fn = MADplots,
+        filename = "landscapeMAD", path = file.path(mod$plotPath),
+        deviceArgs = list(width = 7, height = 7, units = "in", res = 300),
+        xvar = "speciesCode", yvar = "MAD", colourvar = "variable",
+        xlabs = sim$speciesLabels, collabs = colLabels)
+
+
+  ## LOG-LIKELIHOOD -------------------
+  ## Biomass at landscape-level
+  spBObs <- na.omit(sim$landscapeVars[dataType == "observed", .(year, rep, speciesCode, B)])
+  spBSim <- na.omit(sim$landscapeVars[dataType == "simulated", .(year, rep, speciesCode, B)])
+  spBObs <- dcast(spBObs, ... ~ speciesCode, value.var = "B", fill = 0)
+  spBSim <- dcast(spBSim, ... ~ speciesCode, value.var = "B", fill = 0)
+
+  ## probs == 0 lead to infinite values. give them v. small values
+  cols <- intersect(names(spBSim), names(sim$speciesLabels))
+  spBSim[, (cols) := lapply(.SD, function(x) {x[x == 0] <- 1E-6; x}), .SDcols = cols]
+
+  landscapeLogLikB <- NegSumLogLikWrapper(spBObs, spBSim, reps = P(sim)$validationReps,
+                                          years = P(sim)$validationYears, cols = cols,
+                                          varType = "biomass")
+
+  ## Biomass at pixel-level
+  spBObs <- na.omit(sim$pixelVars[dataType == "observed", .(year, rep, pixelIndex, speciesCode, B)])
+  spBSim <- na.omit(sim$pixelVars[dataType == "simulated", .(year, rep, pixelIndex, speciesCode, B)])
+  spBObs <- dcast(spBObs, ... ~ speciesCode, value.var = "B", fill = 0)
+  spBSim <- dcast(spBSim, ... ~ speciesCode, value.var = "B", fill = 0)
+
+  ## probs == 0 lead to infinite values. give them v. small values
+  cols <- intersect(names(spBSim), names(sim$speciesLabels))
+  spBSim[, (cols) := lapply(.SD, function(x) {x[x == 0] <- 1E-6; x}), .SDcols = cols]
+
+  pixelLogLikB <- NegSumLogLikWrapper(spBObs, spBSim, reps = P(sim)$validationReps,
+                                      years = P(sim)$validationYears, cols = cols,
+                                      varType = "biomass")
+
+  ## Counts at landscape-level
+  spCountObs <- na.omit(sim$landscapeVars[dataType == "observed", .(year, rep, speciesCode, count)])
+  spCountSim <- na.omit(sim$landscapeVars[dataType == "simulated", .(year, rep, speciesCode, count)])
+  spCountObs <- dcast(spCountObs, ... ~ speciesCode, value.var = "count", fill = 0)
+  spCountSim <- dcast(spCountSim, ... ~ speciesCode, value.var = "count", fill = 0)
+
+  ## probs == 0 lead to infinite values. give them v. small values
+  cols <- intersect(names(spCountSim), names(sim$speciesLabels))
+  spCountSim[, (cols) := lapply(.SD, function(x) {x[x == 0] <- 1E-6; x}), .SDcols = cols]
+
+  landscapeLogLikCount <- NegSumLogLikWrapper(spCountObs, spCountSim, reps = P(sim)$validationReps,
+                                              years = P(sim)$validationYears, cols = cols,
+                                              varType = "counts")
+
+  ## Dominance at landscape-level
+  spCountObs <- na.omit(sim$landscapeVars[dataType == "observed", .(year, rep, speciesCode, countDom)])
+  spCountSim <- na.omit(sim$landscapeVars[dataType == "simulated", .(year, rep, speciesCode, countDom)])
+  spCountObs <- dcast(spCountObs, ... ~ speciesCode, value.var = "countDom", fill = 0)
+  spCountSim <- dcast(spCountSim, ... ~ speciesCode, value.var = "countDom", fill = 0)
+
+  ## probs == 0 lead to infinite values. give them v. small values
+  cols <- intersect(names(spCountSim), c(names(sim$speciesLabels), "Mixed", "No veg."))
+  spCountSim[, (cols) := lapply(.SD, function(x) {x[x == 0] <- 1E-6; x}), .SDcols = cols]
+
+  landscapeLogLikCountDom <- NegSumLogLikWrapper(spCountObs, spCountSim, reps = P(sim)$validationReps,
+                                                 years = P(sim)$validationYears, cols = cols,
+                                                 varType = "counts")
+
+
+  ## deltaB at landscape-level
+  message(red("Computation of log-likelihood for deltaB is still under development"))
+  spDeltaObs <- na.omit(sim$landscapeVars[dataType == "observed", .(rep, speciesCode, deltaB)])
+  spDeltaSim <- na.omit(sim$landscapeVars[dataType == "simulated", .(rep, speciesCode, deltaB)])
+  spDeltaObs <- dcast(spDeltaObs, ... ~ speciesCode, value.var = "deltaB")
+  spDeltaSim <- dcast(spDeltaSim, ... ~ speciesCode, value.var = "deltaB")
+
+  cols <- intersect(names(spDeltaSim), c(names(sim$speciesLabels), "pixel"))
+
+  landscapeLogLikDeltaB <- NegSumLogLikWrapper(spDeltaObs, spDeltaSim,
+                                               reps = P(sim)$validationReps, cols = cols,
+                                               varType = "delta")
+  colnames(landscapeLogLikDeltaB) <- paste0(P(sim)$validationYears[2],"-", P(sim)$validationYears[1])
+
+  ## deltaB at pixel-level
+  spDeltaObs <- na.omit(sim$pixelVars[dataType == "observed", .(rep, pixelIndex, speciesCode, deltaB)])
+  spDeltaSim <- na.omit(sim$pixelVars[dataType == "simulated", .(rep, pixelIndex, speciesCode, deltaB)])
+  spDeltaObs <- dcast(spDeltaObs, ... ~ speciesCode, value.var = "deltaB")
+  spDeltaSim <- dcast(spDeltaSim, ... ~ speciesCode, value.var = "deltaB")
+
+  cols <- intersect(names(spDeltaSim), c(names(sim$speciesLabels), "pixel"))
+
+  pixelLogLikDeltaB <- NegSumLogLikWrapper(spDeltaObs, spDeltaSim,
+                                           reps = P(sim)$validationReps, cols = cols,
+                                           varType = "delta")
+  colnames(pixelLogLikDeltaB) <- paste0(P(sim)$validationYears[2],"-", P(sim)$validationYears[1])
+
+
+  ## average across reps and make data.table
+  landscapeLikelihood <- rbindlist(
+    list("biomass" = data.table(landscapeLogLikB)[, lapply(.SD, mean)],
+         "presences" = data.table(landscapeLogLikCount)[, lapply(.SD, mean)],
+         "dominance" = data.table(landscapeLogLikCountDom)[, lapply(.SD, mean)],
+         "deltaB" = data.table(landscapeLogLikDeltaB)[, lapply(.SD, mean)]),
+    use.names = TRUE, idcol = "variable", fill = TRUE)
+
+  pixelLikelihood <- rbindlist(
+    list("biomass" = data.table(pixelLogLikB)[, lapply(.SD, mean)],
+         "deltaB" = data.table(pixelLogLikDeltaB)[, lapply(.SD, mean)]),
+    use.names = TRUE, idcol = "variable", fill = TRUE)
+
+  logLikelihood <- rbindlist(list("landscape" = landscapeLikelihood, "pixel" = pixelLikelihood),
+                             use.names = TRUE, idcol = "variable", fill = TRUE)
+
+  ## export to sim
+  sim$pixelMAD <- pixelMAD
+  sim$landscapeMAD <- landscapeMAD
+  sim$logLikelihood <- logLikelihood
 
   return(invisible(sim))
 }
@@ -695,15 +1041,10 @@ obsrvdDeltaMapsEvent <- function(sim) {
 }
 
 landscapeWidePlotsEvent <- function(sim) {
-  assertStandCohortData(sim$pixelCohortData)
-
-  plotData <- sim$pixelCohortData
-  plotData <- plotData[, list(landRelativeAbund = sum(B)/unique(landscapeB),
-                              landRelativeAbundObsrvd = sum(BObsrvd)/unique(landscapeBObsrvd)),
-                       by = .(rep, year, speciesCode)]
-
-  plot1 <- ggplot(data = plotData,
-                  aes(x = speciesCode, y = landRelativeAbund)) +
+  ## Landscape-wide relative abundances
+  cols <- c("speciesCode", "relAbund", "dataType", "year")
+  plot11 <- ggplot(data = na.omit(sim$landscapeVars[dataType == "simulated", ..cols]),
+                   aes(x = speciesCode, y = relAbund)) +
     stat_summary(fun = "mean", geom = "bar") +
     stat_summary(fun.data = "mean_sd", geom = "linerange", size = 1) +
     stat_summary(aes(y = landRelativeAbundObsrvd, colour = "observed"),
@@ -718,18 +1059,12 @@ landscapeWidePlotsEvent <- function(sim) {
          colour = "")
 
   ## no. pixels with a species
-  plotData <- sim$pixelCohortData
-  plotData <- plotData[,  list(count = sum(B > 0),
-                               countObsrvd = sum(BObsrvd > 0)),
-                       by = .(rep, year, speciesCode)]
-  plotData <- melt.data.table(plotData, measure.vars = c("count", "countObsrvd"),
-                              variable.name = "dataType", value.name = "count")
-
-  plot2 <- ggplot(data = plotData[dataType == "count"],
-                  aes(x = speciesCode, y = count)) +
+  cols <- c("speciesCode", "count", "dataType", "year")
+  plot12 <- ggplot(data = na.omit(sim$landscapeVars[dataType == "simulated", ..cols]),
+                   aes(x = speciesCode, y = count)) +
     stat_summary(fun = "mean", geom = "bar") +
     stat_summary(fun.data = "mean_sd", geom = "linerange", size = 1) +
-    stat_summary(data = plotData[dataType == "countObsrvd"],
+    stat_summary(data = na.omit(sim$landscapeVars[dataType == "observed", ..cols]),
                  aes(x = speciesCode, y = count, colour = "observed"),
                  fun = "mean", geom = "point", size = 2) +
     scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
@@ -741,27 +1076,13 @@ landscapeWidePlotsEvent <- function(sim) {
          colour = "", fill = "")
 
   ## no. pixels with a certain dominant species
-  ## note: don't use melt, because dominant spp differ between valid and simul data.
-  ## simulated and observed differ in no. of pixels in year 1...
-  ## this is because B is adjusted using a statistical model
-  plotData1 <- unique(sim$pixelCohortData[, .(year, rep, pixelIndex, vegType)])
-  plotData1[, dataType := "simulated"]
-  plotData2 <- unique(sim$pixelCohortData[, .(year, rep, pixelIndex, vegTypeObsrvd)])
-  plotData2[, dataType := "observed"]
-  setnames(plotData2, "vegTypeObsrvd", "vegType")
-
-  plotData <- rbind(plotData1, plotData2)
-  rm(plotData1, plotData2)
-
-
-  plotData <- plotData[, list(count = length(pixelIndex)),
-                       by = .(rep, year, dataType, vegType)]
-  plot3 <- ggplot(data = plotData[dataType == "simulated"],
-                  aes(x = vegType, y = count)) +
+  cols <- c("speciesCode", "countDom", "dataType", "year")
+  plot13 <- ggplot(data = na.omit(sim$landscapeVars[dataType == "simulated", ..cols]),
+                   aes(x = speciesCode, y = countDom)) +
     stat_summary(fun = "mean", geom = "bar") +
     stat_summary(fun.data = "mean_sd", geom = "linerange", size = 1) +
-    geom_point(data = plotData[dataType == "observed"],
-               aes(x = vegType, y = count, colour = "observed"), size = 2) +
+    geom_point(data = na.omit(sim$landscapeVars[dataType == "observed", ..cols]),
+               aes(x = speciesCode, y = countDom, colour = "observed"), size = 2) +
     scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
     scale_color_manual(values = c("observed" = "red3")) +
     theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45) +
@@ -791,19 +1112,12 @@ landscapeWidePlotsEvent <- function(sim) {
 }
 
 pixelLevelPlotsEvent <- function(sim) {
-  ## PIXEL-LEVEL COMPARISONS IN A GIVEN YEAR --------------------
-  assertStandCohortData(sim$pixelCohortData)
-
-  ## pixel-level relative abundances per species
-  plotData <- sim$pixelCohortData
-  plotData <- plotData[, .(rep, year, pixelIndex, speciesCode,
-                           relativeAbund, relativeAbundObsrvd)]
-  plotData <- melt.data.table(plotData,
-                              id.vars = c("rep", "year", "pixelIndex", "speciesCode"))
-  plot1 <- ggplot(data = plotData,
-                  aes(x = speciesCode, y = value, fill = variable)) +
+  ## Pixel-level relative abundances
+  cols <- c("speciesCode", "relAbund", "dataType", "year")
+  plot14 <- ggplot(data = na.omit(sim$pixelVars[, ..cols]),
+                   aes(x = speciesCode, y = relAbund, fill = dataType )) +
     geom_boxplot() +
-    scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
+    scale_x_discrete(labels = sim$speciesLabels) +
     scale_fill_discrete(labels = c("relativeAbund" = "simulated",
                                    "relativeAbundObsrvd" = "observed")) +
     theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
@@ -826,76 +1140,28 @@ pixelLevelPlotsEvent <- function(sim) {
 }
 
 deltaBComparisonsEvent <- function(sim) {
-  ## COMPARISONS OF DELTA B PER PIXEL-------------------
-  ## per species
-  year1 <- P(sim)$validationYears[1]
-  year2 <- P(sim)$validationYears[2]
-
-  ## across landscape (calculate landscape-wide changes in total B per species/pixel)
-  plotData <- sim$pixelCohortData[, list(B = sum(B),
-                                         landscapeB = unique(landscapeB),
-                                         BObsrvd = sum(BObsrvd),
-                                         landscapeBObsrvd = unique(landscapeBObsrvd)),
-                                  , by = .(rep, year, speciesCode)]
-  plotData <- plotData[, list(deltaB = as.numeric(B[which(year == year2)] - B[which(year == year1)]),
-                              deltaBObsrvd = as.numeric(BObsrvd[which(year == year2)] - BObsrvd[which(year == year1)]),
-                              landDeltaB = as.numeric(landscapeB[which(year == year2)] - landscapeB[which(year == year1)]),
-                              landDeltaBObsrvd = as.numeric(landscapeBObsrvd[which(year == year2)] - landscapeBObsrvd[which(year == year1)])),
-                       by = .(rep, speciesCode)]
-
-  ## melt spp and landscape delta separately and rbind
-  cols <- c("rep", "speciesCode", "deltaB", "deltaBObsrvd")
-  plotData1 <- melt.data.table(plotData[, ..cols], measure.vars = c("deltaB", "deltaBObsrvd"),
-                               variable.name = "dataType", value.name = "deltaB")
-  cols <- c("rep", "speciesCode", "landDeltaB", "landDeltaBObsrvd")
-  plotData2 <- melt.data.table(plotData[, ..cols], measure.vars = c("landDeltaB", "landDeltaBObsrvd"),
-                               variable.name = "dataType", value.name = "deltaB")
-  plotData2[dataType == "landDeltaB", dataType := "deltaB"]
-  plotData2[dataType == "landDeltaBObsrvd", dataType := "deltaBObsrvd"]
-  plotData2 <- unique(plotData2[, speciesCode := "landscape"])
-
-  plotData <- rbind(plotData1, plotData2, use.names = TRUE)
-  rm(plotData1, plotData2)
-
-  plot1 <-  ggplot(data = plotData[dataType == "deltaB"],
+  ## COMPARISONS OF DELTA B ------------------
+  ## landscape-wide deltaB
+  cols <- c("speciesCode", "deltaB", "dataType", "rep")
+  plot15 <- ggplot(data = na.omit(sim$landscapeVars[dataType == "simulated", ..cols]),
                    aes(x = speciesCode, y = deltaB, group = rep)) +
     stat_summary(fun = "mean", geom = "bar") +
     stat_summary(fun.data = "mean_sd", geom = "linerange", size = 1) +
-    geom_point(data = plotData[dataType == "deltaBObsrvd"],
+    geom_point(data = na.omit(sim$landscapeVars[dataType == "observed", ..cols]),
                aes(x = speciesCode, y = deltaB, colour = "observed"), size = 2) +
-    scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
+    scale_x_discrete(labels = sim$speciesLabels) +
     scale_color_manual(values = c("observed" = "red3")) +
-    theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
+    plotTheme(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
     labs(title = "Landscape-level", colour = "",
          x = "", y = expression(paste(Delta, "B")))
 
-  ## pixel-level
-  plotData <- sim$pixelCohortData
-  plotData <- plotData[, list(deltaB = as.numeric(B[which(year == year2)] - B[which(year == year1)]),
-                              deltaBObsrvd = as.numeric(BObsrvd[which(year == year2)] - BObsrvd[which(year == year1)]),
-                              pixelDeltaB = as.numeric(pixelB[which(year == year2)] - pixelB[which(year == year1)]),
-                              pixelDeltaBObsrvd = as.numeric(pixelBObsrvd[which(year == year2)] - pixelBObsrvd[which(year == year1)])),
-                       by = .(rep, pixelIndex, speciesCode)]
-
-  ## melt spp and pixel delta separately and rbind
-  cols <- c("rep", "pixelIndex", "speciesCode", "deltaB", "deltaBObsrvd")
-  plotData1 <- melt.data.table(plotData[, ..cols], measure.vars = c("deltaB", "deltaBObsrvd"),
-                               variable.name = "dataType", value.name = "deltaB")
-  cols <- c("rep", "pixelIndex", "speciesCode", "pixelDeltaB", "pixelDeltaBObsrvd")
-  plotData2 <- melt.data.table(plotData[, ..cols], measure.vars = c("pixelDeltaB", "pixelDeltaBObsrvd"),
-                               variable.name = "dataType", value.name = "deltaB")
-  plotData2[dataType == "pixelDeltaB", dataType := "deltaB"]
-  plotData2[dataType == "pixelDeltaBObsrvd", dataType := "deltaBObsrvd"]
-  plotData2 <- unique(plotData2[, speciesCode := "pixel"])
-
-  plotData <- rbind(plotData1, plotData2, use.names = TRUE)
-  rm(plotData1, plotData2)
-
-  plot2 <- ggplot(data = plotData,
-                  aes(x = speciesCode, y = deltaB, fill = dataType)) +
+  ## pixel-level deltaB
+  cols <- c("speciesCode", "deltaB", "dataType", "rep")
+  plot16 <- ggplot(data = na.omit(sim$pixelVars[, ..cols]),
+                   aes(x = speciesCode, y = deltaB, fill = dataType)) +
     geom_boxplot(aes(alpha = speciesCode == "pixel")) +
     scale_x_discrete(labels = c(sim$speciesLabels, "pixel" = "pixel")) +
-    scale_fill_discrete(labels = c("deltaB" = "simulated",
+    scale_alpha_manual(values = c("TRUE" = 0.3, "FALSE" = 1.0), guide = "none") +
                                    "deltaBObsrvd" = "observed")) +
     scale_alpha_manual(values = c("TRUE" = 0.3, "FALSE" = 1.0), guide = FALSE) +
     theme_pubr(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
