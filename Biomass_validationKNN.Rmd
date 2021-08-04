@@ -1,100 +1,197 @@
 ---
 title: "Biomass_validationKNN"
-author: "Ceres Barros and Alex Chubaty"
+author:
+  - Ceres Barros (<cbarros@mail.ubc.ca>)
+  - Alex M. Chubaty (<achubaty@for-cast.ca>)
 date: "11 May 2021"
 output:
-  html_document:
-    keep_md: yes
+  bookdown::html_document2
 editor_options:
   chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, eval = FALSE, results = "hold")
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE, warning = FALSE, results = "hold")
 ```
+
+[![Gitter](https://badges.gitter.im/PredictiveEcology/LandR_Biomass.svg)](https://gitter.im/PredictiveEcology/LandR_Biomass?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 # Overview
 
-Provide an overview of what the module does / how to use the module.
+An approach to validating outputs from LandR Biomass - notably the `Biomass_core` vegetation simulation module - using publicly available data for Canadian forests.
 
-Module documentation should be written so that others can use your module.
-This is a template for module documentation, and should be changed to reflect your module.
+This module compares simulated outputs of two years (across replicates), with corresponding years of observed data. It was design to compare the observed data for years 2001 (start point for the simulation) and 2011 (so after 10 years of simulation) of the kNN forest layers of the Canadian National Forest Inventory. However, the user can supply other sources of observed data, as long as they obey the same format.
 
-## R Markdown
+The validation is done both visually (using bar and boxplots) and using two statistics: mean absolute deviation of simulated biomass (per species) and the negative sum of log-likelihoods of predictions with respect to observed data for species biomass, species presences/absences and changes in biomass (deltaB) - the later is still under development.
 
-R Markdown syntax allows R code, outputs, and figures to be rendered in the documentation.
 
-For help writing in R Markdown, see https://rmarkdown.rstudio.com/.
+## Detailed description
+The module downloads and prepares all necessary data (observed and simulated). It requires the following input data layers: land-cover change (change type and year), fire perimeters, % species cover, stand age and stand biomass. By default, the module will take these from National Forest Inventory kNN layers for years 2001 and 2011. We recomend that the user supplies layers used to initialise the simulation as the starting input layers (2001 if that is the starting point) to guarantee that they match.
+This module assumes that the simulation data preparation was carried out by `Biomass_borealDataPrep`, and so, to ensure that the comparison and the simulated datasets are built with the same assumptions, the data treatment steps in `Biomass_borealDataPrep` are repeated here. The module may also excludes disturbed pixels coded in `rstLCCChange` and fire perimeter data (`firePerimeters`). If this is not intended pass a `rstLCCChange` with NA's only and an empty `firePerimeters` `sf` object.
+`Biomass_validationKNN` then compares simulated species biomass, presences, dominance, and changes in biomass against observed data available for the starting conditions (2011 by default) and a second time point  (e.g. 2011, or after 10 years of simulation). To do so, for each year and replicate and for both the simulated and observed data, the module calculates:
+* species relative abundances at the pixel- and landscape-level (across all pixels)
+* species presences and dominance at the landscape level
+* changes in species biomass ($\Delta$B) at the pixel- and landscape-level for both the simulated and observed data. 
 
-# Usage
+Pixel-level relative abundances are calculated as the species biomass (summed across cohorts) divided by the total pixel biomass (summed across cohorts and species), while landscape-wide relative abundances are calculated as the sum of a species biomass across all pixels divided by the sum of total biomass across all pixels. Species presences are calculated as the number of pixels where a given species was present, and species dominance was calculated as the number of pixels where a species had the highest relative biomass in a given pixel. Pixels where two or more species shared the highest biomass value were classified as ‘mixed forest’, and pixels without any biomass were classified as ‘no veg.’. Finally, ($\Delta$B) was calculated per species as the final biomass (e.g. year 2011) minus the initial biomass (e.g. year 2001), either at the pixel or landscape level.
+All calculations were done per repetition.
 
-```{r module_usage}
-library(SpaDES.core)
+### Visual validation
+The module plots the above metrics as barplots showing landscape-level values (averaged across repetitions for the simulated data) or boxplots showing pixel-level values. Plotting can be live and/or in the form of exported images (or turned off completely).
 
-setPaths(modulePath = file.path(".."))
-getPaths() # shows where the 4 relevant paths are
+### Mean absolute deviation
+Mean absolute deviance (MAD) values are calculated on landscape- and pixel-level species relative abundances and ($\Delta$B), and landscape-level species presences and dominance, per repetition and year (except for ($\Delta$B), which is integrated across years). Output tables with MAD values are exported as `landscapeMAD` and `pixelMAD`, and the module also produces visual inspection of these values as dot-and-whisker plots.  
 
-times <- list(start = 0, end = 10)
+### Log-likelihood
+To provide a measure of overall goodness of fit of the simulation model, given a given set of starting conditions and simulation mechanisms (i.e. the combination of inputs to `Biomass_core` but also other modules that may be associated in affecting vegetation dynamics), `Biomass_validationKNN` calculates a likelihood estimate as the negative sum of log-likelihoods of simulated species biomasses, $\Delta$B (both at the landscape and pixel-level), and species presences (at the landscape-level), with respect to their observed counterparts.
+More precisely, let $\ell$ be the log-likelihood function denoting the probability of observing $x$ of $X$ (a random variable following a continuous probability distribution $f(x)$), given a parameter $\theta$:
+\begin{equation}
+  \ell(\theta \mid x) = f(x).
+  (\#eq:loglik)
+\end{equation}
 
-parameters <- list(
-  #.progress = list(type = "text", interval = 1), # for a progress bar
-  ## If there are further modules, each can have its own set of parameters:
-  #module1 = list(param1 = value1, param2 = value2),
-  #module2 = list(param1 = value1, param2 = value2)
-)
-modules <- list("Biomass_validationKNN")
-objects <- list()
-inputs <- list()
-outputs <- list()
+In our case, $\theta$ is equivalent to the model's starting conditions and structure, $X$ is the observed data with $x$ being the simulated values, and $f(x)$ the continuous probability distribution of $X$. For each variable that we wanted to evaluate and for each simulation replicate, Equation \@ref(eq:loglik) is applied to calculate the negative sum of log-likelihoods estimated for each value of $x$ at the pixel or landscape-level, $i$:
+\begin{equation}
+  -\sum_{i = 1}^{N} \ell(\theta \mid x_{i}),
+  (\#eq:negsumloglik)
+\end{equation}
+where $N$ is equal to total number of pixels. At the landscape scale $N = 1$. 
 
-mySim <- simInit(times = times, params = parameters, modules = modules,
-                 objects = objects)
+For species biomass and species presences, we draw the probability of observing $x_{i}$ (a vector of species biomasses/presences in pixel/landscape $i$) from a multinomial density distribution ($f(x_{i}) = {\sf Multi}(n_{i}, \mathrm{p}_{i})$), where $n_{i} = \sum_{j = 1}^{K} X_{i,j}$ ($X$ being the observed values of biomass of $j = 1, ..., K$ species in a pixel/landscape $i$) and $\mathrm{p_{i}}$ is the vector of simulated values $x_{i,j}$.
 
-mySimOut <- spades(mySim)
-```
+**The computation of log-likelihood for $\Delta$B is still under development**  
+This is what we have implemented, but it is presenting problems, due to $\mathrm{M}$ not being strictly positive definite.
+For $\Delta$B, we draw the probability of observing $x_{i,j}$ (the simulated $\Delta$B of $j = 1, ..., K$ species in a pixel/landscape $i$) from a multivariate Gaussian distribution, $f(x_{i}) = \mathcal {N}(\mu_{i}, \mathrm{M}_{i})$, where $\mu_{i}$ is the vector of observed mean $\Delta$B for each species $j = 1, ..., K$, and $\mathrm{M}$ is the observed $K * K$ variance-covariance matrix of species $\Delta$B. 
 
-# Parameters
+After calculating the negative sum of log-likelihoods across pixels (or for a landscape), values are averaged across replicates for an overal model estimate and exported in the `logLikelihood` table.
 
-Provide a summary of user-visible parameters.
+We refer to the Wikipedia pages on the [multinomial distribution](https://en.wikipedia.org/wiki/Multinomial_distribution) and on the [multivariate Gaussian distribution](https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Density_function) for a good summary of these two distributions and their use in likelihood estimation.
 
-```{r moduleParams, echo = FALSE, eval = TRUE}
+## Inputs and parametrisation
+
+`Biomass_validationKNN` requires access to outputs of simulations from  `Biomass_core`, and internet access to retrieve the observed kNN datasets used for validation. We advise future users to run `Biomass_validationKNN` with defaults and inspect what the objects are like before supplying their own data, or alternative data URLs. We expect the number of validation modules to increase as other validation approaches are developed based on project needs. 
+
+Key parameters are those defining simulation years and repetitions, (`validationYears`, `validationReps`) and plot control (`.plots`). Here's the full list of parameters:
+
+```{r moduleParams, echo = FALSE, eval = TRUE, message=FALSE, warning=FALSE}
 df_params <- SpaDES.core::moduleParams("Biomass_validationKNN", "..")
 knitr::kable(df_params)
 ```
 
-# Events
+Below is the full list of input objects that `Biomass_validationKNN` expects. Of these, the only input that **must** be provided (i.e. `Biomass_validationKNN` does not have a default for) is `studyArea`. Objects suffixed with `*Start` correspond to the same objects in the simulation without this suffix (e.g. `rawBiomassMapStart` is `rawBiomassMap` in the simulation). Order objects like `studyArea` and `rasterToMatch` have the same names in the simulation.
 
-Describe what happens for each event type.
+We advise users to **supply the *exact same objects* ** as those used in the simulations wherever possible - see example below.
 
-## Plotting
-
-Write what is plotted.
-
-## Saving
-
-Write what is saved.
-
-# Data dependencies
-
-## Input data
-
-How to obtain input data, and a description of the data required by the module.
-If `sourceURL` is specified, `downloadData("Biomass_validationKNN", "..")` may be sufficient.
-
-```{r moduleInputs, echo = FALSE, eval = TRUE}
+```{r moduleInputs, eval = TRUE, echo = FALSE, message=FALSE, warning=FALSE}
 df_inputs <- SpaDES.core::moduleInputs("Biomass_validationKNN", "..")
 knitr::kable(df_inputs)
 ```
 
-## Output data
 
-Description of the module outputs.
+# Usage example
+For this example we will simulate vegetation dynamics using `Biomass_core` with default (dummy) data, and repeat simulations 5 times.
 
-```{r moduleOutputs, echo = FALSE, eval = TRUE}
-df_outputs <- SpaDES.core::moduleOutputs("Biomass_validationKNN", "..")
+## Load SpaDES
+
+```{r load-SpaDES, eval=FALSE}
+library(SpaDES)
+
+moduleName <- c("Biomass_core")  
+spadesModulesDirectory <- ".." # In general, a module code will be controlled at one level above the source code
+```
+
+## Get the module
+
+See [SpaDES-modules repository](https://github.com/PredictiveEcology/SpaDES-modules) to see how to download this and other SpaDES modules. Alternatively, it can be forked or cloned from github.com directly.
+
+## Setup simulation
+
+```{r module usage example, eval=FALSE}
+tempDir <- tempdir()
+setPaths(inputPath = file.path(tempDir, "inputs"), 
+         cachePath = file.path(tempDir, "cache"), 
+         modulePath = spadesModulesDirectory, 
+         outputPath = file.path(tempDir, "outputs"))
+
+times <- list(start = 0, end = 10)
+
+studyArea <- Cache(randomStudyArea, size = 1e7) # cache this so it creates a random one only once on a machine
+
+# Pick the species you want to work with -- using the naming convention in "Boreal" column of LandR::sppEquivalencies_CA
+speciesNameConvention <- "Boreal"
+speciesToUse <- c("Pice_Gla", "Popu_Tre", "Pinu_Con")
+
+sppEquiv <- LandR::sppEquivalencies_CA[get(speciesNameConvention) %in% speciesToUse]
+# Assign a colour convention for graphics for each species
+sppColorVect <- LandR::sppColors(sppEquiv, speciesNameConvention,
+                                 newVals = "Mixed", palette = "Set1")
+
+## Usage example
+modules <- as.list(moduleName)
+objects <- list(studyArea = studyArea, sppEquiv = sppEquiv, sppColorVect = sppColorVect)
+paths <- getPaths()
+
+successionTimestep <- 20L
+
+## keep default values for most parameters 
+## (ommitted from this list)
+parameters <- list(
+  Biomass_core = list(
+    "sppEquivCol" = speciesNameConvention
+    , "successionTimestep" = successionTimestep
+    , ".plots" = c("screen", "object")
+    , ".plotInitialTime" = times$start
+    , ".plotInterval" = 1L
+    , ".saveInitialTime" = times$start
+    , ".useCache" = "init"
+    , ".useParallel" = FALSE
+  )
+)
+
+outputs <- data.frame(expand.grid(objectName = "cohortData",
+                                  saveTime = unique(seq(times$start, times$end, by = 1)),
+                                  eventPriority = 1,
+                                  stringsAsFactors = FALSE))
+
+graphics.off()
+mySim <- simInitAndSpades(times = times,
+                          params = parameters, 
+                          modules = modules, 
+                          objects = objects, 
+                          paths = paths,
+                          outputs = outputs,
+                          debug = TRUE)
+```
+
+# Events
+Events are scheduled as follows:
+
+- Module initiation
+- Seed dispersal (every `successionTimestep`)
+- Mortality and growth
+- Reclassification of age cohorts (every `successionTimestep`)
+- Summary tables of regeneration (summaryRegen), biomass, age, growth and mortality (summaryBGM*)
+- Plots of maps (plotMaps) and averages (plotAvgs)
+- Save
+
+# Outputs
+
+The module produces the following outputs:
+- Plotting - live and/or saved plot objects/images (depending on `.plots`)
+- Saved biomass, mortality, leading vegetation raster layers
+- Whatever objects supplied to `outputs` argument in `simInit` (only `cohortData` in the example above)
+
+```{r moduleOutputs, echo = FALSE, eval = TRUE, message=FALSE, warning=FALSE}
+df_outputs <- SpaDES.core::moduleOutputs("Biomass_core", "..")
 knitr::kable(df_outputs)
 ```
 
 # Links to other modules
 
-Describe any anticipated linkages to other modules.
+Intended to be used with other landscape modules, such as `LandMine`, `FireSense`, `Biomass_borealDataPrep`, `Biomass_regeneration` and possibly many others.
+
+
+## Getting help
+
+- <https://gitter.im/PredictiveEcology/LandR_Biomass>
+
