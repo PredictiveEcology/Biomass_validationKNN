@@ -19,7 +19,7 @@ defineModule(sim, list(
                   "sf", "XML", "RCurl", "ggplot2", "ggpubr",
                   "PredictiveEcology/LandR@modelBiomass (>=1.0.5)",
                   "PredictiveEcology/pemisc@development",
-                  "PredictiveEcology/reproducible@development (>= 1.2.7.9005)",
+                  "PredictiveEcology/reproducible@development (>= 1.2.7.9011)",
                   "PredictiveEcology/SpaDES.core@development",
                   "PredictiveEcology/SpaDES.tools@development"),
   parameters = rbind(
