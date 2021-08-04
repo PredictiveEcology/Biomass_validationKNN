@@ -348,20 +348,20 @@ Init <- function(sim) {
 
   ## make vector of pixels that are both in fire perimeters and LCChange
   ## export to sim
-  sim$disturbedIDs <- union(inFireIDs, inLCChangeIDs)
+  mod$disturbedIDs <- union(inFireIDs, inLCChangeIDs)
 
   sim$rstDisturbedPix <- sim$rasterToMatch
   sim$rstDisturbedPix <- setValues(sim$rstDisturbedPix, values = NA)
-  sim$rstDisturbedPix[sim$disturbedIDs] <- 1
+  sim$rstDisturbedPix[mod$disturbedIDs] <- 1
 
   ## exclude these pixels from validation layers
-  sim$speciesLayersEnd[sim$disturbedIDs] <- NA
-  sim$rawBiomassMapEnd[sim$disturbedIDs] <- NA
-  sim$standAgeMapEnd[sim$disturbedIDs] <- NA
+  sim$speciesLayersEnd[mod$disturbedIDs] <- NA
+  sim$rawBiomassMapEnd[mod$disturbedIDs] <- NA
+  sim$standAgeMapEnd[mod$disturbedIDs] <- NA
 
-  sim$speciesLayersStart[sim$disturbedIDs] <- NA
-  sim$rawBiomassMapStart[sim$disturbedIDs] <- NA
-  sim$standAgeMapStart[sim$disturbedIDs] <- NA
+  sim$speciesLayersStart[mod$disturbedIDs] <- NA
+  sim$rawBiomassMapStart[mod$disturbedIDs] <- NA
+  sim$standAgeMapStart[mod$disturbedIDs] <- NA
 
   ## PREPARE OBSERVED DATA (VALIDATION) PIXEL TABLES   -----------------------------------
   ## need to reproduce some steps in Biomass_borealDataPrep
@@ -485,7 +485,7 @@ Init <- function(sim) {
                                      on = c("rep", "year", "pixelIndex", "speciesCode")]
 
   ## remove disturbed pixels
-  pixelCohortData <- pixelCohortData[!pixelIndex %in% sim$disturbedIDs]
+  pixelCohortData <- pixelCohortData[!pixelIndex %in% mod$disturbedIDs]
 
   ## convert NAs to 0s
   cols <- c("pixelAge", "B")
@@ -545,9 +545,9 @@ Init <- function(sim) {
   sim$pixelCohortData <- pixelCohortData
 
   ## make labels for plots
-  sim$speciesLabels <- equivalentName(unique(sim$pixelCohortData$speciesCode), sim$sppEquiv,
+  mod$speciesLabels <- equivalentName(unique(sim$pixelCohortData$speciesCode), sim$sppEquiv,
                                       column = "EN_generic_short")
-  names(sim$speciesLabels) <- unique(sim$pixelCohortData$speciesCode)
+  names(mod$speciesLabels) <- unique(sim$pixelCohortData$speciesCode)
 
   ## EXCLUDE PIXELS WHERE OBSERVED PIXEL B OR PIXEL AGE DECREASED -----------------
   ## Only keep pixels where pixel age AND pixel B increased, or remained the same,
@@ -571,7 +571,7 @@ Init <- function(sim) {
 
   ## return some statistics about excluded pixels
   pixToRm <- unique(c(setdiff(unique(sim$pixelCohortData$pixelIndex), pixToKeep),
-                      sim$disturbedIDs))
+                      mod$disturbedIDs))
   excludedPixStats <- data.table(noPixels = length(pixToRm),
                                  landscapePrc = round(length(pixToRm) /
                                                         sum(!is.na(getValues(sim$biomassMap))),
@@ -772,7 +772,7 @@ validationStatsEvent <- function(sim) {
         filename = "pixelMAD", path = file.path(mod$plotPath),
         deviceArgs = list(width = 7, height = 7, units = "in", res = 300),
         xvar = "speciesCode", yvar = "MAD", colourvar = "variable",
-        xlabs = sim$speciesLabels, collabs = colLabels)
+        xlabs = mod$speciesLabels, collabs = colLabels)
 
   plotData <- melt(landscapeMAD,
                    measure.vars = c("meanAbsDevRelAbund", "meanAbsDevCount", "meanAbsDevCountDom", "meanAbsDevDeltaB"),
@@ -786,7 +786,7 @@ validationStatsEvent <- function(sim) {
         filename = "landscapeMAD", path = file.path(mod$plotPath),
         deviceArgs = list(width = 7, height = 7, units = "in", res = 300),
         xvar = "speciesCode", yvar = "MAD", colourvar = "variable",
-        xlabs = sim$speciesLabels, collabs = colLabels)
+        xlabs = mod$speciesLabels, collabs = colLabels)
 
 
   ## LOG-LIKELIHOOD -------------------
@@ -797,7 +797,7 @@ validationStatsEvent <- function(sim) {
   spBSim <- dcast(spBSim, ... ~ speciesCode, value.var = "B", fill = 0)
 
   ## probs == 0 lead to infinite values. give them v. small values
-  cols <- intersect(names(spBSim), names(sim$speciesLabels))
+  cols <- intersect(names(spBSim), names(mod$speciesLabels))
   spBSim[, (cols) := lapply(.SD, function(x) {x[x == 0] <- 1E-6; x}), .SDcols = cols]
 
   landscapeLogLikB <- NegSumLogLikWrapper(spBObs, spBSim, reps = P(sim)$validationReps,
@@ -811,7 +811,7 @@ validationStatsEvent <- function(sim) {
   spBSim <- dcast(spBSim, ... ~ speciesCode, value.var = "B", fill = 0)
 
   ## probs == 0 lead to infinite values. give them v. small values
-  cols <- intersect(names(spBSim), names(sim$speciesLabels))
+  cols <- intersect(names(spBSim), names(mod$speciesLabels))
   spBSim[, (cols) := lapply(.SD, function(x) {x[x == 0] <- 1E-6; x}), .SDcols = cols]
 
   pixelLogLikB <- NegSumLogLikWrapper(spBObs, spBSim, reps = P(sim)$validationReps,
@@ -825,7 +825,7 @@ validationStatsEvent <- function(sim) {
   spCountSim <- dcast(spCountSim, ... ~ speciesCode, value.var = "count", fill = 0)
 
   ## probs == 0 lead to infinite values. give them v. small values
-  cols <- intersect(names(spCountSim), names(sim$speciesLabels))
+  cols <- intersect(names(spCountSim), names(mod$speciesLabels))
   spCountSim[, (cols) := lapply(.SD, function(x) {x[x == 0] <- 1E-6; x}), .SDcols = cols]
 
   landscapeLogLikCount <- NegSumLogLikWrapper(spCountObs, spCountSim, reps = P(sim)$validationReps,
@@ -839,7 +839,7 @@ validationStatsEvent <- function(sim) {
   spCountSim <- dcast(spCountSim, ... ~ speciesCode, value.var = "countDom", fill = 0)
 
   ## probs == 0 lead to infinite values. give them v. small values
-  cols <- intersect(names(spCountSim), c(names(sim$speciesLabels), "Mixed", "No veg."))
+  cols <- intersect(names(spCountSim), c(names(mod$speciesLabels), "Mixed", "No veg."))
   spCountSim[, (cols) := lapply(.SD, function(x) {x[x == 0] <- 1E-6; x}), .SDcols = cols]
 
   landscapeLogLikCountDom <- NegSumLogLikWrapper(spCountObs, spCountSim, reps = P(sim)$validationReps,
@@ -854,7 +854,7 @@ validationStatsEvent <- function(sim) {
   spDeltaObs <- dcast(spDeltaObs, ... ~ speciesCode, value.var = "deltaB")
   spDeltaSim <- dcast(spDeltaSim, ... ~ speciesCode, value.var = "deltaB")
 
-  cols <- intersect(names(spDeltaSim), c(names(sim$speciesLabels), "pixel"))
+  cols <- intersect(names(spDeltaSim), c(names(mod$speciesLabels), "pixel"))
 
   landscapeLogLikDeltaB <- NegSumLogLikWrapper(spDeltaObs, spDeltaSim,
                                                reps = P(sim)$validationReps, cols = cols,
@@ -867,7 +867,7 @@ validationStatsEvent <- function(sim) {
   spDeltaObs <- dcast(spDeltaObs, ... ~ speciesCode, value.var = "deltaB")
   spDeltaSim <- dcast(spDeltaSim, ... ~ speciesCode, value.var = "deltaB")
 
-  cols <- intersect(names(spDeltaSim), c(names(sim$speciesLabels), "pixel"))
+  cols <- intersect(names(spDeltaSim), c(names(mod$speciesLabels), "pixel"))
 
   pixelLogLikDeltaB <- NegSumLogLikWrapper(spDeltaObs, spDeltaSim,
                                            reps = P(sim)$validationReps, cols = cols,
@@ -1053,7 +1053,7 @@ landscapeWidePlotsEvent <- function(sim) {
     stat_summary(data = na.omit(sim$landscapeVars[dataType == "observed", ..cols]),
                  aes(x = speciesCode, y = relAbund, colour = "observed"),
                  fun = "mean", geom = "point", size = 2) +
-    scale_x_discrete(labels = sim$speciesLabels) +
+    scale_x_discrete(labels = mod$speciesLabels) +
     scale_color_manual(values = c("observed" = "red3")) +
     plotTheme(base_size = 12, margin = FALSE, legend = "bottom", x.text.angle = 45) +
     facet_wrap(~ year) +
@@ -1070,7 +1070,7 @@ landscapeWidePlotsEvent <- function(sim) {
     stat_summary(data = na.omit(sim$landscapeVars[dataType == "observed", ..cols]),
                  aes(x = speciesCode, y = count, colour = "observed"),
                  fun = "mean", geom = "point", size = 2) +
-    scale_x_discrete(labels = sim$speciesLabels) +
+    scale_x_discrete(labels = mod$speciesLabels) +
     scale_color_manual(values = c("observed" = "red3")) +
     plotTheme(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
     facet_wrap(~ year) +
@@ -1085,7 +1085,7 @@ landscapeWidePlotsEvent <- function(sim) {
     stat_summary(fun.data = "mean_sd", geom = "linerange", size = 1) +
     geom_point(data = na.omit(sim$landscapeVars[dataType == "observed", ..cols]),
                aes(x = speciesCode, y = countDom, colour = "observed"), size = 2) +
-    scale_x_discrete(labels = sim$speciesLabels, drop = FALSE) +
+    scale_x_discrete(labels = mod$speciesLabels, drop = FALSE) +
     scale_color_manual(values = c("observed" = "red3")) +
     plotTheme(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
     facet_wrap(~ year) +
@@ -1130,7 +1130,7 @@ pixelLevelPlotsEvent <- function(sim) {
   plot14 <- ggplot(data = na.omit(sim$pixelVars[, ..cols]),
                    aes(x = speciesCode, y = relAbund, fill = dataType )) +
     geom_boxplot() +
-    scale_x_discrete(labels = sim$speciesLabels) +
+    scale_x_discrete(labels = mod$speciesLabels) +
     plotTheme(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
     facet_wrap(~ year) +
     labs(title = "Species relative abundances", fill = "",
@@ -1162,7 +1162,7 @@ deltaBComparisonsEvent <- function(sim) {
     stat_summary(fun.data = "mean_sd", geom = "linerange", size = 1) +
     geom_point(data = na.omit(sim$landscapeVars[dataType == "observed", ..cols]),
                aes(x = speciesCode, y = deltaB, colour = "observed"), size = 2) +
-    scale_x_discrete(labels = sim$speciesLabels) +
+    scale_x_discrete(labels = mod$speciesLabels) +
     scale_color_manual(values = c("observed" = "red3")) +
     plotTheme(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
     labs(title = "Landscape-level", colour = "",
@@ -1173,7 +1173,7 @@ deltaBComparisonsEvent <- function(sim) {
   plot16 <- ggplot(data = na.omit(sim$pixelVars[, ..cols]),
                    aes(x = speciesCode, y = deltaB, fill = dataType)) +
     geom_boxplot(aes(alpha = speciesCode == "pixel")) +
-    scale_x_discrete(labels = c(sim$speciesLabels, "pixel" = "pixel")) +
+    scale_x_discrete(labels = c(mod$speciesLabels, "pixel" = "pixel")) +
     scale_alpha_manual(values = c("TRUE" = 0.3, "FALSE" = 1.0), guide = "none") +
     plotTheme(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
     labs(title = "Pixel-level", fill = "",
