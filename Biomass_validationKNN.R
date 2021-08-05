@@ -780,7 +780,7 @@ validationStatsEvent <- function(sim) {
 
   Plots(data = plotData, fn = MADplots,
         filename = "pixelMAD", path = file.path(mod$plotPath),
-        deviceArgs = list(width = 7, height = 7, units = "in", res = 300),
+        deviceArgs = list(width = 8, height = 7, units = "in", res = 300),
         xvar = "speciesCode", yvar = "MAD", colourvar = "variable",
         xlabs = mod$speciesLabels, collabs = colLabels)
 
@@ -794,7 +794,7 @@ validationStatsEvent <- function(sim) {
 
   Plots(data = plotData, fn = MADplots,
         filename = "landscapeMAD", path = file.path(mod$plotPath),
-        deviceArgs = list(width = 7, height = 7, units = "in", res = 300),
+        deviceArgs = list(width = 8, height = 7, units = "in", res = 300),
         xvar = "speciesCode", yvar = "MAD", colourvar = "variable",
         xlabs = mod$speciesLabels, collabs = colLabels)
 
@@ -1095,7 +1095,7 @@ landscapeWidePlotsEvent <- function(sim) {
     stat_summary(fun.data = "mean_sd", geom = "linerange", size = 1) +
     geom_point(data = na.omit(sim$landscapeVars[dataType == "observed", ..cols]),
                aes(x = speciesCode, y = countDom, colour = "observed"), size = 2) +
-    scale_x_discrete(labels = mod$speciesLabels, drop = FALSE) +
+    scale_x_discrete(labels = mod$speciesLabels) +
     scale_color_manual(values = c("observed" = "red3")) +
     plotTheme(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
     facet_wrap(~ year) +
