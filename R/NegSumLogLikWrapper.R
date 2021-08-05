@@ -71,8 +71,8 @@ NegSumLogLikWrapper <- function(obsData, simData, reps, years = NULL, cols = NUL
       simDataSubset <- simData[rep == i & year == j,  .SD, .SDcols = cols2]
 
       if (varType == "delta" & NROW(obsData) == 1) {
-        stop("Can't calculate log-likelihoods on a single observation of deltas",
-             "given the lack of a covariance matrix for the multivariate normal density function")
+        message("Can't calculate a variance-covariance matrix for a single observation of deltas.",
+             "Will use 'diag(ncol(obsDataSubset))' instead.")
       }
 
       ## make sure order is the same for rows and columns
