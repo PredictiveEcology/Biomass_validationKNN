@@ -598,11 +598,12 @@ calculateValidVarsEvent <- function(sim)  {
   ## species presences (count)
   ## dominant species presences (countDom)
   ## delta biomass
-
   ## relative abundances and no. pixels with a species
   landscapeVars <- sim$pixelCohortData
   landscapeVars <- landscapeVars[, list(B = sum(B),
                                         BObsrvd = sum(BObsrvd),
+                                        landscapeB = unique(landscapeB),
+                                        landscapeBObsrvd = unique(landscapeBObsrvd),
                                         landRelativeAbund = sum(B)/unique(landscapeB),
                                         landRelativeAbundObsrvd = sum(BObsrvd)/unique(landscapeBObsrvd),
                                         count = sum(B > 0),
@@ -610,8 +611,10 @@ calculateValidVarsEvent <- function(sim)  {
                                  by = .(rep, year, speciesCode)]
   landscapeVars <- melt.data.table(landscapeVars, measure.vars = list(c("B", "BObsrvd"),
                                                                       c("landRelativeAbund", "landRelativeAbundObsrvd"),
-                                                                      c("count", "countObsrvd")),
-                                   variable.name = "dataType", value.name = c("B", "relAbund", "count"))
+                                                                      c("count", "countObsrvd"),
+                                                                      c("landscapeB", "landscapeBObsrvd")),
+                                   variable.name = "dataType",
+                                   value.name = c("B", "relAbund", "count", "landscapeB"))
   landscapeVars[, dataType := ifelse(dataType == "1", "simulated", "observed")]
 
   ## no. pixels with a certain dominant species
@@ -631,39 +634,39 @@ calculateValidVarsEvent <- function(sim)  {
   landscapeVars <- landscapeVars[tempData3, on = c("rep", "year", "dataType", "speciesCode==vegType")]
   rm(tempData, tempData2, tempData3)
 
+  ## now make sure that all species/year combinations exist for both datasets
+  ## and add zeroes to species that had no biomass/presences
+  combos <- expand.grid(dataType = unique(landscapeVars$dataType),
+                        rep = unique(landscapeVars$rep),
+                        year = unique(landscapeVars$year),
+                        speciesCode = unique(landscapeVars$speciesCode)) %>%
+    as.data.table(.)
+  landscapeVars <- landscapeVars[combos, on = .(dataType, rep, year, speciesCode)]
+  cols <- c("B", "relAbund", "count", "countDom")
+  landscapeVars <- landscapeVars[, (cols) := replaceNAs(.SD, val = 0), .SDcols = cols]
+
+  landscapeVars[, landscapeB := unique(landscapeB[!is.na(landscapeB)]), by = .(dataType, rep, year)]
+
   ## delta biomass per species and across the lanscape
   year1 <- P(sim)$validationYears[1]
   year2 <- P(sim)$validationYears[2]
 
   ## across landscape (calculate landscape-wide changes in total B per species/pixel)
-  tempData <- sim$pixelCohortData[, list(B = sum(B),
-                                         landscapeB = unique(landscapeB),
-                                         BObsrvd = sum(BObsrvd),
-                                         landscapeBObsrvd = unique(landscapeBObsrvd)),
-                                  , by = .(rep, year, speciesCode)]
-  tempData <- tempData[, list(deltaB = as.numeric(B[which(year == year2)] - B[which(year == year1)]),
-                              deltaBObsrvd = as.numeric(BObsrvd[which(year == year2)] - BObsrvd[which(year == year1)]),
-                              landDeltaB = as.numeric(landscapeB[which(year == year2)] - landscapeB[which(year == year1)]),
-                              landDeltaBObsrvd = as.numeric(landscapeBObsrvd[which(year == year2)] - landscapeBObsrvd[which(year == year1)])),
-                       by = .(rep, speciesCode)]
+  tempData <- landscapeVars[, list(deltaB = as.numeric(B[which(year == year2)] - B[which(year == year1)]),
+                                  landDeltaB = as.numeric(landscapeB[which(year == year2)] - landscapeB[which(year == year1)])),
+                           by = .(dataType, rep, speciesCode)]
+  ## put "landscape" into speciesCode
+  cols <- setdiff(names(tempData), "deltaB")
+  tempData2 <- tempData[, ..cols]
+  setnames(tempData2, "landDeltaB", "deltaB")
+  tempData2 <- unique(tempData2[, speciesCode := "landscape"])
 
-  ## melt spp and landscape delta separately and rbind
-  cols <- c("rep", "speciesCode", "deltaB", "deltaBObsrvd")
-  tempData2 <- melt.data.table(tempData[, ..cols], measure.vars = c("deltaB", "deltaBObsrvd"),
-                               variable.name = "dataType", value.name = "deltaB")
-  tempData2[, dataType := ifelse(dataType == "deltaB", "simulated", "observed")]
-
-  cols <- c("rep", "speciesCode", "landDeltaB", "landDeltaBObsrvd")
-  tempData3 <- melt.data.table(tempData[, ..cols], measure.vars = c("landDeltaB", "landDeltaBObsrvd"),
-                               variable.name = "dataType", value.name = "deltaB")
-  tempData3[, dataType := ifelse(dataType == "landDeltaB", "simulated", "observed")]
-  tempData3 <- unique(tempData3[, speciesCode := "landscape"])
-
-  tempData <- rbind(tempData2, tempData3, use.names = TRUE)
+  cols <- setdiff(names(tempData), "landDeltaB")
+  tempData <- rbind(tempData[, ..cols], tempData2, use.names = TRUE)
 
   ## rbind as there is no year correspondence
   landscapeVars <- rbind(landscapeVars, tempData, use.names = TRUE, fill = TRUE)
-  rm(tempData, tempData2, tempData3)
+  rm(tempData, tempData2)
 
 
   ## PIXEL-LEVEL COMPARISONS --------------------
@@ -671,38 +674,46 @@ calculateValidVarsEvent <- function(sim)  {
   ## delta biomass
   pixelVars <- sim$pixelCohortData
   pixelVars <- pixelVars[, .(rep, year, pixelIndex, speciesCode, B, BObsrvd,
+                             pixelB, pixelBObsrvd,
                              relativeAbund, relativeAbundObsrvd)]
   pixelVars <- melt.data.table(pixelVars,
                                measure.vars = list(c("B", "BObsrvd"),
+                                                   c("pixelB", "pixelBObsrvd"),
                                                    c("relativeAbund", "relativeAbundObsrvd")),
-                               variable.name = "dataType", value.name = c("B", "relAbund"))
+                               variable.name = "dataType", value.name = c("B", "pixelB", "relAbund"))
   pixelVars[, dataType := ifelse(dataType == "1", "simulated", "observed")]
 
+  ## now make sure that all species/year/pixel combinations exist for both datasets
+  ## and add zeroes to species that had no biomass/presences
+  combos <- expand.grid(dataType = unique(pixelVars$dataType),
+                        rep = unique(pixelVars$rep),
+                        year = unique(pixelVars$year),
+                        pixelIndex = unique(pixelVars$pixelIndex),
+                        speciesCode = unique(pixelVars$speciesCode)) %>%
+    as.data.table(.)
+  pixelVars <- pixelVars[combos, on = .(dataType, rep, year, pixelIndex, speciesCode)]
+  cols <- c("B", "relAbund", "pixelB")
+  pixelVars <- pixelVars[, (cols) := replaceNAs(.SD, val = 0), .SDcols = cols]
+
+  pixelVars[, pixelB := unique(pixelB[!is.na(pixelB)]), by = .(dataType, rep, year, pixelIndex)]
+
   ## delta biomass per species and pixel (i.e. stand)
-  tempData <- sim$pixelCohortData
-  tempData <- tempData[, list(deltaB = as.numeric(B[which(year == year2)] - B[which(year == year1)]),
-                              deltaBObsrvd = as.numeric(BObsrvd[which(year == year2)] - BObsrvd[which(year == year1)]),
-                              pixelDeltaB = as.numeric(pixelB[which(year == year2)] - pixelB[which(year == year1)]),
-                              pixelDeltaBObsrvd = as.numeric(pixelBObsrvd[which(year == year2)] - pixelBObsrvd[which(year == year1)])),
-                       by = .(rep, pixelIndex, speciesCode)]
+  tempData <- pixelVars[, list(deltaB = as.numeric(B[which(year == year2)] - B[which(year == year1)]),
+                               pixelDeltaB = as.numeric(pixelB[which(year == year2)] - pixelB[which(year == year1)])),
+                       by = .(dataType, rep, pixelIndex, speciesCode)]
 
-  ## melt spp and pixel delta separately and rbind
-  cols <- c("rep", "pixelIndex", "speciesCode", "deltaB", "deltaBObsrvd")
-  tempData2 <- melt.data.table(tempData[, ..cols], measure.vars = c("deltaB", "deltaBObsrvd"),
-                               variable.name = "dataType", value.name = "deltaB")
-  tempData2[, dataType := ifelse(dataType == "deltaB", "simulated", "observed")]
+  ## put "pixel" into speciesCode
+  cols <- setdiff(names(tempData), "deltaB")
+  tempData2 <- tempData[, ..cols]
+  setnames(tempData2, "pixelDeltaB", "deltaB")
+  tempData2 <- unique(tempData2[, speciesCode := "pixel"])
 
-  cols <- c("rep", "pixelIndex", "speciesCode", "pixelDeltaB", "pixelDeltaBObsrvd")
-  tempData3 <- melt.data.table(tempData[, ..cols], measure.vars = c("pixelDeltaB", "pixelDeltaBObsrvd"),
-                               variable.name = "dataType", value.name = "deltaB")
-  tempData3[, dataType := ifelse(dataType == "pixelDeltaB", "simulated", "observed")]
-  tempData3 <- unique(tempData3[, speciesCode := "pixel"])
-
-  tempData <- rbind(tempData2, tempData3, use.names = TRUE)
+  cols <- setdiff(names(tempData), "pixelDeltaB")
+  tempData <- rbind(tempData[, ..cols], tempData2, use.names = TRUE)
 
   ## rbind as there is no year correspondence
   pixelVars <- rbind(pixelVars, tempData, use.names = TRUE, fill = TRUE)
-  rm(tempData, tempData2, tempData3)
+  rm(tempData, tempData2)
 
   ## export to sim
   sim$landscapeVars <- landscapeVars
