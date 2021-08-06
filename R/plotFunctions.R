@@ -12,7 +12,7 @@ MADplots <- function(ggData, xvar = "speciesCode", yvar = "MAD", colourvar = "va
   } else {
     gg <- gg + scale_color_brewer(palette = "Dark2")
   }
-  gg <- gg + theme_pubr(base_size = 12, margin = FALSE) +
+  gg <- gg + plotTheme(base_size = 12, margin = FALSE) +
     labs(colour = "", x = "") +
     theme(strip.text.x = element_blank(), strip.background = element_blank()) +
     facet_wrap(colourvar, ncol = 1, scales = "free_y")
