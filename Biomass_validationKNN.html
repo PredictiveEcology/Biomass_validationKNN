@@ -9,7 +9,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Ceres Barros and Alex Chubaty" />
+<meta name="author" content="Ceres Barros (cbarros@mail.ubc.ca)" />
+<meta name="author" content="Alex M. Chubaty (achubaty@for-cast.ca)" />
 
 <meta name="date" content="2021-05-11" />
 
@@ -166,63 +167,63 @@ pre code {
 
 
 <h1 class="title toc-ignore">Biomass_validationKNN</h1>
-<h4 class="author">Ceres Barros and Alex Chubaty</h4>
+<h4 class="author">Ceres Barros (<a href="mailto:cbarros@mail.ubc.ca" class="email">cbarros@mail.ubc.ca</a>)</h4>
+<h4 class="author">Alex M. Chubaty (<a href="mailto:achubaty@for-cast.ca" class="email">achubaty@for-cast.ca</a>)</h4>
 <h4 class="date">11 May 2021</h4>
 
 </div>
 
 
-<div id="overview" class="section level1">
-<h1>Overview</h1>
-<p>Provide an overview of what the module does / how to use the module.</p>
-<p>Module documentation should be written so that others can use your module. This is a template for module documentation, and should be changed to reflect your module.</p>
-<div id="r-markdown" class="section level2">
-<h2>R Markdown</h2>
-<p>R Markdown syntax allows R code, outputs, and figures to be rendered in the documentation.</p>
-<p>For help writing in R Markdown, see <a href="https://rmarkdown.rstudio.com/" class="uri">https://rmarkdown.rstudio.com/</a>.</p>
+<p><a href="https://gitter.im/PredictiveEcology/LandR_Biomass?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5MiIgaGVpZ2h0PSIyMCI+PGxpbmVhckdyYWRpZW50IGlkPSJiIiB4Mj0iMCIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2JiYiIgc3RvcC1vcGFjaXR5PSIuMSIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1vcGFjaXR5PSIuMSIvPjwvbGluZWFyR3JhZGllbnQ+PG1hc2sgaWQ9ImEiPjxyZWN0IHdpZHRoPSI5MiIgaGVpZ2h0PSIyMCIgcng9IjMiIGZpbGw9IiNmZmYiLz48L21hc2s+PGcgbWFzaz0idXJsKCNhKSI+PHBhdGggZmlsbD0iIzU1NSIgZD0iTTAgMGgzNHYyMEgweiIvPjxwYXRoIGZpbGw9IiM0NkJDOTkiIGQ9Ik0zNCAwaDU4djIwSDM0eiIvPjxwYXRoIGZpbGw9InVybCgjYikiIGQ9Ik0wIDBoOTJ2MjBIMHoiLz48L2c+PGcgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkRlamFWdSBTYW5zLFZlcmRhbmEsR2VuZXZhLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiPjx0ZXh0IHg9IjE3IiB5PSIxNSIgZmlsbD0iIzAxMDEwMSIgZmlsbC1vcGFjaXR5PSIuMyI+Y2hhdDwvdGV4dD48dGV4dCB4PSIxNyIgeT0iMTQiPmNoYXQ8L3RleHQ+PHRleHQgeD0iNjIiIHk9IjE1IiBmaWxsPSIjMDEwMTAxIiBmaWxsLW9wYWNpdHk9Ii4zIj5vbiBnaXR0ZXI8L3RleHQ+PHRleHQgeD0iNjIiIHk9IjE0Ij5vbiBnaXR0ZXI8L3RleHQ+PC9nPjwvc3ZnPg==" alt="Gitter" /></a></p>
+<div id="overview" class="section level1" number="1">
+<h1><span class="header-section-number">1</span> Overview</h1>
+<p>An approach to validating outputs from LandR Biomass - notably the <code>Biomass_core</code> vegetation simulation module - using publicly available data for Canadian forests.</p>
+<p>This module compares simulated outputs of two years (across replicates), with corresponding years of observed data. It was design to compare the observed data for years 2001 (start point for the simulation) and 2011 (so after 10 years of simulation) of the kNN forest layers of the Canadian National Forest Inventory. However, the user can supply other sources of observed data, as long as they obey the same format.</p>
+<p>The validation is done both visually (using bar and boxplots) and using two statistics: mean absolute deviation of simulated biomass (per species) and the negative sum of log-likelihoods of predictions with respect to observed data for species biomass, species presences/absences and changes in biomass (deltaB) - the later is still under development.</p>
+<div id="detailed-description" class="section level2" number="1.1">
+<h2><span class="header-section-number">1.1</span> Detailed description</h2>
+<p>The module downloads and prepares all necessary data (observed and simulated). It requires the following input data layers: land-cover change (change type and year), fire perimeters, % species cover, stand age and stand biomass. By default, the module will take these from National Forest Inventory kNN layers for years 2001 and 2011. We recomend that the user supplies layers used to initialise the simulation as the starting input layers (2001 if that is the starting point) to guarantee that they match.
+This module assumes that the simulation data preparation was carried out by <code>Biomass_borealDataPrep</code>, and so, to ensure that the comparison and the simulated datasets are built with the same assumptions, the data treatment steps in <code>Biomass_borealDataPrep</code> are repeated here. The module may also excludes disturbed pixels coded in <code>rstLCCChange</code> and fire perimeter data (<code>firePerimeters</code>). If this is not intended pass a <code>rstLCCChange</code> with NA’s only and an empty <code>firePerimeters</code> <code>sf</code> object.
+<code>Biomass_validationKNN</code> then compares simulated species biomass, presences, dominance, and changes in biomass against observed data available for the starting conditions (2011 by default) and a second time point (e.g. 2011, or after 10 years of simulation). To do so, for each year and replicate and for both the simulated and observed data, the module calculates:
+* species relative abundances at the pixel- and landscape-level (across all pixels)
+* species presences and dominance at the landscape level
+* changes in species biomass (<span class="math inline">\(\Delta\)</span>B) at the pixel- and landscape-level for both the simulated and observed data.</p>
+<p>Pixel-level relative abundances are calculated as the species biomass (summed across cohorts) divided by the total pixel biomass (summed across cohorts and species), while landscape-wide relative abundances are calculated as the sum of a species biomass across all pixels divided by the sum of total biomass across all pixels. Species presences are calculated as the number of pixels where a given species was present, and species dominance was calculated as the number of pixels where a species had the highest relative biomass in a given pixel. Pixels where two or more species shared the highest biomass value were classified as ‘mixed forest’, and pixels without any biomass were classified as ‘no veg.’. Finally, (<span class="math inline">\(\Delta\)</span>B) was calculated per species as the final biomass (e.g. year 2011) minus the initial biomass (e.g. year 2001), either at the pixel or landscape level.
+All calculations were done per repetition.</p>
+<div id="visual-validation" class="section level3" number="1.1.1">
+<h3><span class="header-section-number">1.1.1</span> Visual validation</h3>
+<p>The module plots the above metrics as barplots showing landscape-level values (averaged across repetitions for the simulated data) or boxplots showing pixel-level values. Plotting can be live and/or in the form of exported images (or turned off completely).</p>
+</div>
+<div id="mean-absolute-deviation" class="section level3" number="1.1.2">
+<h3><span class="header-section-number">1.1.2</span> Mean absolute deviation</h3>
+<p>Mean absolute deviance (MAD) values are calculated on landscape- and pixel-level species relative abundances and (<span class="math inline">\(\Delta\)</span>B), and landscape-level species presences and dominance, per repetition and year (except for (<span class="math inline">\(\Delta\)</span>B), which is integrated across years). Output tables with MAD values are exported as <code>landscapeMAD</code> and <code>pixelMAD</code>, and the module also produces visual inspection of these values as dot-and-whisker plots.</p>
+</div>
+<div id="log-likelihood" class="section level3" number="1.1.3">
+<h3><span class="header-section-number">1.1.3</span> Log-likelihood</h3>
+<p>To provide a measure of overall goodness of fit of the simulation model, given a given set of starting conditions and simulation mechanisms (i.e. the combination of inputs to <code>Biomass_core</code> but also other modules that may be associated in affecting vegetation dynamics), <code>Biomass_validationKNN</code> calculates a likelihood estimate as the negative sum of log-likelihoods of simulated species biomasses, <span class="math inline">\(\Delta\)</span>B (both at the landscape and pixel-level), and species presences (at the landscape-level), with respect to their observed counterparts.
+More precisely, let <span class="math inline">\(\ell\)</span> be the log-likelihood function denoting the probability of observing <span class="math inline">\(x\)</span> of <span class="math inline">\(X\)</span> (a random variable following a continuous probability distribution <span class="math inline">\(f(x)\)</span>), given a parameter <span class="math inline">\(\theta\)</span>:
+<span class="math display" id="eq:loglik">\[\begin{equation}
+  \ell(\theta \mid x) = f(x).
+  \tag{1.1}
+\end{equation}\]</span></p>
+<p>In our case, <span class="math inline">\(\theta\)</span> is equivalent to the model’s starting conditions and structure, <span class="math inline">\(X\)</span> is the observed data with <span class="math inline">\(x\)</span> being the simulated values, and <span class="math inline">\(f(x)\)</span> the continuous probability distribution of <span class="math inline">\(X\)</span>. For each variable that we wanted to evaluate and for each simulation replicate, Equation <a href="#eq:loglik">(1.1)</a> is applied to calculate the negative sum of log-likelihoods estimated for each value of <span class="math inline">\(x\)</span> at the pixel or landscape-level, <span class="math inline">\(i\)</span>:
+<span class="math display" id="eq:negsumloglik">\[\begin{equation}
+  -\sum_{i = 1}^{N} \ell(\theta \mid x_{i}),
+  \tag{1.2}
+\end{equation}\]</span>
+where <span class="math inline">\(N\)</span> is equal to total number of pixels. At the landscape scale <span class="math inline">\(N = 1\)</span>.</p>
+<p>For species biomass and species presences, we draw the probability of observing <span class="math inline">\(x_{i}\)</span> (a vector of species biomasses/presences in pixel/landscape <span class="math inline">\(i\)</span>) from a multinomial density distribution (<span class="math inline">\(f(x_{i}) = {\sf Multi}(n_{i}, \mathrm{p}_{i})\)</span>), where <span class="math inline">\(n_{i} = \sum_{j = 1}^{K} X_{i,j}\)</span> (<span class="math inline">\(X\)</span> being the observed values of biomass of <span class="math inline">\(j = 1, ..., K\)</span> species in a pixel/landscape <span class="math inline">\(i\)</span>) and <span class="math inline">\(\mathrm{p_{i}}\)</span> is the vector of simulated values <span class="math inline">\(x_{i,j}\)</span>.</p>
+<p><strong>The computation of log-likelihood for <span class="math inline">\(\Delta\)</span>B is still under development</strong><br />
+This is what we have implemented, but it is presenting problems, due to <span class="math inline">\(\mathrm{M}\)</span> not being strictly positive definite.
+For <span class="math inline">\(\Delta\)</span>B, we draw the probability of observing <span class="math inline">\(x_{i,j}\)</span> (the simulated <span class="math inline">\(\Delta\)</span>B of <span class="math inline">\(j = 1, ..., K\)</span> species in a pixel/landscape <span class="math inline">\(i\)</span>) from a multivariate Gaussian distribution, <span class="math inline">\(f(x_{i}) = \mathcal {N}(\mu_{i}, \mathrm{M}_{i})\)</span>, where <span class="math inline">\(\mu_{i}\)</span> is the vector of observed mean <span class="math inline">\(\Delta\)</span>B for each species <span class="math inline">\(j = 1, ..., K\)</span>, and <span class="math inline">\(\mathrm{M}\)</span> is the observed <span class="math inline">\(K * K\)</span> variance-covariance matrix of species <span class="math inline">\(\Delta\)</span>B.</p>
+<p>After calculating the negative sum of log-likelihoods across pixels (or for a landscape), values are averaged across replicates for an overal model estimate and exported in the <code>logLikelihood</code> table.</p>
+<p>We refer to the Wikipedia pages on the <a href="https://en.wikipedia.org/wiki/Multinomial_distribution">multinomial distribution</a> and on the <a href="https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Density_function">multivariate Gaussian distribution</a> for a good summary of these two distributions and their use in likelihood estimation.</p>
 </div>
 </div>
-<div id="usage" class="section level1">
-<h1>Usage</h1>
-<pre class="r"><code>library(SpaDES.core)
-
-setPaths(modulePath = file.path(&quot;..&quot;))
-getPaths() # shows where the 4 relevant paths are
-
-times &lt;- list(start = 0, end = 10)
-
-parameters &lt;- list(
-  #.progress = list(type = &quot;text&quot;, interval = 1), # for a progress bar
-  ## If there are further modules, each can have its own set of parameters:
-  #module1 = list(param1 = value1, param2 = value2),
-  #module2 = list(param1 = value1, param2 = value2)
-)
-modules &lt;- list(&quot;Biomass_validationKNN&quot;)
-objects &lt;- list()
-inputs &lt;- list()
-outputs &lt;- list()
-
-mySim &lt;- simInit(times = times, params = parameters, modules = modules,
-                 objects = objects)
-
-mySimOut &lt;- spades(mySim)</code></pre>
-</div>
-<div id="parameters" class="section level1">
-<h1>Parameters</h1>
-<p>Provide a summary of user-visible parameters.</p>
-<pre><code>## defineParameter: &#39;coverThresh&#39; is not of specified type &#39;integer&#39;.</code></pre>
-<pre><code>## defineParameter: &#39;LCChangeYr&#39; is not of specified type &#39;integer&#39;.</code></pre>
-<pre><code>## defineParameter: &#39;validationYears&#39; is not of specified type &#39;integer&#39;.</code></pre>
-<pre><code>## defineParameter: &#39;.useCache&#39; is not of specified type &#39;logical&#39;.</code></pre>
-<pre><code>## Loading required package: dplyr</code></pre>
-<pre><code>## 
-## Attaching package: &#39;dplyr&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:stats&#39;:
-## 
-##     filter, lag</code></pre>
-<pre><code>## The following objects are masked from &#39;package:base&#39;:
-## 
-##     intersect, setdiff, setequal, union</code></pre>
+<div id="inputs-and-parametrisation" class="section level2" number="1.2">
+<h2><span class="header-section-number">1.2</span> Inputs and parametrisation</h2>
+<p><code>Biomass_validationKNN</code> requires access to outputs of simulations from <code>Biomass_core</code>, and internet access to retrieve the observed kNN datasets used for validation. We advise future users to run <code>Biomass_validationKNN</code> with defaults and inspect what the objects are like before supplying their own data, or alternative data URLs. We expect the number of validation modules to increase as other validation approaches are developed based on project needs.</p>
+<p>Key parameters are those defining simulation years and repetitions, (<code>validationYears</code>, <code>validationReps</code>) and plot control (<code>.plots</code>). Here’s the full list of parameters:</p>
 <table>
 <colgroup>
 <col width="7%" />
@@ -317,19 +318,19 @@ mySimOut &lt;- spades(mySim)</code></pre>
 </tr>
 <tr class="even">
 <td align="left">.plotInitialTime</td>
-<td align="left">numeric</td>
-<td align="left">0</td>
+<td align="left">integer</td>
+<td align="left">1</td>
 <td align="left">NA</td>
 <td align="left">NA</td>
-<td align="left">Vector of length = 1, describing the simulation time at which the first plot event should occur. Set to NA to turn plotting off.</td>
+<td align="left">If NA plotting is off completely (this includes saving).</td>
 </tr>
 <tr class="odd">
-<td align="left">.plotInterval</td>
-<td align="left">numeric</td>
+<td align="left">.plots</td>
+<td align="left">character</td>
+<td align="left">object, png</td>
 <td align="left">NA</td>
 <td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">This describes the simulation time interval between plot events</td>
+<td align="left">Passed to <code>types</code> in Plots (see ?Plots). There are a few plots that are made within this module, if set. Note that plots (or their data) are saved in file.path(outputPath(sim), ‘figures’). If NA plotting is off completely (this includes saving).</td>
 </tr>
 <tr class="even">
 <td align="left">.saveInitialTime</td>
@@ -340,14 +341,6 @@ mySimOut &lt;- spades(mySim)</code></pre>
 <td align="left">This describes the simulation time at which the first save event should occur</td>
 </tr>
 <tr class="odd">
-<td align="left">.savePlots</td>
-<td align="left">logical</td>
-<td align="left">TRUE</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">Whether plots should be saved in file.path(outputPath(sim), ‘Figs’)</td>
-</tr>
-<tr class="even">
 <td align="left">.saveInterval</td>
 <td align="left">numeric</td>
 <td align="left">NA</td>
@@ -355,7 +348,7 @@ mySimOut &lt;- spades(mySim)</code></pre>
 <td align="left">NA</td>
 <td align="left">This describes the simulation time interval between save events</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">.studyAreaName</td>
 <td align="left">character</td>
 <td align="left">NA</td>
@@ -363,7 +356,7 @@ mySimOut &lt;- spades(mySim)</code></pre>
 <td align="left">NA</td>
 <td align="left">Human-readable name for the study area used. If NA, a hash of studyArea will be used.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">.useCache</td>
 <td align="left">logical</td>
 <td align="left">init</td>
@@ -373,34 +366,14 @@ mySimOut &lt;- spades(mySim)</code></pre>
 </tr>
 </tbody>
 </table>
-</div>
-<div id="events" class="section level1">
-<h1>Events</h1>
-<p>Describe what happens for each event type.</p>
-<div id="plotting" class="section level2">
-<h2>Plotting</h2>
-<p>Write what is plotted.</p>
-</div>
-<div id="saving" class="section level2">
-<h2>Saving</h2>
-<p>Write what is saved.</p>
-</div>
-</div>
-<div id="data-dependencies" class="section level1">
-<h1>Data dependencies</h1>
-<div id="input-data" class="section level2">
-<h2>Input data</h2>
-<p>How to obtain input data, and a description of the data required by the module. If <code>sourceURL</code> is specified, <code>downloadData(&quot;Biomass_validationKNN&quot;, &quot;..&quot;)</code> may be sufficient.</p>
-<pre><code>## defineParameter: &#39;coverThresh&#39; is not of specified type &#39;integer&#39;.</code></pre>
-<pre><code>## defineParameter: &#39;LCChangeYr&#39; is not of specified type &#39;integer&#39;.</code></pre>
-<pre><code>## defineParameter: &#39;validationYears&#39; is not of specified type &#39;integer&#39;.</code></pre>
-<pre><code>## defineParameter: &#39;.useCache&#39; is not of specified type &#39;logical&#39;.</code></pre>
+<p>Below is the full list of input objects that <code>Biomass_validationKNN</code> expects. Of these, the only input that <strong>must</strong> be provided (i.e. <code>Biomass_validationKNN</code> does not have a default for) is <code>studyArea</code>. Objects suffixed with <code>*Start</code> correspond to the same objects in the simulation without this suffix (e.g. <code>rawBiomassMapStart</code> is <code>rawBiomassMap</code> in the simulation). Order objects like <code>studyArea</code> and <code>rasterToMatch</code> have the same names in the simulation.</p>
+<p>We advise users to <strong>supply the <em>exact same objects</em> </strong> as those used in the simulations wherever possible - see example below.</p>
 <table>
 <colgroup>
 <col width="2%" />
 <col width="3%" />
-<col width="64%" />
-<col width="28%" />
+<col width="69%" />
+<col width="25%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -420,13 +393,13 @@ mySimOut &lt;- spades(mySim)</code></pre>
 <tr class="even">
 <td align="left">biomassMap</td>
 <td align="left">RasterLayer</td>
-<td align="left">total biomass raster layer in study area, filtered for pixels covered by cohortData. Only used to calculate total no. of pixels being simulated If not supplied, will default to to the Canadian Forestry Service, National Forest Inventory, kNN-derived total aboveground biomass map from 2001. See <a href="https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990" class="uri">https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990</a> for metadata</td>
+<td align="left">total biomass raster layer in study area, filtered for pixels covered by cohortData. Only used to calculate total no. of pixels being simulated If not supplied, will default to ‘rawBiomassMapStart’</td>
 <td align="left">NA</td>
 </tr>
 <tr class="odd">
 <td align="left">firePerimeters</td>
 <td align="left">sf</td>
-<td align="left">A map of fire perimeters in the study area that can be used to exclude pixels that have been burnt during the validation period. Defaults to the Canadian Wildland Fire Information System 1986-2018 National Burned Area Composite, subset to fires between 2001 and 2011 (inclusively).</td>
+<td align="left">A map of fire perimeters in the study area that can be used to exclude pixels that have been burnt during the validation period. If burnt pixels are not to be excluded Provide an empty sf object with the same properties as the default. Defaults to the Canadian Wildland Fire Information System 1986-2018 National Burned Area Composite, subset to fires between 2001 and 2011 (inclusively).</td>
 <td align="left"><a href="http://cwfis.cfs.nrcan.gc.ca/downloads/nbac/nbac_1986_to_2019_20200921.zip" class="uri">http://cwfis.cfs.nrcan.gc.ca/downloads/nbac/nbac_1986_to_2019_20200921.zip</a></td>
 </tr>
 <tr class="even">
@@ -456,7 +429,7 @@ mySimOut &lt;- spades(mySim)</code></pre>
 <tr class="even">
 <td align="left">rstLCChange</td>
 <td align="left">RasterLayer</td>
-<td align="left">A mask-type map of land cover changes in the study area that can be used to exclude pixels that have been disturbed during the validation period. Defaults to Canada’s forest change map between 1985-2011 (CFS), filtered for years 2001-2011 (inclusively) and all disturbances collapsed (map only has values of 1 and NA). See parameter LCChangeYr to change the period of disturbances, and <a href="https://opendata.nfis.org/mapserver/nfis-change_eng.html" class="uri">https://opendata.nfis.org/mapserver/nfis-change_eng.html</a> for more information.</td>
+<td align="left">A mask-type map of land cover changes in the study area that can be used to exclude pixels that have been disturbed during the validation period. If disturbed pixels are not to be excluded Provide an empty sf object with the same properties as the default. Defaults to Canada’s forest change map between 1985-2011 (CFS), filtered for years 2001-2011 (inclusively) and all disturbances collapsed (map only has values of 1 and NA). See parameter LCChangeYr to change the period of disturbances, and <a href="https://opendata.nfis.org/mapserver/nfis-change_eng.html" class="uri">https://opendata.nfis.org/mapserver/nfis-change_eng.html</a> for more information.</td>
 <td align="left"><a href="https://opendata.nfis.org/downloads/forest_change/C2C_change_type_1985_2011.zip" class="uri">https://opendata.nfis.org/downloads/forest_change/C2C_change_type_1985_2011.zip</a></td>
 </tr>
 <tr class="odd">
@@ -516,18 +489,102 @@ mySimOut &lt;- spades(mySim)</code></pre>
 </tbody>
 </table>
 </div>
-<div id="output-data" class="section level2">
-<h2>Output data</h2>
-<p>Description of the module outputs.</p>
-<pre><code>## defineParameter: &#39;coverThresh&#39; is not of specified type &#39;integer&#39;.</code></pre>
-<pre><code>## defineParameter: &#39;LCChangeYr&#39; is not of specified type &#39;integer&#39;.</code></pre>
-<pre><code>## defineParameter: &#39;validationYears&#39; is not of specified type &#39;integer&#39;.</code></pre>
-<pre><code>## defineParameter: &#39;.useCache&#39; is not of specified type &#39;logical&#39;.</code></pre>
+</div>
+<div id="usage-example" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> Usage example</h1>
+<div id="load-spades" class="section level2" number="2.1">
+<h2><span class="header-section-number">2.1</span> Load SpaDES</h2>
+<pre class="r"><code>library(SpaDES)
+
+moduleName &lt;- c(&quot;Biomass_core&quot;)  
+spadesModulesDirectory &lt;- &quot;..&quot; # In general, a module code will be controlled at one level above the source code</code></pre>
+</div>
+<div id="get-the-module" class="section level2" number="2.2">
+<h2><span class="header-section-number">2.2</span> Get the module</h2>
+<p>See <a href="https://github.com/PredictiveEcology/SpaDES-modules">SpaDES-modules repository</a> to see how to download this and other SpaDES modules. Alternatively, it can be forked or cloned from github.com directly.</p>
+</div>
+<div id="setup-simulation" class="section level2" number="2.3">
+<h2><span class="header-section-number">2.3</span> Setup simulation</h2>
+<pre class="r"><code>tempDir &lt;- tempdir()
+setPaths(inputPath = file.path(tempDir, &quot;inputs&quot;), 
+         cachePath = file.path(tempDir, &quot;cache&quot;), 
+         modulePath = spadesModulesDirectory, 
+         outputPath = file.path(tempDir, &quot;outputs&quot;))
+
+times &lt;- list(start = 0, end = 10)
+
+studyArea &lt;- Cache(randomStudyArea, size = 1e7) # cache this so it creates a random one only once on a machine
+
+# Pick the species you want to work with -- using the naming convention in &quot;Boreal&quot; column of LandR::sppEquivalencies_CA
+speciesNameConvention &lt;- &quot;Boreal&quot;
+speciesToUse &lt;- c(&quot;Pice_Gla&quot;, &quot;Popu_Tre&quot;, &quot;Pinu_Con&quot;)
+
+sppEquiv &lt;- LandR::sppEquivalencies_CA[get(speciesNameConvention) %in% speciesToUse]
+# Assign a colour convention for graphics for each species
+sppColorVect &lt;- LandR::sppColors(sppEquiv, speciesNameConvention,
+                                 newVals = &quot;Mixed&quot;, palette = &quot;Set1&quot;)
+
+## Usage example
+modules &lt;- as.list(moduleName)
+objects &lt;- list(studyArea = studyArea, sppEquiv = sppEquiv, sppColorVect = sppColorVect)
+paths &lt;- getPaths()
+
+successionTimestep &lt;- 20L
+
+## keep default values for most parameters 
+## (ommitted from this list)
+parameters &lt;- list(
+  Biomass_core = list(
+    &quot;sppEquivCol&quot; = speciesNameConvention
+    , &quot;successionTimestep&quot; = successionTimestep
+    , &quot;.plots&quot; = c(&quot;screen&quot;, &quot;object&quot;)
+    , &quot;.plotInitialTime&quot; = times$start
+    , &quot;.plotInterval&quot; = 1L
+    , &quot;.saveInitialTime&quot; = times$start
+    , &quot;.useCache&quot; = &quot;init&quot;
+    , &quot;.useParallel&quot; = FALSE
+  )
+)
+
+outputs &lt;- data.frame(expand.grid(objectName = &quot;cohortData&quot;,
+                                  saveTime = unique(seq(times$start, times$end, by = 1)),
+                                  eventPriority = 1,
+                                  stringsAsFactors = FALSE))
+
+graphics.off()
+mySim &lt;- simInitAndSpades(times = times,
+                          params = parameters, 
+                          modules = modules, 
+                          objects = objects, 
+                          paths = paths,
+                          outputs = outputs,
+                          debug = TRUE)</code></pre>
+</div>
+</div>
+<div id="events" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> Events</h1>
+<p>Events are scheduled as follows:</p>
+<ul>
+<li>Module initiation</li>
+<li>Seed dispersal (every <code>successionTimestep</code>)</li>
+<li>Mortality and growth</li>
+<li>Reclassification of age cohorts (every <code>successionTimestep</code>)</li>
+<li>Summary tables of regeneration (summaryRegen), biomass, age, growth and mortality (summaryBGM*)</li>
+<li>Plots of maps (plotMaps) and averages (plotAvgs)</li>
+<li>Save</li>
+</ul>
+</div>
+<div id="outputs" class="section level1" number="4">
+<h1><span class="header-section-number">4</span> Outputs</h1>
+<p>The module produces the following outputs:
+- Plotting - live and/or saved plot objects/images (depending on <code>.plots</code>)
+- Saved biomass, mortality, leading vegetation raster layers
+- Whatever objects supplied to <code>outputs</code> argument in <code>simInit</code> (only <code>cohortData</code> in the example above)</p>
 <table>
 <colgroup>
-<col width="8%" />
-<col width="5%" />
-<col width="86%" />
+<col width="12%" />
+<col width="4%" />
+<col width="82%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -538,52 +595,147 @@ mySimOut &lt;- spades(mySim)</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">rstDisturbedPix</td>
-<td align="left">RasterLayer</td>
-<td align="left">Raster of pixel IDs (as a mask) that have been disturbed by fire or suffered land-cover changes during the validation period. These pixels are excluded form the validation.</td>
+<td align="left">activePixelIndex</td>
+<td align="left">integer</td>
+<td align="left">internal use. Keeps track of which pixels are active</td>
 </tr>
 <tr class="even">
-<td align="left">rawBiomassMapStart</td>
-<td align="left">RasterLayer</td>
-<td align="left">observed total biomass raster layer in study area at the first year of the validation period. Filtered to exclude pixels that were disturbed during the validation period</td>
+<td align="left">activePixelIndexReporting</td>
+<td align="left">integer</td>
+<td align="left">internal use. Keeps track of which pixels are active in the reporting study area</td>
 </tr>
 <tr class="odd">
-<td align="left">rawBiomassMapEnd</td>
+<td align="left">ANPPMap</td>
 <td align="left">RasterLayer</td>
-<td align="left">observed total biomass raster layer in study area at the last year of the validation period. Filtered to exclude pixels that were disturbed during the validation period</td>
+<td align="left">ANPP map at each succession time step</td>
 </tr>
 <tr class="even">
-<td align="left">speciesLayersStart</td>
-<td align="left">RasterStack</td>
-<td align="left">observed cover percentage raster layers by species in Canada species map, at the first year of the validation period. Filtered to exclude pixels that were disturbed during the validation period</td>
-</tr>
-<tr class="odd">
-<td align="left">speciesLayersEnd</td>
-<td align="left">RasterStack</td>
-<td align="left">observed cover percentage raster layers by species in Canada species map, at the last year of the validation period. Filtered to exclude pixels that were disturbed during the validation period</td>
-</tr>
-<tr class="even">
-<td align="left">standAgeMapStart</td>
-<td align="left">RasterLayer</td>
-<td align="left">observed stand age map in study area, at the first year of the validation period Filtered to exclude pixels that were disturbed during the validation period</td>
-</tr>
-<tr class="odd">
-<td align="left">standAgeMapEnd</td>
-<td align="left">RasterLayer</td>
-<td align="left">observed stand age map in study area, at the last year of the validation period Filtered to exclude pixels that were disturbed during the validation period</td>
-</tr>
-<tr class="even">
-<td align="left">standCohortData</td>
+<td align="left">cohortData</td>
 <td align="left">data.table</td>
-<td align="left"></td>
+<td align="left">age cohort-biomass table hooked to pixel group map by pixelGroupIndex at succession time step</td>
+</tr>
+<tr class="odd">
+<td align="left">ecoregionMap</td>
+<td align="left">RasterLayer</td>
+<td align="left">ecoregion map that has mapcodes match ecoregion table and speciesEcoregion table. Defaults to a dummy map matching rasterToMatch with two regions</td>
+</tr>
+<tr class="even">
+<td align="left">inactivePixelIndex</td>
+<td align="left">logical</td>
+<td align="left">internal use. Keeps track of which pixels are inactive</td>
+</tr>
+<tr class="odd">
+<td align="left">inactivePixelIndexReporting</td>
+<td align="left">integer</td>
+<td align="left">internal use. Keeps track of which pixels are inactive in the reporting study area</td>
+</tr>
+<tr class="even">
+<td align="left">lastFireYear</td>
+<td align="left">numeric</td>
+<td align="left">Year of the most recent fire year</td>
+</tr>
+<tr class="odd">
+<td align="left">lastReg</td>
+<td align="left">numeric</td>
+<td align="left">an internal counter keeping track of when the last regeneration event occurred</td>
+</tr>
+<tr class="even">
+<td align="left">minRelativeB</td>
+<td align="left">data.frame</td>
+<td align="left">define the cut points to classify stand shadeness</td>
+</tr>
+<tr class="odd">
+<td align="left">mortalityMap</td>
+<td align="left">RasterLayer</td>
+<td align="left">Mortality map at each succession time step</td>
+</tr>
+<tr class="even">
+<td align="left">pixelGroupMap</td>
+<td align="left">RasterLayer</td>
+<td align="left">updated community map at each succession time step</td>
+</tr>
+<tr class="odd">
+<td align="left">regenerationOutput</td>
+<td align="left">data.table</td>
+<td align="left">TODO: description needed</td>
+</tr>
+<tr class="even">
+<td align="left">reproductionMap</td>
+<td align="left">RasterLayer</td>
+<td align="left">Regeneration map at each succession time step</td>
+</tr>
+<tr class="odd">
+<td align="left">simulatedBiomassMap</td>
+<td align="left">RasterLayer</td>
+<td align="left">Biomass map at each succession time step</td>
+</tr>
+<tr class="even">
+<td align="left">simulationOutput</td>
+<td align="left">data.table</td>
+<td align="left">contains simulation results by ecoregion (main output)</td>
+</tr>
+<tr class="odd">
+<td align="left">simulationTreeOutput</td>
+<td align="left">data.table</td>
+<td align="left">Summary of several characteristics about the stands, derived from cohortData</td>
+</tr>
+<tr class="even">
+<td align="left">species</td>
+<td align="left">data.table</td>
+<td align="left">a table that has species traits such as longevity, shade tolerance, etc. Currently obtained from LANDIS-II Biomass Succession v.6.0-2.0 inputs</td>
+</tr>
+<tr class="odd">
+<td align="left">speciesEcoregion</td>
+<td align="left">data.table</td>
+<td align="left">define the maxANPP, maxB and SEP change with both ecoregion and simulation time</td>
+</tr>
+<tr class="even">
+<td align="left">speciesLayers</td>
+<td align="left">RasterStack</td>
+<td align="left">biomass percentage raster layers by species in Canada species map</td>
+</tr>
+<tr class="odd">
+<td align="left">spinupOutput</td>
+<td align="left">data.table</td>
+<td align="left">Spin-up output</td>
+</tr>
+<tr class="even">
+<td align="left">summaryBySpecies</td>
+<td align="left">data.table</td>
+<td align="left">The total species biomass, average age and aNPP across the landscape (used for plotting and reporting).</td>
+</tr>
+<tr class="odd">
+<td align="left">summaryBySpecies1</td>
+<td align="left">data.table</td>
+<td align="left">No. pixels of each leading vegetation type (used for plotting and reporting).</td>
+</tr>
+<tr class="even">
+<td align="left">summaryLandscape</td>
+<td align="left">data.table</td>
+<td align="left">The averages of total biomass, age and aNPP across the landscape (used for plotting and reporting).</td>
+</tr>
+<tr class="odd">
+<td align="left">treedFirePixelTableSinceLastDisp</td>
+<td align="left">data.table</td>
+<td align="left">3 columns: pixelIndex, pixelGroup, and burnTime. Each row represents a forested pixel that was burned up to and including this year, since last dispersal event, with its corresponding pixelGroup and time it occurred</td>
+</tr>
+<tr class="even">
+<td align="left">vegTypeMap</td>
+<td align="left">RasterLayer</td>
+<td align="left">Map of leading species in each pixel, colored according to sim$sppColorVect</td>
 </tr>
 </tbody>
 </table>
 </div>
+<div id="links-to-other-modules" class="section level1" number="5">
+<h1><span class="header-section-number">5</span> Links to other modules</h1>
+<p>Intended to be used with other landscape modules, such as <code>LandMine</code>, <code>FireSense</code>, <code>Biomass_borealDataPrep</code>, <code>Biomass_regeneration</code> and possibly many others.</p>
+<div id="getting-help" class="section level2" number="5.1">
+<h2><span class="header-section-number">5.1</span> Getting help</h2>
+<ul>
+<li><a href="https://gitter.im/PredictiveEcology/LandR_Biomass" class="uri">https://gitter.im/PredictiveEcology/LandR_Biomass</a></li>
+</ul>
 </div>
-<div id="links-to-other-modules" class="section level1">
-<h1>Links to other modules</h1>
-<p>Describe any anticipated linkages to other modules.</p>
 </div>
 
 
