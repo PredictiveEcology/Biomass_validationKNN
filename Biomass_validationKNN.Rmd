@@ -46,14 +46,14 @@ Mean absolute deviance (MAD) values are calculated on landscape- and pixel-level
 To provide a measure of overall goodness of fit of the simulation model, given a given set of starting conditions and simulation mechanisms (i.e. the combination of inputs to `Biomass_core` but also other modules that may be associated in affecting vegetation dynamics), `Biomass_validationKNN` calculates a likelihood estimate as the negative sum of log-likelihoods of simulated species biomasses, $\Delta$B (both at the landscape and pixel-level), and species presences (at the landscape-level), with respect to their observed counterparts.
 More precisely, let $\ell$ be the log-likelihood function denoting the probability of observing $x$ of $X$ (a random variable following a continuous probability distribution $f(x)$), given a parameter $\theta$:
 \begin{equation}
-  \ell(\theta \mid x) = f(x).
-  (\#eq:loglik)
+\ell(\theta \mid x) = f(x).
+(\#eq:loglik)
 \end{equation}
 
 In our case, $\theta$ is equivalent to the model's starting conditions and structure, $X$ is the observed data with $x$ being the simulated values, and $f(x)$ the continuous probability distribution of $X$. For each variable that we wanted to evaluate and for each simulation replicate, Equation \@ref(eq:loglik) is applied to calculate the negative sum of log-likelihoods estimated for each value of $x$ at the pixel or landscape-level, $i$:
 \begin{equation}
-  -\sum_{i = 1}^{N} \ell(\theta \mid x_{i}),
-  (\#eq:negsumloglik)
+-\sum_{i = 1}^{N} \ell(\theta \mid x_{i}),
+(\#eq:negsumloglik)
 \end{equation}
 where $N$ is equal to total number of pixels. At the landscape scale $N = 1$. 
 
@@ -91,23 +91,33 @@ knitr::kable(df_inputs)
 # Usage example
 For this example we will simulate vegetation dynamics using `Biomass_core` with default (dummy) data, and repeat simulations 5 times.
 
-## Load SpaDES
+## Load SpaDES and download modules
 
 ```{r load-SpaDES, eval=FALSE}
 library(SpaDES)
+library(SpaDES.install)
+library(SpaDES.experiment)
+library(future)
 
-moduleName <- c("Biomass_core")  
-spadesModulesDirectory <- ".." # In general, a module code will be controlled at one level above the source code
+tempDir <- tempdir()
+spadesModulesDirectory <- file.path(tempDir, "modules")
+setPaths(inputPath = file.path(tempDir, "inputs"), 
+         cachePath = file.path(tempDir, "cache"), 
+         modulePath = spadesModulesDirectory, 
+         outputPath = file.path(tempDir, "outputs"))
+
+getModule("PredictiveEcology/Biomass_core", modulePath = spadesModulesDirectory, overwrite = TRUE)
+getModule("PredictiveEcology/Biomass_validationKNN", modulePath = spadesModulesDirectory, overwrite = TRUE)
+
+file.rename(c(file.path(spadesModulesDirectory, "Biomass_core-master"),
+              file.path(spadesModulesDirectory, "Biomass_validationKNN-master")),
+            c(file.path(spadesModulesDirectory, "Biomass_core"),
+              file.path(spadesModulesDirectory, "Biomass_validationKNN")))
 ```
-
-## Get the module
-
-See [SpaDES-modules repository](https://github.com/PredictiveEcology/SpaDES-modules) to see how to download this and other SpaDES modules. Alternatively, it can be forked or cloned from github.com directly.
 
 ## Setup simulation
 
-```{r module usage example, eval=FALSE}
-tempDir <- tempdir()
+```{r module usage example1, eval=FALSE}
 setPaths(inputPath = file.path(tempDir, "inputs"), 
          cachePath = file.path(tempDir, "cache"), 
          modulePath = spadesModulesDirectory, 
@@ -127,7 +137,7 @@ sppColorVect <- LandR::sppColors(sppEquiv, speciesNameConvention,
                                  newVals = "Mixed", palette = "Set1")
 
 ## Usage example
-modules <- as.list(moduleName)
+modules <- as.list("Biomass_core")
 objects <- list(studyArea = studyArea, sppEquiv = sppEquiv, sppColorVect = sppColorVect)
 paths <- getPaths()
 
@@ -139,9 +149,9 @@ parameters <- list(
   Biomass_core = list(
     "sppEquivCol" = speciesNameConvention
     , "successionTimestep" = successionTimestep
-    , ".plots" = c("screen", "object")
     , ".plotInitialTime" = times$start
     , ".plotInterval" = 1L
+    , ".plots" = "png"
     , ".saveInitialTime" = times$start
     , ".useCache" = "init"
     , ".useParallel" = FALSE
@@ -152,43 +162,80 @@ outputs <- data.frame(expand.grid(objectName = "cohortData",
                                   saveTime = unique(seq(times$start, times$end, by = 1)),
                                   eventPriority = 1,
                                   stringsAsFactors = FALSE))
-
-graphics.off()
-mySim <- simInitAndSpades(times = times,
-                          params = parameters, 
-                          modules = modules, 
-                          objects = objects, 
-                          paths = paths,
-                          outputs = outputs,
-                          debug = TRUE)
 ```
 
-# Events
-Events are scheduled as follows:
+## Run a simulation with ten replicates
 
-- Module initiation
-- Seed dispersal (every `successionTimestep`)
-- Mortality and growth
-- Reclassification of age cohorts (every `successionTimestep`)
-- Summary tables of regeneration (summaryRegen), biomass, age, growth and mortality (summaryBGM*)
-- Plots of maps (plotMaps) and averages (plotAvgs)
-- Save
+```{r module usage example2,  eval=FALSE}
+graphics.off()
+mySimInit <- simInit(times = times,
+                     params = parameters, 
+                     modules = modules, 
+                     objects = objects, 
+                     paths = paths,
+                     outputs = outputs)
+
+plan(sequential)
+mySimExperiment <- experiment2(
+  sim1 = mySimInit,
+  clearSimEnv = FALSE,
+  replicates = 3)
+```
+
+## Validate simulation outputs with `Biomass_validationKNN`
+Note that because we ran `Biomass_core`, we can't expect the validation to tbe sensible - as it compares the simulated results with real data.
+
+```{r validation,  eval=FALSE}
+simulationOutputs <- lapply(mySimExperiment, FUN = function(x, localSimPaths) {
+  oldPath <- dirname(outputPath(x)) ## exclude sim*_rep* folder
+  DT <- as.data.table(outputs(x))
+  DT[, file := sub(oldPath, localSimPaths$outputPath, file)]
+  DT
+}, localSimPaths = getPaths())
+simulationOutputs <- rbindlist(simulationOutputs)
+
+validationPaths <- getPaths()
+validationPaths$outputPath <- file.path(validationPaths$outputPath, "validation")
+
+validationTimes <- list(start = 1, end = 1)
+validationParams <- list(
+  Biomass_validationKNN = list(
+    "sppEquivCol" = params(mySimInit)$sppEquivCol
+    , "validationReps" = as.integer(1:3)  ## or length of simLists
+    , "validationYears" = as.integer(c(2001, 2011))
+    , ".plots" = c("png")
+  )
+)
+
+validationObjects <- list(
+  "biomassMap" = mySimExperiment$sim1_rep1$biomassMap
+  , "rasterToMatch" = mySimExperiment$sim1_rep1$rasterToMatch
+  , "rawBiomassMapStart" = mySimExperiment$sim1_rep1$biomassMap
+  , "simulationOutputs" = simulationOutputs
+  , "speciesLayersStart" = mySimExperiment$sim1_rep1$speciesLayers
+  , "sppColorVect" = mySimExperiment$sim1_rep1$sppColorVect
+  , "sppEquiv" = mySimExperiment$sim1_rep1$sppEquiv
+  , "studyArea" = mySimExperiment$sim1_rep1$studyArea
+)
+
+mySimValidation <- simInitAndSpades(times = validationTimes
+                                    , params = validationParams
+                                    , modules = "Biomass_validationKNN"
+                                    , objects = validationObjects
+                                    , paths = validationPaths
+                                    , .studyAreaName = SAname)
+
+```
 
 # Outputs
-
 The module produces the following outputs:
-- Plotting - live and/or saved plot objects/images (depending on `.plots`)
-- Saved biomass, mortality, leading vegetation raster layers
-- Whatever objects supplied to `outputs` argument in `simInit` (only `cohortData` in the example above)
 
 ```{r moduleOutputs, echo = FALSE, eval = TRUE, message=FALSE, warning=FALSE}
-df_outputs <- SpaDES.core::moduleOutputs("Biomass_core", "..")
+df_outputs <- SpaDES.core::moduleOutputs("Biomass_validationKNN", "..")
 knitr::kable(df_outputs)
 ```
 
-# Links to other modules
-
-Intended to be used with other landscape modules, such as `LandMine`, `FireSense`, `Biomass_borealDataPrep`, `Biomass_regeneration` and possibly many others.
+and saves the validation figures in `getPaths$outputPath`
 
 
 ## Getting help
