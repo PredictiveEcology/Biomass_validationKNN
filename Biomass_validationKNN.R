@@ -345,8 +345,12 @@ Init <- function(sim) {
   rasterToMatchIDs <- setValues(rasterToMatchIDs, values = 1:ncell(rasterToMatchIDs))
 
   ## get pixels inside fire perimeters
-  inFireIDs <- getValues(mask(rasterToMatchIDs, sim$firePerimeters))
-  inFireIDs <- inFireIDs[!is.na(inFireIDs)] ## faster than na.omit
+  if (!st_is_empty(sim$firePerimeters)) {
+    inFireIDs <- getValues(mask(rasterToMatchIDs, sim$firePerimeters))
+    inFireIDs <- inFireIDs[!is.na(inFireIDs)] ## faster than na.omit
+  } else {
+    inFireIDs <- integer(0)
+  }
 
   ## get pixels inside LCC pixels
   inLCChangeIDs <- rasterToMatchIDs[!is.na(sim$rstLCChange)]
