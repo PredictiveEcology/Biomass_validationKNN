@@ -659,8 +659,8 @@ calculateValidVarsEvent <- function(sim)  {
 
   ## across landscape (calculate landscape-wide changes in total B per species/pixel)
   tempData <- landscapeVars[, list(deltaB = as.numeric(B[which(year == year2)] - B[which(year == year1)]),
-                                  landDeltaB = as.numeric(landscapeB[which(year == year2)] - landscapeB[which(year == year1)])),
-                           by = .(dataType, rep, speciesCode)]
+                                   landDeltaB = as.numeric(landscapeB[which(year == year2)] - landscapeB[which(year == year1)])),
+                            by = .(dataType, rep, speciesCode)]
   ## put "landscape" into speciesCode
   cols <- setdiff(names(tempData), "deltaB")
   tempData2 <- tempData[, ..cols]
@@ -706,7 +706,7 @@ calculateValidVarsEvent <- function(sim)  {
   ## delta biomass per species and pixel (i.e. stand)
   tempData <- pixelVars[, list(deltaB = as.numeric(B[which(year == year2)] - B[which(year == year1)]),
                                pixelDeltaB = as.numeric(pixelB[which(year == year2)] - pixelB[which(year == year1)])),
-                       by = .(dataType, rep, pixelIndex, speciesCode)]
+                        by = .(dataType, rep, pixelIndex, speciesCode)]
 
   ## put "pixel" into speciesCode
   cols <- setdiff(names(tempData), "deltaB")
