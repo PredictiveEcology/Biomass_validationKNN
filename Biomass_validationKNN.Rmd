@@ -211,7 +211,7 @@ validationParams <- list(
 )
 
 ## make an empty fire polygon object to bypass removing fire-disturbed pixels
-noFires <- st_polygon()
+noFires <- sf::st_polygon()
 validationObjects <- list(
   "biomassMap" = mySimExperiment$sim1_rep1$biomassMap
   , "firePerimeters" = noFires
