@@ -1474,10 +1474,12 @@ deltaBComparisonsEvent <- function(sim) {
 
   if (!suppliedElsewhere("speciesLayersStart", sim)) {
     #opts <- options(reproducible.useCache = "overwrite")
-    sim$speciesLayersStart <- Cache(loadkNNSpeciesLayers,
-                                    dPath = dPath,
+    sim$speciesLayersStart <- Cache(prepSpeciesLayers_KNN,
+                                    destinationPath = dPath,
+                                    outputPath = dPath,
                                     rasterToMatch = sim$rasterToMatch,
-                                    studyArea = sim$studyArea,   ## Ceres: makePixel table needs same no. pixels for this, RTM rawBiomassMapStart, LCC.. etc
+                                    studyArea = sim$studyArea,
+                                    studyAreaName = P(sim)$.studyAreaName,
                                     sppEquiv = sim$sppEquiv,
                                     knnNamesCol = "KNN",
                                     sppEquivCol = P(sim)$sppEquivCol,
@@ -1492,15 +1494,18 @@ deltaBComparisonsEvent <- function(sim) {
   sppEquiv <- sim$sppEquiv[sppEquiv]
 
   if (!suppliedElsewhere("speciesLayersEnd", sim)) {
-    sim$speciesLayersEnd <- Cache(loadkNNSpeciesLayersValidation,
-                                  dPath = dPath,
+    sim$speciesLayersEnd <- Cache(prepSpeciesLayers_KNN,
+                                  destinationPath = dPath,
+                                  outputPath = dPath,
                                   rasterToMatch = sim$rasterToMatch,
                                   studyArea = sim$studyArea,   ## Ceres: makePixel table needs same no. pixels for this, RTM rawBiomassMapStart, LCC.. etc
+                                  studyAreaName = P(sim)$.studyAreaName,
                                   sppEquiv = sppEquiv,
                                   knnNamesCol = "KNN",
                                   sppEquivCol = P(sim)$sppEquivCol,
                                   thresh = P(sim)$coverThresh,
                                   url = extractURL("speciesLayersEnd"),
+                                  year = 2011,
                                   userTags = c(cacheTags, "speciesLayersEnd"),
                                   omitArgs = c("userTags"))
   }
