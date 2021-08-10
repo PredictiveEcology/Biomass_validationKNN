@@ -237,9 +237,7 @@ The module produces the following outputs:
 df_outputs <- SpaDES.core::moduleOutputs("Biomass_validationKNN", "..")
 knitr::kable(df_outputs)
 ```
-
-and saves the validation figures in `getPaths$outputPath`
-
+and saves the validation figures in `getPaths$outputPath`. To see the log-likelihoods table use `mySimValidation$logLikelihood`.
 
 ## Getting help
 
