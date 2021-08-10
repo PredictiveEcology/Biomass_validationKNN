@@ -9,7 +9,7 @@ defineModule(sim, list(
                "forest dynamics", "forest succession", "data", "prediction"),
   authors = c(person("Ceres", "Barros", email = "cbarros@mail.ubc.ca", role = c("aut", "cre"))),
   childModules = character(0),
-  version = list(Biomass_validationKNN = "0.0.2"),
+  version = list(Biomass_validationKNN = "0.0.2.9001"),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
