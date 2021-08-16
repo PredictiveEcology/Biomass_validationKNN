@@ -790,7 +790,7 @@ validationStatsEvent <- function(sim) {
 
   Plots(data = plotData, fn = MADplots,
         filename = "pixelMAD", path = file.path(mod$plotPath),
-        deviceArgs = list(width = 8, height = 7, units = "in", res = 300),
+        deviceArgs = list(width = 10, height = 8, units = "in", res = 300),
         xvar = "speciesCode", yvar = "MAD", colourvar = "variable",
         xlabs = mod$speciesLabels, collabs = colLabels)
 
@@ -804,7 +804,7 @@ validationStatsEvent <- function(sim) {
 
   Plots(data = plotData, fn = MADplots,
         filename = "landscapeMAD", path = file.path(mod$plotPath),
-        deviceArgs = list(width = 8, height = 7, units = "in", res = 300),
+        deviceArgs = list(width = 10, height = 8, units = "in", res = 300),
         xvar = "speciesCode", yvar = "MAD", colourvar = "variable",
         xlabs = mod$speciesLabels, collabs = colLabels)
 
@@ -1604,7 +1604,7 @@ deltaBComparisonsEvent <- function(sim) {
   ## Cohort data -------------------------------------------
   if (!suppliedElsewhere("allCohortData", sim)) {
     if (!suppliedElsewhere("simulationOutputs", sim)) {
-      stop("If not supplying 'allCohort' then you MUST supply 'simulationOutputs'")
+      stop("If not supplying 'allCohortData' then you MUST supply 'simulationOutputs'")
     } else {
       cohortDataOutputs <- sim$simulationOutputs[objectName == "cohortData"]
 
