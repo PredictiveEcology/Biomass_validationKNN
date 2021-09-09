@@ -949,7 +949,7 @@ obsrvdDeltaMapsEvent <- function(sim) {
   plot1 <- ggplot(pixelDeltaObsrvdData,
                   aes(x = pixelDeltaAgeObsrvd, y = pixelDeltaBObsrvd)) +
     geom_point() +
-    stat_smooth(method = "lm") +
+    # stat_smooth(method = "lm") +
     plotTheme(base_size = 12, margin = FALSE, majorYlines = FALSE) +
     theme(axis.title.x = element_blank(), axis.text.x = element_blank()) +
     labs(y = expression(paste("observed ", Delta, "B")))
@@ -1003,7 +1003,7 @@ obsrvdDeltaMapsEvent <- function(sim) {
   plot6 <- ggplot(plotData,
                   aes(x = pixelDeltaAgeObsrvd, y = pixelDeltaBObsrvd)) +
     geom_point() +
-    stat_smooth(method = "lm") +
+    # stat_smooth(method = "lm") +
     plotTheme(base_size = 12, margin = FALSE, majorYlines = FALSE) +
     theme(axis.title.x = element_blank(), axis.text.x = element_blank()) +
     labs(y = expression(paste("observed ", Delta, "B", " - adjusted")))
