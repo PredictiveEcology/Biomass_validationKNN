@@ -15,8 +15,9 @@ MADplots <- function(ggData, xvar = "speciesCode", yvar = "MAD", colourvar = "va
   }
   gg <- gg + plotTheme(base_size = 12, legend = "top", x.text.angle = 45) +
     labs(colour = "", x = "") +
-    theme(strip.text.x = element_blank(), strip.background = element_blank()) +
-    facet_wrap(colourvar, ncol = 1, scales = "free_y")
+    theme(strip.background = element_blank(), strip.switch.pad.wrap = unit(0, "cm")) +
+    facet_wrap(colourvar, ncol = 1, scales = "free_y", labeller = label_parsed,
+               strip.position = "left")
 
   return(gg)
 }

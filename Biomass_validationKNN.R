@@ -792,7 +792,12 @@ validationStatsEvent <- function(sim) {
   ## melt and add all labels to factor for equal colours
   plotData <- melt(pixelMAD, measure.vars = c("meanAbsDevRelAbund", "meanAbsDevDeltaB"),
                    value.name = "MAD")
-  plotData$variable <- factor(plotData$variable, levels = names(colLabels))
+  plotData$variable <- factor(plotData$variable,
+                              levels = unique(plotData$variable),
+                              labels = c("frac('species B', 'total/pixel B')",
+                                         "paste('No. of pixels')",
+                                         "paste('No. of pixels ')",
+                                         "g/m^2"))
 
   Plots(data = plotData, fn = MADplots,
         filename = "pixelMAD", path = file.path(mod$plotPath),
@@ -803,6 +808,12 @@ validationStatsEvent <- function(sim) {
   plotData <- melt(landscapeMAD,
                    measure.vars = c("meanAbsDevRelAbund", "meanAbsDevCount", "meanAbsDevCountDom", "meanAbsDevDeltaB"),
                    value.name = "MAD")
+  plotData$variable <- factor(plotData$variable,
+                              levels = unique(plotData$variable),
+                              labels = c("frac('species B', 'total/pixel B')",
+                                         "paste('No. of pixels')",
+                                         "paste('No. of pixels ')",
+                                         "g/m^2"))
 
   Plots(data = plotData, fn = MADplots,
         filename = "landscapeMAD", path = file.path(mod$plotPath),
