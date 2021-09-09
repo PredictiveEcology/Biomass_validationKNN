@@ -16,7 +16,7 @@ defineModule(sim, list(
   citation = list("citation.bib"),
   documentation = list("README.txt", "Biomass_validationKNN.Rmd"),
   reqdPkgs = list("crayon", "raster", "achubaty/amc", "mclust",
-                  "sf", "XML", "RCurl", "ggplot2", "ggpubr",
+                  "sf", "XML", "RCurl", "ggplot2", "ggpubr", "scales",
                   "PredictiveEcology/LandR@modelBiomass (>=1.0.5)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development (>= 1.2.7.9011)",
@@ -784,20 +784,20 @@ validationStatsEvent <- function(sim) {
 
 
   ## PLOTS
-  colLabels <- list("meanAbsDevRelAbund" = "rel. abundance",
-                    "meanAbsDevCount" = "presences",
-                    "meanAbsDevCountDom" = "dominance",
-                    "meanAbsDevDeltaB" = bquote(paste(Delta, B)))
-
   ## melt and add all labels to factor for equal colours
   plotData <- melt(pixelMAD, measure.vars = c("meanAbsDevRelAbund", "meanAbsDevDeltaB"),
                    value.name = "MAD")
   plotData$variable <- factor(plotData$variable,
-                              levels = unique(plotData$variable),
+                              levels = c("meanAbsDevRelAbund", "meanAbsDevCount", "meanAbsDevCountDom", "meanAbsDevDeltaB"),
                               labels = c("frac('species B', 'total/pixel B')",
                                          "paste('No. of pixels')",
                                          "paste('No. of pixels ')",
                                          "g/m^2"))
+
+  colLabels <- list("frac('species B', 'total/pixel B')" = "rel. abundance",
+                    "paste('No. of pixels')" = "presences",
+                    "paste('No. of pixels ')" = "dominance",
+                    "g/m^2" = bquote(paste(Delta, B)))
 
   Plots(data = plotData, fn = MADplots,
         filename = "pixelMAD", path = file.path(mod$plotPath),
@@ -1107,7 +1107,7 @@ landscapeWidePlotsEvent <- function(sim) {
     scale_color_manual(values = c("observed" = "red3")) +
     plotTheme(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
     facet_wrap(~ year) +
-    labs(title = "Species presences", x = "", y = "Count",
+    labs(title = "Species presences", x = "", y = "No. of pixels",
          colour = "", fill = "")
 
   ## no. pixels with a certain dominant species
@@ -1123,7 +1123,7 @@ landscapeWidePlotsEvent <- function(sim) {
     plotTheme(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
     facet_wrap(~ year) +
     labs(title = "Dominant species' presences",
-         x = "", y = "Count", fill = "", colour = "")
+         x = "", y = "No. of pixels", fill = "", colour = "")
 
   maxPixels <- sum(!is.na(getValues(sim$biomassMap)))
   plotLandscapeComp <- ggarrange(plot11 + scale_y_continuous(limits = c(0,1)),
