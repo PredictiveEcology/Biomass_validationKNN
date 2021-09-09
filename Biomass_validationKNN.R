@@ -782,11 +782,17 @@ validationStatsEvent <- function(sim) {
                                       meanAbsDevDeltaB = 1/.N * sum(abs(deltaB - meanDeltaBObs))),
                                by = .(rep, year, speciesCode)]
 
+
   ## PLOTS
+  colLabels <- list("meanAbsDevRelAbund" = "rel. abundance",
+                    "meanAbsDevCount" = "presences",
+                    "meanAbsDevCountDom" = "dominance",
+                    "meanAbsDevDeltaB" = bquote(paste(Delta, B)))
+
+  ## melt and add all labels to factor for equal colours
   plotData <- melt(pixelMAD, measure.vars = c("meanAbsDevRelAbund", "meanAbsDevDeltaB"),
                    value.name = "MAD")
-  colLabels <- list("meanAbsDevRelAbund" = "rel. abundance",
-                    "meanAbsDevDeltaB" = bquote(paste(Delta, B)))
+  plotData$variable <- factor(plotData$variable, levels = names(colLabels))
 
   Plots(data = plotData, fn = MADplots,
         filename = "pixelMAD", path = file.path(mod$plotPath),
@@ -797,10 +803,6 @@ validationStatsEvent <- function(sim) {
   plotData <- melt(landscapeMAD,
                    measure.vars = c("meanAbsDevRelAbund", "meanAbsDevCount", "meanAbsDevCountDom", "meanAbsDevDeltaB"),
                    value.name = "MAD")
-  colLabels <- list("meanAbsDevRelAbund" = "rel. abundance",
-                    "meanAbsDevCount" = "presences",
-                    "meanAbsDevCountDom" = "dominance",
-                    "meanAbsDevDeltaB" = bquote(paste(Delta, B)))
 
   Plots(data = plotData, fn = MADplots,
         filename = "landscapeMAD", path = file.path(mod$plotPath),
