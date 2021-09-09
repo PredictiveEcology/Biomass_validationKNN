@@ -1613,7 +1613,7 @@ deltaBComparisonsEvent <- function(sim) {
         out <- lapply(P(sim)$validationYears, FUN = function(y, cohortDataOutputs, reps) {
           fileNames <- cohortDataOutputs[saveTime == y, file]
           reps <- paste("rep", reps, sep = "")
-          reps <- sub("(rep)([[:digit:]])$", "\\10*\\2", reps)
+          reps <- sub("(rep)([[:digit:]])$", "\\10\\2", reps)
           out <- vapply(reps, FUN = function(x) any(grepl(x, fileNames)), FUN.VALUE = logical(1))
           out2 <- which(!out)
           if (length(out2))
@@ -1633,7 +1633,7 @@ deltaBComparisonsEvent <- function(sim) {
       ## subset to validation reps and add reps column
       if (!any(is.na(P(sim)$validationReps))) {
         repsStr <- paste("rep", P(sim)$validationReps, sep = "")
-        repsStr <- sub("(rep)([[:digit:]])$", "\\10*\\2", repsStr)
+        repsStr <- sub("(rep)([[:digit:]])$", "\\10\\2", repsStr)
         repsStr <- paste(repsStr, sep = "", collapse = "|" )
         cohortDataOutputs <- cohortDataOutputs[grepl(repsStr, file)]
         cohortDataOutputs[, rep := sub("(.*rep)([[:digit:]]*)(\\/.*)", "\\2", file)]
@@ -1670,7 +1670,7 @@ deltaBComparisonsEvent <- function(sim) {
         out <- lapply(P(sim)$validationYears, FUN = function(y, pixelGroupMapOutputs, reps) {
           fileNames <- pixelGroupMapOutputs[saveTime == y, file]
           reps <- paste("rep", reps, sep = "")
-          reps <- sub("(rep)([[:digit:]])$", "\\10*\\2", reps)
+          reps <- sub("(rep)([[:digit:]])$", "\\10\\2", reps)
           out <- vapply(reps, FUN = function(x) any(grepl(x, fileNames)), FUN.VALUE = logical(1))
           out2 <- which(!out)
           if (length(out2))
@@ -1690,7 +1690,7 @@ deltaBComparisonsEvent <- function(sim) {
       ## subset to validation reps and add reps column
       if (!any(is.na(P(sim)$validationReps))) {
         repsStr <- paste("rep", P(sim)$validationReps, sep = "")
-        repsStr <- sub("(rep)([[:digit:]])$", "\\10*\\2", repsStr)
+        repsStr <- sub("(rep)([[:digit:]])$", "\\10\\2", repsStr)
         repsStr <- paste(repsStr, sep = "", collapse = "|" )
         pixelGroupMapOutputs <- pixelGroupMapOutputs[grepl(repsStr, file)]
         pixelGroupMapOutputs[, rep := sub("(.*rep)([[:digit:]]*)(\\/.*)", "\\2", file)]
