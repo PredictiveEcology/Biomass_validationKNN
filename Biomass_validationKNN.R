@@ -76,10 +76,10 @@ defineModule(sim, list(
     expectsInput("firePerimeters", "sf",
                  desc = paste("A map of fire perimeters in the study area that can be used to exclude pixels",
                               "that have been burnt during the validation period. If burnt pixels are not to be excluded",
-                              "Provide an empty sf object with the same properties as the default. Defaults to the Canadian",
-                              "Wildland Fire Information System 1986-2018 National Burned Area Composite,",
-                              "subset to fires between 2001 and 2011 (inclusively)."),
-                 sourceURL = "http://cwfis.cfs.nrcan.gc.ca/downloads/nbac/nbac_1986_to_2019_20200921.zip"),
+                              "Provide an empty sf object with the same properties as the default. Defaults to the latest Canadian",
+                              "Wildland Fire Information System National Burned Area Composite,",
+                              "subset to fires occuring up to last validation year (inclusively). Source URL determined by 'fireURL'"),
+                 sourceURL = NA),
     expectsInput("fireURL", "character",
                  desc = paste("A url to a fire database, such as the Canadian National Fire Database,",
                               "that is a zipped shapefile with fire polygons, an attribute (i.e., a column) named 'Year'.",
@@ -1394,12 +1394,8 @@ deltaBComparisonsEvent <- function(sim) {
   ## Fire perimeter data ---------------------------------------------------
 
   if (!suppliedElsewhere("firePerimeters", sim)) {
-    firePerimetersFile <- "nbac_1986_to_2019_20200921.shp"
     sim$firePerimeters <- Cache(prepInputs,
-                                targetFile = firePerimetersFile,
-                                alsoExtract = "similar",
-                                archive = asPath("nbac_1986_to_2019_20200921.zip"),
-                                url = extractURL("firePerimeters"),
+                                url = extractURL("fireURL"),
                                 destinationPath = dPath,
                                 studyArea = sim$studyArea,
                                 rasterToMatch = sim$rasterToMatch,
