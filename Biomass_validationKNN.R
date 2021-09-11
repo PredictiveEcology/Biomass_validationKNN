@@ -1409,7 +1409,7 @@ deltaBComparisonsEvent <- function(sim) {
     sim$firePerimeters <- st_as_sf(sim$firePerimeters)
 
     ## exclude fire years outside validation period
-    sim$firePerimeters <- sim$firePerimeters[sim$firePerimeters$YEAR > 2000 &
+    sim$firePerimeters <- sim$firePerimeters[sim$firePerimeters$YEAR >= 1986 &
                                                sim$firePerimeters$YEAR < 2012,]
   }
 
