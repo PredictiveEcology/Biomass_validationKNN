@@ -801,7 +801,7 @@ validationStatsEvent <- function(sim) {
 
   Plots(data = plotData, fn = MADplots,
         filename = "pixelMAD", path = file.path(mod$plotPath),
-        deviceArgs = list(width = 10, height = 8, units = "in", res = 300),
+        deviceArgs = list(width = 8, height = 10, units = "in", res = 300),
         xvar = "speciesCode", yvar = "MAD", colourvar = "variable",
         xlabs = mod$speciesLabels, collabs = colLabels)
 
@@ -817,7 +817,7 @@ validationStatsEvent <- function(sim) {
 
   Plots(data = plotData, fn = MADplots,
         filename = "landscapeMAD", path = file.path(mod$plotPath),
-        deviceArgs = list(width = 10, height = 8, units = "in", res = 300),
+        deviceArgs = list(width = 8, height = 10, units = "in", res = 300),
         xvar = "speciesCode", yvar = "MAD", colourvar = "variable",
         xlabs = mod$speciesLabels, collabs = colLabels)
 
