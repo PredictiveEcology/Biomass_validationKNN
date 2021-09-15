@@ -22,7 +22,7 @@ An approach to validating outputs from LandR Biomass - notably the `Biomass_core
 
 This module compares simulated outputs of two years (across replicates), with corresponding years of observed data. It was design to compare the observed data for years 2001 (start point for the simulation) and 2011 (so after 10 years of simulation) of the kNN forest layers of the Canadian National Forest Inventory. However, the user can supply other sources of observed data, as long as they obey the same format.
 
-The validation is done both visually (using bar and boxplots) and using two statistics: mean absolute deviation of simulated biomass (per species) and the negative sum of log-likelihoods of predictions with respect to observed data for species biomass, species presences/absences and changes in biomass (deltaB) - the later is still under development.
+The validation is done both visually (using bar and boxplots) and using two statistics: mean absolute deviation of simulated biomass (per species) and the  sum of negative log-likelihoods (SNLL) of predictions with respect to observed data for species biomass, species presences/absences and changes in biomass (deltaB) - the later is still under development.
 
 
 ## Detailed description
@@ -40,17 +40,17 @@ All calculations were done per repetition.
 The module plots the above metrics as barplots showing landscape-level values (averaged across repetitions for the simulated data) or boxplots showing pixel-level values. Plotting can be live and/or in the form of exported images (or turned off completely).
 
 ### Mean absolute deviation
-Mean absolute deviance (MAD) values are calculated on landscape- and pixel-level species relative abundances and ($\Delta$B), and landscape-level species presences and dominance, per repetition and year (except for ($\Delta$B), which is integrated across years). Output tables with MAD values are exported as `landscapeMAD` and `pixelMAD`, and the module also produces visual inspection of these values as dot-and-whisker plots.  
+Mean absolute deviance (MAD) values are calculated on landscape- and pixel-level species absolute abundances and $\Delta$B, and landscape-level species presences and dominance, per repetition and year (except for $\Delta$B, which is integrated across years). Output tables with MAD values are exported as `landscapeMAD` and `pixelMAD`, and the module also produces visual inspection of these values as dot-and-whisker plots.  
 
-### Log-likelihood
-To provide a measure of overall goodness of fit of the simulation model, given a given set of starting conditions and simulation mechanisms (i.e. the combination of inputs to `Biomass_core` but also other modules that may be associated in affecting vegetation dynamics), `Biomass_validationKNN` calculates a likelihood estimate as the negative sum of log-likelihoods of simulated species biomasses, $\Delta$B (both at the landscape and pixel-level), and species presences (at the landscape-level), with respect to their observed counterparts.
+### Sum of negative log-likelihood (SNLL)
+To provide a measure of overall goodness of fit of the simulation model, given a given set of starting conditions and simulation mechanisms (i.e., the combination of inputs to `Biomass_core` but also other modules that may be associated in affecting vegetation dynamics), `Biomass_validationKNN` estimates sum of negative log-likelihoods (SNLL) of simulated species biomasses, $\Delta$B (both at the landscape and pixel-level), and species presences (at the landscape-level), with respect to their observed counterparts.
 More precisely, let $\ell$ be the log-likelihood function denoting the probability of observing $x$ of $X$ (a random variable following a continuous probability distribution $f(x)$), given a parameter $\theta$:
 \begin{equation}
 \ell(\theta \mid x) = f(x).
 (\#eq:loglik)
 \end{equation}
 
-In our case, $\theta$ is equivalent to the model's starting conditions and structure, $X$ is the observed data with $x$ being the simulated values, and $f(x)$ the continuous probability distribution of $X$. For each variable that we wanted to evaluate and for each simulation replicate, Equation \@ref(eq:loglik) is applied to calculate the negative sum of log-likelihoods estimated for each value of $x$ at the pixel or landscape-level, $i$:
+In our case, $\theta$ is equivalent to the model's starting conditions and structure, $X$ is the observed data with $x$ being the simulated values, and $f(x)$ the continuous probability distribution of $X$. For each variable that we wanted to evaluate and for each simulation replicate, Equation \@ref(eq:loglik) is applied to calculate the SNLL estimated for each value of $x$ at the pixel or landscape-level, $i$:
 \begin{equation}
 -\sum_{i = 1}^{N} \ell(\theta \mid x_{i}),
 (\#eq:negsumloglik)
@@ -59,13 +59,13 @@ where $N$ is equal to total number of pixels. At the landscape scale $N = 1$.
 
 For species biomass and species presences, we draw the probability of observing $x_{i}$ (a vector of species biomasses/presences in pixel/landscape $i$) from a multinomial density distribution ($f(x_{i}) = {\sf Multi}(n_{i}, \mathrm{p}_{i})$), where $n_{i} = \sum_{j = 1}^{K} X_{i,j}$ ($X$ being the observed values of biomass of $j = 1, ..., K$ species in a pixel/landscape $i$) and $\mathrm{p_{i}}$ is the vector of simulated values $x_{i,j}$.
 
-**The computation of log-likelihood for $\Delta$B is still under development**  
+**The computation of SNLL for $\Delta$B is still under development**  
 This is what we have implemented, but it is presenting problems, due to $\mathrm{M}$ not being strictly positive definite.
 For $\Delta$B, we draw the probability of observing $x_{i,j}$ (the simulated $\Delta$B of $j = 1, ..., K$ species in a pixel/landscape $i$) from a multivariate Gaussian distribution, $f(x_{i}) = \mathcal {N}(\mu_{i}, \mathrm{M}_{i})$, where $\mu_{i}$ is the vector of observed mean $\Delta$B for each species $j = 1, ..., K$, and $\mathrm{M}$ is the observed $K * K$ variance-covariance matrix of species $\Delta$B. 
 
-After calculating the negative sum of log-likelihoods across pixels (or for a landscape), values are averaged across replicates for an overal model estimate and exported in the `logLikelihood` table.
+After calculating SNLL across pixels (or for a landscape), values are averaged across replicates for an overall model estimate and exported in the `logLikelihood` table.
 
-We refer to the Wikipedia pages on the [multinomial distribution](https://en.wikipedia.org/wiki/Multinomial_distribution) and on the [multivariate Gaussian distribution](https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Density_function) for a good summary of these two distributions and their use in likelihood estimation.
+We refer to the Wikipedia pages on the [multinomial distribution](https://en.wikipedia.org/wiki/Multinomial_distribution) and on the [multivariate Gaussian distribution](https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Density_function) for a good summary of these two distributions and their use in SNLL estimation.
 
 ## Inputs and parametrisation
 
@@ -239,7 +239,7 @@ The module produces the following outputs:
 df_outputs <- SpaDES.core::moduleOutputs("Biomass_validationKNN", "..")
 knitr::kable(df_outputs)
 ```
-and saves the validation figures in `getPaths$outputPath`. To see the log-likelihoods table use `mySimValidation$logLikelihood`.
+and saves the validation figures in `getPaths$outputPath`. To see the SNLL table use `mySimValidation$logLikelihood`.
 
 ## Getting help
 

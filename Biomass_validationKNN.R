@@ -16,8 +16,8 @@ defineModule(sim, list(
   citation = list("citation.bib"),
   documentation = list("README.txt", "Biomass_validationKNN.Rmd"),
   reqdPkgs = list("crayon", "raster", "achubaty/amc", "mclust",
-                  "sf", "XML", "RCurl", "ggplot2", "ggpubr",
-                  "PredictiveEcology/LandR@modelBiomass (>=1.0.5)",
+                  "sf", "XML", "RCurl", "ggplot2", "ggpubr", "scales",
+                  "PredictiveEcology/LandR@development (>=1.0.5)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development (>= 1.2.7.9011)",
                   "PredictiveEcology/SpaDES.core@development",
@@ -76,10 +76,10 @@ defineModule(sim, list(
     expectsInput("firePerimeters", "sf",
                  desc = paste("A map of fire perimeters in the study area that can be used to exclude pixels",
                               "that have been burnt during the validation period. If burnt pixels are not to be excluded",
-                              "Provide an empty sf object with the same properties as the default. Defaults to the Canadian",
-                              "Wildland Fire Information System 1986-2018 National Burned Area Composite,",
-                              "subset to fires between 2001 and 2011 (inclusively)."),
-                 sourceURL = "http://cwfis.cfs.nrcan.gc.ca/downloads/nbac/nbac_1986_to_2019_20200921.zip"),
+                              "Provide an empty sf object with the same properties as the default. Defaults to the latest Canadian",
+                              "Wildland Fire Information System National Burned Area Composite,",
+                              "subset to fires occuring up to last validation year (inclusively). Source URL determined by 'fireURL'"),
+                 sourceURL = NA),
     expectsInput("fireURL", "character",
                  desc = paste("A url to a fire database, such as the Canadian National Fire Database,",
                               "that is a zipped shapefile with fire polygons, an attribute (i.e., a column) named 'Year'.",
@@ -782,29 +782,42 @@ validationStatsEvent <- function(sim) {
                                       meanAbsDevDeltaB = 1/.N * sum(abs(deltaB - meanDeltaBObs))),
                                by = .(rep, year, speciesCode)]
 
+
   ## PLOTS
+  ## melt and add all labels to factor for equal colours
   plotData <- melt(pixelMAD, measure.vars = c("meanAbsDevRelAbund", "meanAbsDevDeltaB"),
                    value.name = "MAD")
-  colLabels <- list("meanAbsDevRelAbund" = "rel. abundance",
-                    "meanAbsDevDeltaB" = bquote(paste(Delta, B)))
+  plotData$variable <- factor(plotData$variable,
+                              levels = c("meanAbsDevRelAbund", "meanAbsDevCount", "meanAbsDevCountDom", "meanAbsDevDeltaB"),
+                              labels = c("frac('species B', 'total/pixel B')",
+                                         "paste('No. of pixels')",
+                                         "paste('No. of pixels ')",
+                                         "g/m^2"))
+
+  colLabels <- list("frac('species B', 'total/pixel B')" = "rel. abundance",
+                    "paste('No. of pixels')" = "presences",
+                    "paste('No. of pixels ')" = "dominance",
+                    "g/m^2" = bquote(paste(Delta, B)))
 
   Plots(data = plotData, fn = MADplots,
         filename = "pixelMAD", path = file.path(mod$plotPath),
-        deviceArgs = list(width = 10, height = 8, units = "in", res = 300),
+        deviceArgs = list(width = 8, height = 10, units = "in", res = 300),
         xvar = "speciesCode", yvar = "MAD", colourvar = "variable",
         xlabs = mod$speciesLabels, collabs = colLabels)
 
   plotData <- melt(landscapeMAD,
                    measure.vars = c("meanAbsDevRelAbund", "meanAbsDevCount", "meanAbsDevCountDom", "meanAbsDevDeltaB"),
                    value.name = "MAD")
-  colLabels <- list("meanAbsDevRelAbund" = "rel. abundance",
-                    "meanAbsDevCount" = "presences",
-                    "meanAbsDevCountDom" = "dominance",
-                    "meanAbsDevDeltaB" = bquote(paste(Delta, B)))
+  plotData$variable <- factor(plotData$variable,
+                              levels = unique(plotData$variable),
+                              labels = c("frac('species B', 'total/pixel B')",
+                                         "paste('No. of pixels')",
+                                         "paste('No. of pixels ')",
+                                         "g/m^2"))
 
   Plots(data = plotData, fn = MADplots,
         filename = "landscapeMAD", path = file.path(mod$plotPath),
-        deviceArgs = list(width = 10, height = 8, units = "in", res = 300),
+        deviceArgs = list(width = 8, height = 10, units = "in", res = 300),
         xvar = "speciesCode", yvar = "MAD", colourvar = "variable",
         xlabs = mod$speciesLabels, collabs = colLabels)
 
@@ -936,7 +949,7 @@ obsrvdDeltaMapsEvent <- function(sim) {
   plot1 <- ggplot(pixelDeltaObsrvdData,
                   aes(x = pixelDeltaAgeObsrvd, y = pixelDeltaBObsrvd)) +
     geom_point() +
-    stat_smooth(method = "lm") +
+    # stat_smooth(method = "lm") +
     plotTheme(base_size = 12, margin = FALSE, majorYlines = FALSE) +
     theme(axis.title.x = element_blank(), axis.text.x = element_blank()) +
     labs(y = expression(paste("observed ", Delta, "B")))
@@ -990,7 +1003,7 @@ obsrvdDeltaMapsEvent <- function(sim) {
   plot6 <- ggplot(plotData,
                   aes(x = pixelDeltaAgeObsrvd, y = pixelDeltaBObsrvd)) +
     geom_point() +
-    stat_smooth(method = "lm") +
+    # stat_smooth(method = "lm") +
     plotTheme(base_size = 12, margin = FALSE, majorYlines = FALSE) +
     theme(axis.title.x = element_blank(), axis.text.x = element_blank()) +
     labs(y = expression(paste("observed ", Delta, "B", " - adjusted")))
@@ -1094,7 +1107,7 @@ landscapeWidePlotsEvent <- function(sim) {
     scale_color_manual(values = c("observed" = "red3")) +
     plotTheme(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
     facet_wrap(~ year) +
-    labs(title = "Species presences", x = "", y = "Count",
+    labs(title = "Species presences", x = "", y = "No. of pixels",
          colour = "", fill = "")
 
   ## no. pixels with a certain dominant species
@@ -1110,7 +1123,7 @@ landscapeWidePlotsEvent <- function(sim) {
     plotTheme(base_size = 12, margin = FALSE, x.text.angle = 45, legend = "bottom") +
     facet_wrap(~ year) +
     labs(title = "Dominant species' presences",
-         x = "", y = "Count", fill = "", colour = "")
+         x = "", y = "No. of pixels", fill = "", colour = "")
 
   maxPixels <- sum(!is.na(getValues(sim$biomassMap)))
   plotLandscapeComp <- ggarrange(plot11 + scale_y_continuous(limits = c(0,1)),
@@ -1381,12 +1394,8 @@ deltaBComparisonsEvent <- function(sim) {
   ## Fire perimeter data ---------------------------------------------------
 
   if (!suppliedElsewhere("firePerimeters", sim)) {
-    firePerimetersFile <- "nbac_1986_to_2019_20200921.shp"
     sim$firePerimeters <- Cache(prepInputs,
-                                targetFile = firePerimetersFile,
-                                alsoExtract = "similar",
-                                archive = asPath("nbac_1986_to_2019_20200921.zip"),
-                                url = extractURL("firePerimeters"),
+                                url = extractURL("fireURL"),
                                 destinationPath = dPath,
                                 studyArea = sim$studyArea,
                                 rasterToMatch = sim$rasterToMatch,
@@ -1400,7 +1409,7 @@ deltaBComparisonsEvent <- function(sim) {
     sim$firePerimeters <- st_as_sf(sim$firePerimeters)
 
     ## exclude fire years outside validation period
-    sim$firePerimeters <- sim$firePerimeters[sim$firePerimeters$YEAR > 2000 &
+    sim$firePerimeters <- sim$firePerimeters[sim$firePerimeters$YEAR >= 1986 &
                                                sim$firePerimeters$YEAR < 2012,]
   }
 
