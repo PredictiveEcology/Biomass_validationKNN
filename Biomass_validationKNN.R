@@ -1627,16 +1627,29 @@ deltaBComparisonsEvent <- function(sim) {
       cohortDataOutputs <- sim$simulationOutputs[objectName == "cohortData"]
 
       ## check that the selected years and reps exist in outputs table
+      ## make a reps vector that aligns with file naming
+      if (!any(is.na(P(sim)$validationReps))) {
+        if (all(grepl("rep[[:digit:]]", cohortDataOutputs$file))) {
+          reps <- paste("rep", P(sim)$validationReps, sep = "")
+        } else {
+          stop(paste("Simulation output paths should contain 'rep' in the",
+                     "folder or file name to identify different replicate outputs"))
+        }
+
+        repsWzeros <- sub("(rep)([[:digit:]])$", "\\10\\2", reps)
+        if (all(grepl(paste(repsWzeros, collapse = "|"), cohortDataOutputs$file))) {
+          reps <- repsWzeros
+        }
+      }
+
       if (!any(is.na(P(sim)$validationReps))) {
         out <- lapply(P(sim)$validationYears, FUN = function(y, cohortDataOutputs, reps) {
           fileNames <- cohortDataOutputs[saveTime == y, file]
-          reps <- paste("rep", reps, sep = "")
-          reps <- sub("(rep)([[:digit:]])$", "\\10\\2", reps)
           out <- vapply(reps, FUN = function(x) any(grepl(x, fileNames)), FUN.VALUE = logical(1))
           out2 <- which(!out)
           if (length(out2))
             stop(paste("Missing `cohortData` outputs for year", y, "and rep(s)", paste(out2, collapse = ", ")))
-        }, cohortDataOutputs = cohortDataOutputs, reps = P(sim)$validationReps)
+        }, cohortDataOutputs = cohortDataOutputs, reps = reps)
       } else {
         out <- lapply(P(sim)$validationYears, FUN = function(y, cohortDataOutputs) {
           fileNames <- cohortDataOutputs[saveTime == y, file]
@@ -1650,9 +1663,7 @@ deltaBComparisonsEvent <- function(sim) {
 
       ## subset to validation reps and add reps column
       if (!any(is.na(P(sim)$validationReps))) {
-        repsStr <- paste("rep", P(sim)$validationReps, sep = "")
-        repsStr <- sub("(rep)([[:digit:]])$", "\\10\\2", repsStr)
-        repsStr <- paste(repsStr, sep = "", collapse = "|" )
+        repsStr <- paste(reps, sep = "", collapse = "|" )
         cohortDataOutputs <- cohortDataOutputs[grepl(repsStr, file)]
         cohortDataOutputs[, rep := sub("(.*rep)([[:digit:]]*)(\\/.*)", "\\2", file)]
       } else {
@@ -1687,13 +1698,11 @@ deltaBComparisonsEvent <- function(sim) {
       if (!any(is.na(P(sim)$validationReps))) {
         out <- lapply(P(sim)$validationYears, FUN = function(y, pixelGroupMapOutputs, reps) {
           fileNames <- pixelGroupMapOutputs[saveTime == y, file]
-          reps <- paste("rep", reps, sep = "")
-          reps <- sub("(rep)([[:digit:]])$", "\\10\\2", reps)
           out <- vapply(reps, FUN = function(x) any(grepl(x, fileNames)), FUN.VALUE = logical(1))
           out2 <- which(!out)
           if (length(out2))
             stop(paste("Missing 'pixelGroupMap' outputs for year", y, "and rep(s)", paste(out2, collapse = ", ")))
-        }, pixelGroupMapOutputs = pixelGroupMapOutputs, reps = P(sim)$validationReps)
+        }, pixelGroupMapOutputs = pixelGroupMapOutputs, reps = reps)
       } else {
         out <- lapply(P(sim)$validationYears, FUN = function(y, pixelGroupMapOutputs) {
           fileNames <- pixelGroupMapOutputs[saveTime == y, file]
@@ -1707,9 +1716,7 @@ deltaBComparisonsEvent <- function(sim) {
 
       ## subset to validation reps and add reps column
       if (!any(is.na(P(sim)$validationReps))) {
-        repsStr <- paste("rep", P(sim)$validationReps, sep = "")
-        repsStr <- sub("(rep)([[:digit:]])$", "\\10\\2", repsStr)
-        repsStr <- paste(repsStr, sep = "", collapse = "|" )
+        repsStr <- paste(reps, sep = "", collapse = "|" )
         pixelGroupMapOutputs <- pixelGroupMapOutputs[grepl(repsStr, file)]
         pixelGroupMapOutputs[, rep := sub("(.*rep)([[:digit:]]*)(\\/.*)", "\\2", file)]
       } else {
