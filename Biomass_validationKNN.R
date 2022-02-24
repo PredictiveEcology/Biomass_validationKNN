@@ -1077,13 +1077,13 @@ obsrvdDeltaMapsEvent <- function(sim) {
 
     noScreenTypes <- setdiff(P(sim)$.plots, "screen")
     if (length(noScreenTypes)) {
-      Plots(plot4, types = noScreenTypes, filename = "observedDeltaBDeltaAge_lm",
+      Plots(plot4, types = noScreenTypes, filename = "observedDeltaBDeltaAge",
             path = file.path(mod$plotPath),
             deviceArgs = list(width = 7, height = 5, units = "in", res = 300))
       Plots(plot5, types = noScreenTypes, filename = "observedDeltaB_yearGap",
             path = file.path(mod$plotPath),
             deviceArgs = list(width = 5, height = 4, units = "in", res = 300))
-      Plots(plot9, types = noScreenTypes, filename = "observedDeltaBDeltaAge_lmADJ",
+      Plots(plot9, types = noScreenTypes, filename = "observedDeltaBDeltaAge_ADJ",
             path = file.path(mod$plotPath),
             deviceArgs = list(width = 7, height = 5, units = "in", res = 300))
       Plots(plot10, types = noScreenTypes, filename = "observedDeltaB_yearGapADJ",
