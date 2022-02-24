@@ -29,11 +29,13 @@ defineModule(sim, list(
                                  "the species cover layers for simulation set up.")),
     defineParameter("deciduousCoverDiscount", "numeric", 0.8418911, NA, NA,
                     desc = paste("This was estimated with data from NWT on March 18, 2020 and may or may not be universal.",
-                                 "Should be the same as the one used when preparing 'cohortData' in the simulation set up.")),
-    defineParameter("LCChangeYr", "integer", c(2001:2011), 1985, 2015,
-                    desc = paste("An integer or vector of integers of the validation period years, defining which",
+                                 "Should be the same as the one used when preparing `cohortData` in the simulation set up.")),
+    defineParameter("LCChangeYr", "integer", NULL, 1900, NA,
+                    desc = paste("OPTIONAL. An integer or vector of integers of the validation period years, defining which",
                                  "years of land-cover changes (i.e. disturbances) should be excluded.",
-                                 "Only used if rstLCChangeYr is not NULL.",
+                                 "`NULL` by default, which presumes no subsetting based on years is done internally (either",
+                                 "the user supplies a pre-filtered `rstLCChange`, or no filtering is desired). If not `NULL`",
+                                 "`rstLCChangeYr` is used to filter disturbed pixels within the specified years.",
                                  "See https://opendata.nfis.org/mapserver/nfis-change_eng.html for more information.")),
     defineParameter("minCoverThreshold", "numeric", 5, 0, 100,
                     desc = paste("Cover that is equal to or below this number will be omitted from the dataset",
@@ -123,9 +125,10 @@ defineModule(sim, list(
                  sourceURL = "https://opendata.nfis.org/downloads/forest_change/C2C_change_type_1985_2011.zip"),
     expectsInput("rstLCChangeYr", "RasterLayer",
                  desc = paste("An OPTIONAL map of land cover change years in the study area used to exclude pixels that have",
-                              "been disturbed during the validation period. Defaults to Canada's forest",
-                              "change national map between 1985-2011 (CFS). By default disturbances are subset to",
-                              " to years 2001-2011 (inclusively; see parameter LCChangeYr).",
+                              "been disturbed during the validation period. It defaults to Canada's forest",
+                              "change year national map between 1985-2011 (CFS). If `P(sim)$LCChangeYr` is not `NULL`,",
+                              "this layer is used to filted disturbed pixels that fall within the years specified by ",
+                              "`P(sim)$LCChangeYr`. If `P(sim)$LCChangeYr` is `NULL` this layer is not used.",
                               "See https://opendata.nfis.org/mapserver/nfis-change_eng.html for more information."),
                  sourceURL = "https://opendata.nfis.org/downloads/forest_change/C2C_change_year_1985_2011.zip"),
     expectsInput("simulationOutputs", "data.table",
@@ -339,6 +342,12 @@ Init <- function(sim) {
     sim$rstLCChange <- postProcess(sim$rstLCChange, rasterToMatch = sim$rasterToMatch)
   }
 
+  if (!is.null(P(sim)$LCChangeYr)) {
+    if (!compareRaster(sim$rstLCChangeYr, sim$rasterToMatch, stopiffalse = FALSE)) {
+      sim$rstLCChangeYr <- postProcess(sim$rstLCChangeYr, rasterToMatch = sim$rasterToMatch)
+    }
+  }
+
   ## EXCLUDE DISTURBED PIXELS FROM VALIDATION  -----------------------------------
   ## make a template raster with IDs
   rasterToMatchIDs <- sim$rasterToMatch
@@ -350,6 +359,17 @@ Init <- function(sim) {
     inFireIDs <- inFireIDs[!is.na(inFireIDs)] ## faster than na.omit
   } else {
     inFireIDs <- integer(0)
+  }
+
+  ## only keep pixels that have been disturbed during the validation period
+  ## convert years to the map's format
+  if (!is.null(P(sim)$LCChangeYr)) {
+    yrs <- P(sim)$LCChangeYr - 1900
+    pixKeep <- !is.na(getValues(sim$rstLCChange)) &
+      getValues(sim$rstLCChangeYr) %in% yrs
+
+    sim$rstLCChange[!pixKeep] <- NA
+    sim$rstLCChangeYr[!pixKeep] <- NA
   }
 
   ## get pixels inside LCC pixels
@@ -1343,7 +1363,6 @@ deltaBComparisonsEvent <- function(sim) {
 
     ## need the year of change map to subset CFSs land-cover change type map.
     LCChangeFilename <- "C2C_change_type_1985_2011.tif"
-    LCChangeYrFilename <- "C2C_change_year_1985_2011.tif"
     sim$rstLCChange <- Cache(prepInputs,
                              targetFile = LCChangeFilename,
                              archive = file.path(dPath, "C2C_change_type_1985_2011.zip"),
@@ -1361,7 +1380,12 @@ deltaBComparisonsEvent <- function(sim) {
                              omitArgs = c("destinationPath", "targetFile", "userTags"))
     ## convert to mask
     sim$rstLCChange[!is.na(sim$rstLCChange)] <- 1
+  }
 
+  ## Check that rstLCChange is a mask and matches RTM
+  assertRstLCChange(sim$rstLCChange, sim$rasterToMatch)
+  if (!suppliedElsewhere("rstLCChangeYr", sim) & !is.null(P(sim)$LCChangeYr)) {
+    LCChangeYrFilename <- "C2C_change_year_1985_2011.tif"
     sim$rstLCChangeYr <- Cache(prepInputs,
                                targetFile = LCChangeYrFilename,
                                archive = asPath("C2C_change_year_1985_2011.zip"),
@@ -1377,19 +1401,7 @@ deltaBComparisonsEvent <- function(sim) {
                                overwrite = TRUE,
                                userTags = c("rstLCChangeYr", cacheTags),
                                omitArgs = c("destinationPath", "targetFile", "userTags"))
-
-    ## only keep pixels that have been disturbed during the validation period
-    ## convert years to the map's format
-    yrs <- P(sim)$LCChangeYr - 1900
-    pixKeep <- !is.na(getValues(sim$rstLCChange)) &
-      getValues(sim$rstLCChangeYr) %in% yrs
-
-    sim$rstLCChange[!pixKeep] <- NA
-    sim$rstLCChangeYr[!pixKeep] <- NA
   }
-
-  ## Check that rstLCChange is a mask and matches RTM
-  assertRstLCChange(sim$rstLCChange, sim$rasterToMatch)
 
   ## Fire perimeter data ---------------------------------------------------
 
