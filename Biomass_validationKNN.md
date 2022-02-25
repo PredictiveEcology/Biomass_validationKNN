@@ -1,8 +1,7 @@
 ---
 title: "LandR _Biomass_validationKNN_ Manual"
 subtitle: "v.0.0.2.9001"
-author: "Ceres Barros"
-date: "Last updated: 2022-02-24"
+date: "Last updated: 2022-02-25"
 output:
   bookdown::html_document2:
     toc: true
@@ -32,6 +31,11 @@ badge](https://img.shields.io/badge/Get%20help-Report%20issues-%3CCOLOR%3E.svg)]
 **This documentation is work in progress. Potential discrepancies and omissions
 may exist for the time being. If you find any, do contact us using the link
 above\^\^**
+
+#### Authors:
+
+Yong Luo <yluo1@lakeheadu.ca> [aut], Eliot J B McIntire <eliot.mcintire@canada.ca> [aut, cre], Jean Marchal <jean.d.marchal@gmail.com> [ctb], Alex M. Chubaty <achubaty@for-cast.ca> [ctb], Ceres Barros <cbarros@mail.ubc.ca> [ctb]
+<!-- ideally separate authors with new lines, '\n' not working -->
 
 ## Module Overview
 
@@ -64,11 +68,11 @@ Key parameters are those defining simulation years and replicates,
 (`validationYears`, `validationReps`) and plot control (`.plots`). Here's the
 full list of parameters:
 
-Table \@ref(tab:moduleInputsBiomassValid) shows a full list of input objects that
+Table \@ref(tab:moduleInputs-Biomass-validationKNN) shows a full list of input objects that
 *Biomass_validationKNN* expects.
 
 <table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleInputsBiomassValid)List of _Biomass_validationKNN_  input objects and their description.</caption>
+<caption>(\#tab:moduleInputs-Biomass-validationKNN)List of _Biomass_validationKNN_  input objects and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> objectName </th>
@@ -152,7 +156,7 @@ Table \@ref(tab:moduleInputsBiomassValid) shows a full list of input objects tha
 </table>
 
 Below is the full list of input objects that *Biomass_validationKNN* expects
-(Table \@ref(tab:moduleParamsBiomassValid)). Of these, the only input that **must** be
+(Table \@ref(tab:moduleParams-Biomass-validationKNN)). Of these, the only input that **must** be
 provided (i.e. *Biomass_validationKNN* does not have a default for) is
 `studyArea`. Objects suffixed with `*Start` correspond to the same objects in
 the simulation without this suffix (e.g. `rawBiomassMapStart` is `rawBiomassMap`
@@ -163,7 +167,7 @@ We advise users to **supply the *exact same objects*** as those used in the
 simulations wherever possible - see example below.
 
 <table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleParamsBiomassValid)List of _Biomass_validationKNN_ parameters and their description.</caption>
+<caption>(\#tab:moduleParams-Biomass-validationKNN)List of _Biomass_validationKNN_ parameters and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> paramName </th>
@@ -260,10 +264,10 @@ this module only runs once (in one "timestep").
 
 ### Module outputs
 
-The module produces the following outputs (Table \@ref(tab:moduleOutputsBiomassValid)):
+The module produces the following outputs (Table \@ref(tab:moduleOutputs-Biomass-validationKNN)):
 
 <table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleOutputsBiomassValid)List of _Biomass_validationKNN_ output objects and their description.</caption>
+<caption>(\#tab:moduleOutputs-Biomass-validationKNN)List of _Biomass_validationKNN_ output objects and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> objectName </th>
@@ -495,11 +499,11 @@ stand biomass. By default, the module will take these from National Forest
 Inventory kNN layers for years 2001 and 2011. We recommend that the user
 supplies layers used to initialise the simulation as the starting input layers
 (2001 if that is the starting point) to guarantee that they match. Table
-\@ref(tab:moduleInputs2BiomassValid) shows the full list of input objects used by the
+\@ref(tab:moduleInputs2-Biomass-validationKNN) shows the full list of input objects used by the
 module.
 
 <table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleInputs2BiomassValid)List of _Biomass_validationKNN_ input objects and their description.</caption>
+<caption>(\#tab:moduleInputs2-Biomass-validationKNN)List of _Biomass_validationKNN_ input objects and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> objectName </th>
@@ -620,7 +624,7 @@ module.
 </tbody>
 </table>
 
-Of the inputs in Table \@ref(tab:moduleInputs2BiomassValid), the following are particularly
+Of the inputs in Table \@ref(tab:moduleInputs2-Biomass-validationKNN), the following are particularly
 important and deserve special attention:
 
 -   **Spatial layers**
@@ -701,11 +705,11 @@ important and deserve special attention:
 
 #### Parameters
 
-Table \@ref(tab:moduleParams2BiomassValid) lists all parameters used in
+Table \@ref(tab:moduleParams2-Biomass-validationKNN) lists all parameters used in
 *Biomass_validationKNN* and their detailed information.
 
 <table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleParams2BiomassValid)List of _Biomass_validationKNN_ parameters and their description.</caption>
+<caption>(\#tab:moduleParams2-Biomass-validationKNN)List of _Biomass_validationKNN_ parameters and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> paramName </th>
@@ -840,7 +844,7 @@ Table \@ref(tab:moduleParams2BiomassValid) lists all parameters used in
 </tbody>
 </table>
 
-Of the parameters listed in Table \@ref(tab:moduleParams2BiomassValid), the following are
+Of the parameters listed in Table \@ref(tab:moduleParams2-Biomass-validationKNN), the following are
 particularly important:
 
 -   `LCChangeYr` -- integer. Optional parameter defining the years of
@@ -919,7 +923,7 @@ The general flow of *Biomass_validationKNN* processes is:
         the first year, in observed and simulated data.
 
 All module default outputs are in the form of plots, but the user can chose to
-save any objects (see Table \@ref(tab:moduleOutputsBiomassValid)).
+save any objects (see Table \@ref(tab:moduleOutputs-Biomass-validationKNN)).
 
 ## Usage example
 
@@ -1087,17 +1091,17 @@ Here are some of the output figures automatically produced by
 
 <div class="figure">
 <img src="figures/LandscapeComparisons_PresAbs.png" alt="_Biomass_validationKNN_ automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left)." width="50%" /><img src="figures/PixelComparisons_relB.png" alt="_Biomass_validationKNN_ automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left)." width="50%" />
-<p class="caption">(\#fig:figBiomassValidOutPlots)_Biomass_validationKNN_ automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left).</p>
+<p class="caption">(\#fig:fig-Biomass-validationKNNOutPlots)_Biomass_validationKNN_ automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left).</p>
 </div>
 
 <div class="figure">
 <img src="figures/landscapeMAD.png" alt="A plot of landscape-wide mean absolute deviations (MAD) from (top to bottom) observed mean relative abundance, no. of presences, no. of pixels where the species is dominant and $\Delta$B." width="672" />
-<p class="caption">(\#fig:figBiomassValidOutPlots2)A plot of landscape-wide mean absolute deviations (MAD) from (top to bottom) observed mean relative abundance, no. of presences, no. of pixels where the species is dominant and $\Delta$B.</p>
+<p class="caption">(\#fig:fig-Biomass-validationKNNOutPlots2)A plot of landscape-wide mean absolute deviations (MAD) from (top to bottom) observed mean relative abundance, no. of presences, no. of pixels where the species is dominant and $\Delta$B.</p>
 </div>
 
 <div class="figure">
 <img src="figures/observedDeltaBDeltaAge.png" alt="Diagnostic plot of observed changes in biomass and age $\Delta$B and $\Delta$Age, respectively)." width="672" />
-<p class="caption">(\#fig:figBiomassValidOutPlots3)Diagnostic plot of observed changes in biomass and age $\Delta$B and $\Delta$Age, respectively).</p>
+<p class="caption">(\#fig:fig-Biomass-validationKNNOutPlots3)Diagnostic plot of observed changes in biomass and age $\Delta$B and $\Delta$Age, respectively).</p>
 </div>
 
 ## References
