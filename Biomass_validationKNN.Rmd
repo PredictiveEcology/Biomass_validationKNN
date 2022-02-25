@@ -15,7 +15,7 @@ editor_options:
   chunk_output_type: console
   markdown: 
     wrap: 80
-bibliography: citations/references.bib
+bibliography: citations/references_Biomass_validationKNN.bib
 citation-style: citations/ecology-letters.csl
 link-citations: true
 always_allow_html: true
