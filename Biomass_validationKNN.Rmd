@@ -82,7 +82,7 @@ full list of parameters:
 Table \@ref(tab:moduleInputs) shows a full list of input objects that
 *Biomass_validationKNN* expects.
 
-```{r moduleInputs, echo = FALSE, eval = TRUE, message = FALSE}
+```{r moduleInputsBiomassValid, echo = FALSE, eval = TRUE, message = FALSE}
 df_inputs <- SpaDES.core::moduleInputs("Biomass_validationKNN", "..")[, c(1, 3)]  ## name + desc only
 knitr::kable(df_inputs,
              caption = "List of _Biomass_validationKNN_  input objects and their description.") %>%
@@ -100,7 +100,7 @@ same names in the simulation.
 We advise users to **supply the *exact same objects*** as those used in the
 simulations wherever possible - see example below.
 
-```{r moduleParams, echo = FALSE, eval = TRUE, message = FALSE}
+```{r moduleParamsBiomassValid, echo = FALSE, eval = TRUE, message = FALSE}
 df_params <- SpaDES.core::moduleParams("Biomass_validationKNN", "..")[, c(1, 6)] ## name + desc only
 knitr::kable(df_params,
              caption = "List of _Biomass_validationKNN_ parameters and their description.") %>%
@@ -314,7 +314,7 @@ supplies layers used to initialise the simulation as the starting input layers
 \@ref(tab:moduleInputs2) shows the full list of input objects used by the
 module.
 
-```{r moduleInputs2, echo = FALSE, eval = TRUE, message = FALSE}
+```{r moduleInputs2BiomassValid, echo = FALSE, eval = TRUE, message = FALSE}
 df_inputs <- SpaDES.core::moduleInputs("Biomass_validationKNN", "..")
 knitr::kable(df_inputs, 
              caption = "List of _Biomass_validationKNN_ input objects and their description.") %>%
@@ -405,7 +405,7 @@ important and deserve special attention:
 Table \@ref(tab:moduleParams2) lists all parameters used in
 *Biomass_validationKNN* and their detailed information.
 
-```{r moduleParams2, echo = FALSE, eval = TRUE, message = FALSE}
+```{r moduleParams2BiomassValid, echo = FALSE, eval = TRUE, message = FALSE}
 df_params <- SpaDES.core::moduleParams("Biomass_validationKNN", "..")
 knitr::kable(df_params,
              caption = "List of _Biomass_validationKNN_ parameters and their description.") %>%
@@ -497,7 +497,7 @@ save any objects (see Table \@ref(tab:moduleOutputs)).
 
 ### Load `SpaDES` and other packages.
 
-```{r load-SpaDES, eval=FALSE}
+```{r load-SpaDESBiomassValid, eval=FALSE}
 library(SpaDES)
 library(SpaDES.install)
 library(SpaDES.experiment)
@@ -512,7 +512,7 @@ observed data, we need to first run a simulation of forest dynamics with
 GitHub repository. Notice that we are placing all module code, inputs and
 outputs in temporary directories.
 
-```{r module usage example setup, eval = FALSE}
+```{r module usage example setup BiomassValid, eval = FALSE}
 tempDir <- tempdir()
 spadesModulesDirectory <- file.path(tempDir, "modules")
 paths <- list(inputPath = file.path(tempDir, "inputs"), 
@@ -533,7 +533,7 @@ file.rename(c(file.path(spadesModulesDirectory, "Biomass_core-master"),
 
 ### Setup simulation
 
-```{r  module usage example setup2, eval = FALSE}
+```{r  module usage example setup2 BiomassValid, eval = FALSE}
 times <- list(start = 2001, end = 2011)
 
 studyArea <- Cache(randomStudyArea, size = 1e7) # cache this so it creates a random one only once on a machine
@@ -583,7 +583,7 @@ Here we run a simulation with three replicates using the `experiment2` function
 of the `SpaDES.experiment` R package [@McIntireChubaty2021], which builds a
 folder structure where simulation outputs are conveniently organised.
 
-```{r module usage example2, eval=FALSE}
+```{r module usage example2 BiomassValid, eval=FALSE}
 graphics.off()
 mySimInit <- simInit(times = times,
                      params = parameters, 
@@ -605,7 +605,7 @@ Note that because we ran *Biomass_core* by itself using theoretical input data,
 we can expect the validation to reveal that the module didn't do a great job at
 reproducing observed patterns.
 
-```{r validation,  eval=FALSE}
+```{r module usage example validation,  eval=FALSE}
 simulationOutputs <- lapply(mySimExperiment, FUN = function(x, localSimPaths) {
   oldPath <- dirname(outputPath(x)) ## exclude sim*_rep* folder
   DT <- as.data.table(outputs(x))
