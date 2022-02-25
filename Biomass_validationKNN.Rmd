@@ -22,6 +22,9 @@ always_allow_html: true
 
 # LandR *Biomass_validationKNN* Module
 
+<!-- the following are text references used in captions for LaTeX compatibility -->
+(ref:moduleName) *Biomass_validationKNN*
+
 ```{r setup-Biomass-validationKNN, include=FALSE}
 ## set cache.rebuild = TRUE whenever there are changes to the module code/metadata
 knitr::opts_chunk$set(echo = TRUE, eval = FALSE, warning = FALSE, 
@@ -39,9 +42,10 @@ if (!require(dplyr)) {
 }
 ```
 
-[![made-with-Markdown](https://img.shields.io/badge/Made%20with-Markdown-1f425f.svg)](http://commonmark.org)
-[![Generic
-badge](https://img.shields.io/badge/Get%20help-Report%20issues-%3CCOLOR%3E.svg)](https://github.com/PredictiveEcology/Biomass_validationKNN/issues)
+[![made-with-Markdown](https://img.shields.io/badge/Made%20with-Markdown-1f425f.png)](http://commonmark.org)
+[![Generic badge](https://img.shields.io/badge/Get%20help-Report%20issues-%3CCOLOR%3E.png)](https://github.com/PredictiveEcology/Biomass_validationKNN/issues)
+
+<!-- if knitting to pdf remember to add the pandoc_args: ["--extract-media", "."] option to yml in order to get the badge images -->
 
 **This documentation is work in progress. Potential discrepancies and omissions
 may exist for the time being. If you find any, do contact us using the link
@@ -49,7 +53,7 @@ above\^\^**
 
 #### Authors:
 
-`r paste(as.character(SpaDES.core::moduleMetadata(module = 'Biomass_core', path = '..')$authors), sep = ', ')`
+`r paste(as.character(SpaDES.core::moduleMetadata(module = 'Biomass_validationKNN', path = '..')$authors), sep = ', ')`
 <!-- ideally separate authors with new lines, '\n' not working -->
 
 ## Module Overview
@@ -89,7 +93,7 @@ Table \@ref(tab:moduleInputs-Biomass-validationKNN) shows a full list of input o
 ```{r moduleInputs-Biomass-validationKNN, echo = FALSE, eval = TRUE, message = FALSE}
 df_inputs <- SpaDES.core::moduleInputs("Biomass_validationKNN", "..")[, c(1, 3)]  ## name + desc only
 knitr::kable(df_inputs,
-             caption = "List of _Biomass_validationKNN_  input objects and their description.") %>%
+             caption = "List of (ref:moduleName) input objects and their description.") %>%
   kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
 ```
 
@@ -107,7 +111,7 @@ simulations wherever possible - see example below.
 ```{r moduleParams-Biomass-validationKNN, echo = FALSE, eval = TRUE, message = FALSE}
 df_params <- SpaDES.core::moduleParams("Biomass_validationKNN", "..")[, c(1, 6)] ## name + desc only
 knitr::kable(df_params,
-             caption = "List of _Biomass_validationKNN_ parameters and their description.") %>%
+             caption = "List of (ref:moduleName) parameters and their description.") %>%
   kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
 ```
 
@@ -142,7 +146,7 @@ The module produces the following outputs (Table \@ref(tab:moduleOutputs-Biomass
 ```{r moduleOutputs-Biomass-validationKNN, echo = FALSE, eval = TRUE, message = FALSE}
 df_outputs <- SpaDES.core::moduleOutputs("Biomass_validationKNN", "..")[, c(1, 3)] ## name + desc only
 knitr::kable(df_outputs,
-             caption = "List of _Biomass_validationKNN_ output objects and their description.") %>%
+             caption = "List of (ref:moduleName) output objects and their description.") %>%
   kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
 ```
 
@@ -321,7 +325,7 @@ module.
 ```{r moduleInputs2-Biomass-validationKNN, echo = FALSE, eval = TRUE, message = FALSE}
 df_inputs <- SpaDES.core::moduleInputs("Biomass_validationKNN", "..")
 knitr::kable(df_inputs, 
-             caption = "List of _Biomass_validationKNN_ input objects and their description.") %>%
+             caption = "List of (ref:moduleName) input objects and their description.") %>%
   kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
 ```
 
@@ -412,7 +416,7 @@ Table \@ref(tab:moduleParams2-Biomass-validationKNN) lists all parameters used i
 ```{r moduleParams2-Biomass-validationKNN, echo = FALSE, eval = TRUE, message = FALSE}
 df_params <- SpaDES.core::moduleParams("Biomass_validationKNN", "..")
 knitr::kable(df_params,
-             caption = "List of _Biomass_validationKNN_ parameters and their description.") %>%
+             caption = "List of (ref:moduleName) parameters and their description.") %>%
   kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
 ```
 
@@ -656,7 +660,7 @@ mySimValidation <- simInitAndSpades(times = validationTimes
 Here are some of the output figures automatically produced by
 *Biomass_validationKNN*
 
-```{r fig-Biomass-validationKNNOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', out.width = "50%", fig.cap = "_Biomass_validationKNN_ automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left)."}
+```{r fig-Biomass-validationKNNOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', out.width = "50%", fig.cap = "(ref:moduleName) automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left)."}
 knitr::include_graphics(c("figures/LandscapeComparisons_PresAbs.png", "figures/PixelComparisons_relB.png"))
 ```
 
