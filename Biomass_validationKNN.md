@@ -15,11 +15,13 @@ editor_options:
   chunk_output_type: console
   markdown: 
     wrap: 80
-bibliography: citations/references.bib
+bibliography: citations/references_Biomass_validationKNN.bib
 citation-style: citations/ecology-letters.csl
 link-citations: true
 always_allow_html: true
 ---
+
+# LandR *Biomass_validationKNN* Module
 
 
 
@@ -31,9 +33,9 @@ badge](https://img.shields.io/badge/Get%20help-Report%20issues-%3CCOLOR%3E.svg)]
 may exist for the time being. If you find any, do contact us using the link
 above\^\^**
 
-# Module Overview
+## Module Overview
 
-## Module summary
+### Module summary
 
 An approach to validating outputs from LandR Biomass - notably the
 *Biomass_core* vegetation simulation module - using publicly available data for
@@ -43,7 +45,7 @@ presence/absence in the landscape. To do so, it downloads and prepares all
 necessary data (observed and simulated), calculates validation statistics and
 produces/saves validation plots.
 
-## Module inputs and parameters at a glance
+### Module inputs and parameters at a glance
 
 *Biomass_validationKNN* requires access to outputs of simulations from
 *Biomass_core*, and internet access to retrieve the observed kNN datasets used
@@ -62,11 +64,11 @@ Key parameters are those defining simulation years and replicates,
 (`validationYears`, `validationReps`) and plot control (`.plots`). Here's the
 full list of parameters:
 
-Table \@ref(tab:moduleInputs) shows a full list of input objects that
+Table \@ref(tab:moduleInputsBiomassValid) shows a full list of input objects that
 *Biomass_validationKNN* expects.
 
 <table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleInputs)List of _Biomass_validationKNN_  input objects and their description.</caption>
+<caption>(\#tab:moduleInputsBiomassValid)List of _Biomass_validationKNN_  input objects and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> objectName </th>
@@ -150,7 +152,7 @@ Table \@ref(tab:moduleInputs) shows a full list of input objects that
 </table>
 
 Below is the full list of input objects that *Biomass_validationKNN* expects
-(Table \@ref(tab:moduleParams)). Of these, the only input that **must** be
+(Table \@ref(tab:moduleParamsBiomassValid)). Of these, the only input that **must** be
 provided (i.e. *Biomass_validationKNN* does not have a default for) is
 `studyArea`. Objects suffixed with `*Start` correspond to the same objects in
 the simulation without this suffix (e.g. `rawBiomassMapStart` is `rawBiomassMap`
@@ -161,7 +163,7 @@ We advise users to **supply the *exact same objects*** as those used in the
 simulations wherever possible - see example below.
 
 <table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleParams)List of _Biomass_validationKNN_ parameters and their description.</caption>
+<caption>(\#tab:moduleParamsBiomassValid)List of _Biomass_validationKNN_ parameters and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> paramName </th>
@@ -256,12 +258,12 @@ this module only runs once (in one "timestep").
         and simulated data, with respect to the first year. (`deltaBComparisons`
         event)
 
-## Module outputs
+### Module outputs
 
-The module produces the following outputs (Table \@ref(tab:moduleOutputs)):
+The module produces the following outputs (Table \@ref(tab:moduleOutputsBiomassValid)):
 
 <table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleOutputs)List of _Biomass_validationKNN_ output objects and their description.</caption>
+<caption>(\#tab:moduleOutputsBiomassValid)List of _Biomass_validationKNN_ output objects and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> objectName </th>
@@ -330,7 +332,7 @@ not saved unless specified via `spades(outputs = data.frame(...), ...)`. If not
 saving objects to disk (such as tables), these can be looked at using, e.g.,
 `mySimValidation$logLikelihood`.
 
-## Links to other modules
+### Links to other modules
 
 Intended to be used with *Biomass_core* and any other modules that link to it
 and affect cohort biomass (e.g., via `cohortData` table). You can see all
@@ -339,13 +341,13 @@ and affect cohort biomass (e.g., via `cohortData` table). You can see all
 *Biomass_validationKNN* from the dropdown menu to see linkages with
 *Biomass_validationKNN*.
 
-## Getting help
+### Getting help
 
 -   <https://github.com/PredictiveEcology/Biomass_validationKNN/issues>
 
-# Module manual
+## Module manual
 
-## Detailed description
+### Detailed description
 
 This module compares simulated outputs of two years (across replicates), with
 corresponding years of observed data. It was designed to compare the observed
@@ -397,16 +399,16 @@ Finally, ($\Delta$B) is calculated per species as the final biomass (e.g., year
 2011) minus the initial biomass (e.g., year 2001), either at the pixel- or
 landscape-level. All calculations were done per replicate.
 
-## Validation approaches
+### Validation approaches
 
-### Visual validation
+#### Visual validation
 
 The module plots the above metrics as barplots showing landscape-level values
 (averaged across replicates for the simulated data) or boxplots showing
 pixel-level values. Plotting can be live and/or in the form of exported images
 (or both turned off completely).
 
-### Mean absolute deviation
+#### Mean absolute deviation
 
 Mean absolute deviance (MAD) values are calculated on landscape- and pixel-level
 species relative abundances and $\Delta$B, and landscape-level species presences
@@ -415,7 +417,7 @@ across years). Output tables with MAD values are exported as `landscapeMAD` and
 `pixelMAD`, and the module also produces visual inspection of these values as
 dot-and-whisker plots.
 
-### Sum of negative log-likelihood (SNLL)
+#### Sum of negative log-likelihood (SNLL)
 
 To provide a measure of overall goodness of fit of the simulation model, given a
 given set of starting conditions and simulation mechanisms (i.e., the
@@ -475,7 +477,7 @@ distribution](https://en.wikipedia.org/wiki/Multinomial_distribution) and on the
 distribution](https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Density_function)
 for a good summary of these two distributions and their use in SNLL estimation.
 
-## Initialization, inputs and parameters
+### Initialization, inputs and parameters
 
 *Biomass_validationKNN* initializes itself and prepares all inputs provided that
 it has access to outputs of simulations from Biomass_core, and internet access
@@ -485,7 +487,7 @@ before supplying their own data, or alternative data URLs. Alternatively, users
 may develop their own validation modules using *Biomass_validationKNN* as a
 template.
 
-### Input objects
+#### Input objects
 
 *Biomass_validationKNN* requires the following input data layers: land-cover
 change (change type and year), fire perimeters, % species cover, stand age and
@@ -493,11 +495,11 @@ stand biomass. By default, the module will take these from National Forest
 Inventory kNN layers for years 2001 and 2011. We recommend that the user
 supplies layers used to initialise the simulation as the starting input layers
 (2001 if that is the starting point) to guarantee that they match. Table
-\@ref(tab:moduleInputs2) shows the full list of input objects used by the
+\@ref(tab:moduleInputs2BiomassValid) shows the full list of input objects used by the
 module.
 
 <table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleInputs2)List of _Biomass_validationKNN_ input objects and their description.</caption>
+<caption>(\#tab:moduleInputs2BiomassValid)List of _Biomass_validationKNN_ input objects and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> objectName </th>
@@ -618,7 +620,7 @@ module.
 </tbody>
 </table>
 
-Of the inputs in Table \@ref(tab:moduleInputs2), the following are particularly
+Of the inputs in Table \@ref(tab:moduleInputs2BiomassValid), the following are particularly
 important and deserve special attention:
 
 -   **Spatial layers**
@@ -697,13 +699,13 @@ important and deserve special attention:
         other initial groupings (e.g., this is possible in the
         *Biomass_borealDataPrep* data module).
 
-### Parameters
+#### Parameters
 
-Table \@ref(tab:moduleParams2) lists all parameters used in
+Table \@ref(tab:moduleParams2BiomassValid) lists all parameters used in
 *Biomass_validationKNN* and their detailed information.
 
 <table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleParams2)List of _Biomass_validationKNN_ parameters and their description.</caption>
+<caption>(\#tab:moduleParams2BiomassValid)List of _Biomass_validationKNN_ parameters and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> paramName </th>
@@ -838,7 +840,7 @@ Table \@ref(tab:moduleParams2) lists all parameters used in
 </tbody>
 </table>
 
-Of the parameters listed in Table \@ref(tab:moduleParams2), the following are
+Of the parameters listed in Table \@ref(tab:moduleParams2BiomassValid), the following are
 particularly important:
 
 -   `LCChangeYr` -- integer. Optional parameter defining the years of
@@ -858,7 +860,7 @@ particularly important:
     instance, if the first observed data year is 2001, that must be the first
     simulation year.
 
-## Simulation flow
+### Simulation flow
 
 The general flow of *Biomass_validationKNN* processes is:
 
@@ -917,11 +919,11 @@ The general flow of *Biomass_validationKNN* processes is:
         the first year, in observed and simulated data.
 
 All module default outputs are in the form of plots, but the user can chose to
-save any objects (see Table \@ref(tab:moduleOutputs)).
+save any objects (see Table \@ref(tab:moduleOutputsBiomassValid)).
 
-# Usage example
+## Usage example
 
-## Load `SpaDES` and other packages.
+### Load `SpaDES` and other packages.
 
 
 ```r
@@ -931,7 +933,7 @@ library(SpaDES.experiment)
 library(future)
 ```
 
-## Get the modules
+### Get the modules
 
 Because *Biomass_validationKNN* is meant to validate simulation outputs against
 observed data, we need to first run a simulation of forest dynamics with
@@ -959,7 +961,7 @@ file.rename(c(file.path(spadesModulesDirectory, "Biomass_core-master"),
               file.path(spadesModulesDirectory, "Biomass_validationKNN")))
 ```
 
-## Setup simulation
+### Setup simulation
 
 
 ```r
@@ -1006,7 +1008,7 @@ outputs <- rbind(outputs, data.frame(objectName = "pixelGroupMap",
                                      eventPriority = 1))
 ```
 
-## Run simulation
+### Run simulation
 
 Here we run a simulation with three replicates using the `experiment2` function
 of the `SpaDES.experiment` R package [@McIntireChubaty2021], which builds a
@@ -1029,7 +1031,7 @@ mySimExperiment <- experiment2(
   replicates = 3)
 ```
 
-## Validate simulation outputs with *Biomass_validationKNN*
+### Validate simulation outputs with *Biomass_validationKNN*
 
 Note that because we ran *Biomass_core* by itself using theoretical input data,
 we can expect the validation to reveal that the module didn't do a great job at
@@ -1098,4 +1100,4 @@ Here are some of the output figures automatically produced by
 <p class="caption">(\#fig:figBiomassValidOutPlots3)Diagnostic plot of observed changes in biomass and age $\Delta$B and $\Delta$Age, respectively).</p>
 </div>
 
-# References
+## References
