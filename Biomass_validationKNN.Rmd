@@ -79,7 +79,7 @@ Key parameters are those defining simulation years and replicates,
 (`validationYears`, `validationReps`) and plot control (`.plots`). Here's the
 full list of parameters:
 
-Table \@ref(tab:moduleInputs) shows a full list of input objects that
+Table \@ref(tab:moduleInputsBiomassValid) shows a full list of input objects that
 *Biomass_validationKNN* expects.
 
 ```{r moduleInputsBiomassValid, echo = FALSE, eval = TRUE, message = FALSE}
@@ -90,7 +90,7 @@ knitr::kable(df_inputs,
 ```
 
 Below is the full list of input objects that *Biomass_validationKNN* expects
-(Table \@ref(tab:moduleParams)). Of these, the only input that **must** be
+(Table \@ref(tab:moduleParamsBiomassValid)). Of these, the only input that **must** be
 provided (i.e. *Biomass_validationKNN* does not have a default for) is
 `studyArea`. Objects suffixed with `*Start` correspond to the same objects in
 the simulation without this suffix (e.g. `rawBiomassMapStart` is `rawBiomassMap`
@@ -133,7 +133,7 @@ this module only runs once (in one "timestep").
 
 ### Module outputs
 
-The module produces the following outputs (Table \@ref(tab:moduleOutputs)):
+The module produces the following outputs (Table \@ref(tab:moduleOutputsBiomassValid)):
 
 ```{r moduleOutputsBiomassValid, echo = FALSE, eval = TRUE, message = FALSE}
 df_outputs <- SpaDES.core::moduleOutputs("Biomass_validationKNN", "..")[, c(1, 3)] ## name + desc only
@@ -311,7 +311,7 @@ stand biomass. By default, the module will take these from National Forest
 Inventory kNN layers for years 2001 and 2011. We recommend that the user
 supplies layers used to initialise the simulation as the starting input layers
 (2001 if that is the starting point) to guarantee that they match. Table
-\@ref(tab:moduleInputs2) shows the full list of input objects used by the
+\@ref(tab:moduleInputs2BiomassValid) shows the full list of input objects used by the
 module.
 
 ```{r moduleInputs2BiomassValid, echo = FALSE, eval = TRUE, message = FALSE}
@@ -321,7 +321,7 @@ knitr::kable(df_inputs,
   kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
 ```
 
-Of the inputs in Table \@ref(tab:moduleInputs2), the following are particularly
+Of the inputs in Table \@ref(tab:moduleInputs2BiomassValid), the following are particularly
 important and deserve special attention:
 
 -   **Spatial layers**
@@ -402,7 +402,7 @@ important and deserve special attention:
 
 #### Parameters
 
-Table \@ref(tab:moduleParams2) lists all parameters used in
+Table \@ref(tab:moduleParams2BiomassValid) lists all parameters used in
 *Biomass_validationKNN* and their detailed information.
 
 ```{r moduleParams2BiomassValid, echo = FALSE, eval = TRUE, message = FALSE}
@@ -412,7 +412,7 @@ knitr::kable(df_params,
   kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
 ```
 
-Of the parameters listed in Table \@ref(tab:moduleParams2), the following are
+Of the parameters listed in Table \@ref(tab:moduleParams2BiomassValid), the following are
 particularly important:
 
 -   `LCChangeYr` -- integer. Optional parameter defining the years of
@@ -491,7 +491,7 @@ The general flow of *Biomass_validationKNN* processes is:
         the first year, in observed and simulated data.
 
 All module default outputs are in the form of plots, but the user can chose to
-save any objects (see Table \@ref(tab:moduleOutputs)).
+save any objects (see Table \@ref(tab:moduleOutputsBiomassValid)).
 
 ## Usage example
 
