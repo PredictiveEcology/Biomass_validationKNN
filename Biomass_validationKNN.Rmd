@@ -23,6 +23,7 @@ always_allow_html: true
 # LandR *Biomass_validationKNN* Module
 
 <!-- the following are text references used in captions for LaTeX compatibility -->
+
 (ref:Biomass-validationKNN) *Biomass_validationKNN*
 
 ```{r setup-Biomass-validationKNN, include=FALSE}
@@ -43,7 +44,8 @@ if (!require(dplyr)) {
 ```
 
 [![made-with-Markdown](https://img.shields.io/badge/Made%20with-Markdown-1f425f.png)](http://commonmark.org)
-[![Generic badge](https://img.shields.io/badge/Get%20help-Report%20issues-%3CCOLOR%3E.png)](https://github.com/PredictiveEcology/Biomass_validationKNN/issues)
+[![Generic
+badge](https://img.shields.io/badge/Get%20help-Report%20issues-%3CCOLOR%3E.png)](https://github.com/PredictiveEcology/Biomass_validationKNN/issues)
 
 <!-- if knitting to pdf remember to add the pandoc_args: ["--extract-media", "."] option to yml in order to get the badge images -->
 
@@ -72,10 +74,14 @@ produces/saves validation plots.
 
 *Biomass_validationKNN* requires access to outputs of simulations from
 *Biomass_core*, and internet access to retrieve the observed kNN datasets used
-for validation. We advise future users to run *Biomass_validationKNN* with
-defaults and inspect what the objects are like before supplying their own data,
-or alternative data URLs. We expect the number of validation modules to increase
-as other validation approaches are developed based on project needs.
+for validation. Raw data layers downloaded by the module are saved in
+`dataPath(sim)`, which can be controlled via
+`options(reproducible.destinationPath = ...)`.
+
+We advise future users to run *Biomass_validationKNN* with defaults and inspect
+what the objects are like before supplying their own data, or alternative data
+URLs. We expect the number of validation modules to increase as other validation
+approaches are developed based on project needs.
 
 The module is able to compile all simulation output data provided that the user
 supplies the object names and their file paths via the `simulationOutputs` input
@@ -87,8 +93,18 @@ Key parameters are those defining simulation years and replicates,
 (`validationYears`, `validationReps`) and plot control (`.plots`). Here's the
 full list of parameters:
 
-Table \@ref(tab:moduleInputs-Biomass-validationKNN) shows a full list of input objects that
-*Biomass_validationKNN* expects.
+Below is the full list of input objects (Table
+\@ref(tab:moduleInputs-Biomass-validationKNN)) and parameters (Table
+\@ref(tab:moduleParams-Biomass-validationKNN)) that *Biomass_validationKNN*
+expects. The only input that **must** be provided (i.e., *Biomass_validationKNN*
+does not have a default for) is `studyArea`. All other input objects and
+parameters have internal defaults (see Tables
+\@ref(tab:moduleInputs2-Biomass-validationKNN) and
+\@ref(tab:moduleParams2-Biomass-validationKNN). Objects suffixed with `*Start`
+correspond to the same objects in the simulation without this suffix (e.g.
+`rawBiomassMapStart` is `rawBiomassMap` in the simulation), whereas other
+objects like `studyArea` and `rasterToMatch` have the same names in the
+simulation and should be exactly the same object.
 
 ```{r moduleInputs-Biomass-validationKNN, echo = FALSE, eval = TRUE, message = FALSE}
 df_inputs <- SpaDES.core::moduleInputs("Biomass_validationKNN", "..")[, c(1, 3)]  ## name + desc only
@@ -97,17 +113,6 @@ knitr::kable(df_inputs,
   kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
 ```
 
-Below is the full list of input objects that *Biomass_validationKNN* expects
-(Table \@ref(tab:moduleParams-Biomass-validationKNN)). Of these, the only input that **must** be
-provided (i.e. *Biomass_validationKNN* does not have a default for) is
-`studyArea`. Objects suffixed with `*Start` correspond to the same objects in
-the simulation without this suffix (e.g. `rawBiomassMapStart` is `rawBiomassMap`
-in the simulation). Order objects like `studyArea` and `rasterToMatch` have the
-same names in the simulation.
-
-We advise users to **supply the *exact same objects*** as those used in the
-simulations wherever possible - see example below.
-
 ```{r moduleParams-Biomass-validationKNN, echo = FALSE, eval = TRUE, message = FALSE}
 df_params <- SpaDES.core::moduleParams("Biomass_validationKNN", "..")[, c(1, 6)] ## name + desc only
 knitr::kable(df_params,
@@ -115,10 +120,10 @@ knitr::kable(df_params,
   kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
 ```
 
-## Events
+### Events
 
 The following events take place during a *Biomass_validationKNN* run. Note that
-this module only runs once (in one "timestep").
+this module only runs once (in one "time step").
 
 -   Module initiation (`init` event) - prepares both the observed and simulated
     data to be compared
@@ -141,7 +146,8 @@ this module only runs once (in one "timestep").
 
 ### Module outputs
 
-The module produces the following outputs (Table \@ref(tab:moduleOutputs-Biomass-validationKNN)):
+The module produces the following outputs (Table
+\@ref(tab:moduleOutputs-Biomass-validationKNN)):
 
 ```{r moduleOutputs-Biomass-validationKNN, echo = FALSE, eval = TRUE, message = FALSE}
 df_outputs <- SpaDES.core::moduleOutputs("Biomass_validationKNN", "..")[, c(1, 3)] ## name + desc only
@@ -162,8 +168,7 @@ Intended to be used with *Biomass_core* and any other modules that link to it
 and affect cohort biomass (e.g., via `cohortData` table). You can see all
 *potential* module linkages within the LandR ecosystem
 [here](https://rpubs.com/PredictiveEcology/LandR_Module_Ecosystem). Select
-*Biomass_validationKNN* from the dropdown menu to see linkages with
-*Biomass_validationKNN*.
+*Biomass_validationKNN* from the drop-down menu to see linkages.
 
 ### Getting help
 
@@ -252,25 +257,27 @@ sum of negative log-likelihoods (SNLL) of simulated species biomasses, $\Delta$B
 landscape-level), with respect to their observed counterparts. More precisely,
 let $\ell$ be the log-likelihood function denoting the probability of observing
 $x$ of $X$ (a random variable following a continuous probability distribution
-$f(x)$), given a parameter $\theta$: 
+$f(x)$), given a parameter $\theta$:
 
+```{=tex}
 \begin{equation}
   \ell(\theta \mid x) = f(x)
   (\#eq:loglik)
 \end{equation}
-
+```
 In our case, $\theta$ is equivalent to the model's starting conditions and
 structure, $X$ is the observed data with $x$ being the simulated values, and
 $f(x)$ the continuous probability distribution of $X$. For each variable that we
 wanted to evaluate and for each simulation replicate, Equation \@ref(eq:loglik)
 is applied to calculate the SNLL estimated for each value of $x$ at the pixel or
-landscape-level, $i$: 
+landscape-level, $i$:
 
+```{=tex}
 \begin{equation}
   -\sum_{i = 1}^{N} \ell(\theta \mid x_{i})
   (\#eq:negsumloglik)
 \end{equation}
-
+```
 where $N$ is equal to total number of pixels. At the landscape scale $N = 1$.
 
 For species biomass and species presences, we draw the probability of observing
@@ -281,15 +288,15 @@ $n_{i} = \sum_{j = 1}^{K} X_{i,j}$ ($X$ being the observed values of biomass of
 $j = 1, ..., K$ species in a pixel/landscape $i$) and $\mathrm{p_{i}}$ is the
 vector of simulated values $x_{i,j}$.
 
-**The computation of SNLL for $\Delta$B is still under development**. We have implemented the following, approach:
-For $\Delta$B, we draw the
-probability of observing $x_{i,j}$ (the simulated $\Delta$B of $j = 1, ..., K$
-species in a pixel/landscape $i$) from a multivariate Gaussian distribution,
+**The computation of SNLL for** $\Delta$B is still under development. We have
+implemented the following, approach: For $\Delta$B, we draw the probability of
+observing $x_{i,j}$ (the simulated $\Delta$B of $j = 1, ..., K$ species in a
+pixel/landscape $i$) from a multivariate Gaussian distribution,
 $f(x_{i}) = \mathcal {N}(\mu_{i}, \mathrm{M}_{i})$, where $\mu_{i}$ is the
 vector of observed mean $\Delta$B for each species $j = 1, ..., K$, and
 $\mathrm{M}$ is the observed $K * K$ variance-covariance matrix of species
-$\Delta$B. Unfortunately this is presenting problems, due to
-$\mathrm{M}$ not being strictly positive definite.
+$\Delta$B. Unfortunately this is presenting problems, due to $\mathrm{M}$ not
+being strictly positive definite.
 
 After calculating SNLL across pixels (or for a landscape), values are averaged
 across replicates for an overall model estimate and exported in the
@@ -304,7 +311,7 @@ for a good summary of these two distributions and their use in SNLL estimation.
 ### Initialization, inputs and parameters
 
 *Biomass_validationKNN* initializes itself and prepares all inputs provided that
-it has access to outputs of simulations from Biomass_core, and internet access
+it has access to outputs of simulations from *Biomass_core*, and internet access
 to retrieve the observed kNN datasets used for validation. Future users should
 run *Biomass_validationKNN* with defaults and inspect what the objects are like
 before supplying their own data, or alternative data URLs. Alternatively, users
@@ -319,8 +326,8 @@ stand biomass. By default, the module will take these from National Forest
 Inventory kNN layers for years 2001 and 2011. We recommend that the user
 supplies layers used to initialise the simulation as the starting input layers
 (2001 if that is the starting point) to guarantee that they match. Table
-\@ref(tab:moduleInputs2-Biomass-validationKNN) shows the full list of input objects used by the
-module.
+\@ref(tab:moduleInputs2-Biomass-validationKNN) shows the full list of input
+objects used by the module.
 
 ```{r moduleInputs2-Biomass-validationKNN, echo = FALSE, eval = TRUE, message = FALSE}
 df_inputs <- SpaDES.core::moduleInputs("Biomass_validationKNN", "..")
@@ -329,8 +336,8 @@ knitr::kable(df_inputs,
   kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
 ```
 
-Of the inputs in Table \@ref(tab:moduleInputs2-Biomass-validationKNN), the following are particularly
-important and deserve special attention:
+Of the inputs in Table \@ref(tab:moduleInputs2-Biomass-validationKNN), the
+following are particularly important and deserve special attention:
 
 -   **Spatial layers**
 
@@ -410,8 +417,8 @@ important and deserve special attention:
 
 #### Parameters
 
-Table \@ref(tab:moduleParams2-Biomass-validationKNN) lists all parameters used in
-*Biomass_validationKNN* and their detailed information.
+Table \@ref(tab:moduleParams2-Biomass-validationKNN) lists all parameters used
+in *Biomass_validationKNN* and their detailed information.
 
 ```{r moduleParams2-Biomass-validationKNN, echo = FALSE, eval = TRUE, message = FALSE}
 df_params <- SpaDES.core::moduleParams("Biomass_validationKNN", "..")
@@ -420,8 +427,9 @@ knitr::kable(df_params,
   kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
 ```
 
-Of the parameters listed in Table \@ref(tab:moduleParams2-Biomass-validationKNN), the following are
-particularly important:
+Of the parameters listed in Table
+\@ref(tab:moduleParams2-Biomass-validationKNN), the following are particularly
+important:
 
 -   `LCChangeYr` -- integer. Optional parameter defining the years of
     disturbance that should be filtered out of the analysis using the
