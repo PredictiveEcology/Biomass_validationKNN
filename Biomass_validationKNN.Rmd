@@ -93,7 +93,7 @@ Key parameters are those defining simulation years and replicates,
 (`validationYears`, `validationReps`) and plot control (`.plots`). Here's the
 full list of parameters:
 
-Below is the full list of input objects (Table
+Below are the full lists of input objects (Table
 \@ref(tab:moduleInputs-Biomass-validationKNN)) and parameters (Table
 \@ref(tab:moduleParams-Biomass-validationKNN)) that *Biomass_validationKNN*
 expects. The only input that **must** be provided (i.e., *Biomass_validationKNN*
@@ -436,9 +436,9 @@ important:
     `rstLCChangeYr` layer. This parameter is set to `NULL` by default, meaning
     that `rstLCChangeYr` will not be used.
 
--   `sppEquivCol` -- character. the column name in `specieEquivalency`
+-   `sppEquivCol` -- character. the column name in `speciesEquivalency`
     data.table that defines the naming convention to use throughout the
-    simulation. The user needs to make sure the is
+    simulation.
 
 -   `validationReps` -- integer. which simulation replicates should be used for
     the validation.
