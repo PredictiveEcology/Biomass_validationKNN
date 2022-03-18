@@ -669,15 +669,18 @@ Here are some of the output figures automatically produced by
 *Biomass_validationKNN*
 
 ```{r fig-Biomass-validationKNNOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', out.width = "50%", fig.cap = "(ref:Biomass-validationKNN) automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left)."}
-knitr::include_graphics(c("figures/LandscapeComparisons_PresAbs.png", "figures/PixelComparisons_relB.png"))
+## make sure all include_graphics have wd attached to figure path
+## this is necessary to knit to pdf using child Rmds - see https://stackoverflow.com/questions/61065560/cant-compile-rmarkdown-pdf-with-image-in-child-rmd-latex-error-image-file
+knitr::include_graphics(normalizePath(c("figures/LandscapeComparisons_PresAbs.png",
+                                        "figures/PixelComparisons_relB.png"), winslash = "/"))
 ```
 
 ```{r fig-Biomass-validationKNNOutPlots2, echo = FALSE, eval = TRUE, fig.show='hold', fig.cap = "A plot of landscape-wide mean absolute deviations (MAD) from (top to bottom) observed mean relative abundance, no. of presences, no. of pixels where the species is dominant and $\\Delta$B."}
-knitr::include_graphics(c("figures/landscapeMAD.png"))
+knitr::include_graphics(normalizePath(c("figures/landscapeMAD.png"), winslash = "/"))
 ```
 
 ```{r fig-Biomass-validationKNNOutPlots3, echo = FALSE, eval = TRUE, fig.show='hold', fig.cap = "Diagnostic plot of observed changes in biomass and age $\\Delta$B and $\\Delta$Age, respectively)."}
-knitr::include_graphics(c("figures/observedDeltaBDeltaAge.png"))
+knitr::include_graphics(normalizePath(c("figures/observedDeltaBDeltaAge.png"), winslash = "/"))
 ```
 
 ## References
