@@ -132,7 +132,7 @@ defineModule(sim, list(
                               "See https://opendata.nfis.org/mapserver/nfis-change_eng.html for more information."),
                  sourceURL = "https://opendata.nfis.org/downloads/forest_change/C2C_change_year_1985_2011.zip"),
     expectsInput("simulationOutputs", "data.table",
-                 desc = paste("An OPTIONAL table listing simulation outputs (as passed to `spades()`, or `experiment)",
+                 desc = paste("An OPTIONAL table listing simulation outputs (as passed to `spades()`, or `experiment`)",
                               "that will be used to make `allCohortData`, `pixelGroupMapStk`,",
                               "if these are not provided.")),
     expectsInput("speciesLayersStart", "RasterStack",
