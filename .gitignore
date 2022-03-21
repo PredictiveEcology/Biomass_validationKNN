@@ -3,8 +3,14 @@
 .RData
 .Ruserdata
 
-E:/GitHub/../.httr-oauth
-E:/GitHub/../.httr-oauth-SUSPENDED
+.httr-oauth
+.httr-oauth-SUSPENDED
 
 cache/
-Biomass_validationKNN_cache/
+
+## these are downloaded automatically, no point in caching
+figures/*Badge.png
+
+## html cache/files
+*_cache/
+*_files/
