@@ -113,7 +113,7 @@ expects. The only input that **must** be provided (i.e., *Biomass_validationKNN*
 does not have a default for) is `studyArea`. All other input objects and
 parameters have internal defaults (see Tables
 \@ref(tab:moduleInputs2-Biomass-validationKNN) and
-\@ref(tab:moduleParams2-Biomass-validationKNN). Objects suffixed with `*Start`
+\@ref(tab:moduleParams2-Biomass-validationKNN)). Objects suffixed with `*Start`
 correspond to the same objects in the simulation without this suffix (e.g.
 `rawBiomassMapStart` is `rawBiomassMap` in the simulation), whereas other
 objects like `studyArea` and `rasterToMatch` have the same names in the
