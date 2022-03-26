@@ -25,6 +25,7 @@ always_allow_html: true
 <!-- the following are text references used in captions for LaTeX compatibility -->
 
 (ref:Biomass-validationKNN) *Biomass_validationKNN*
+(ref:percent) %
 
 ```{r setup-Biomass-validationKNN, include=FALSE}
 ## set cache.rebuild = TRUE whenever there are changes to the module code/metadata
@@ -193,7 +194,7 @@ corresponding years of observed data. It was designed to compare the observed
 data for years 2001 (start point for the simulation) and 2011 (i.e., after 10
 years of simulation) of the kNN forest layers of the Canadian National Forest
 Inventory -- these are currently the only available FAIR datasets [*sensu*
-@StallEtAl2019]) on stand biomass and species % cover changes across Canada.
+@StallEtAl2019]) on stand biomass and species (ref:percent) cover changes across Canada.
 However, the user can supply other sources of observed data, as long as they
 have an identical format.
 
@@ -331,7 +332,7 @@ template.
 #### Input objects
 
 *Biomass_validationKNN* requires the following input data layers: land-cover
-change (change type and year), fire perimeters, % species cover, stand age and
+change (change type and year), fire perimeters, (ref:percent) species cover, stand age and
 stand biomass. By default, the module will take these from National Forest
 Inventory kNN layers for years 2001 and 2011. We recommend that the user
 supplies layers used to initialise the simulation as the starting input layers
@@ -388,10 +389,10 @@ following are particularly important and deserve special attention:
         (CFS)](https://opendata.nfis.org/downloads/forest_change/C2C_change_year_1985_2011.zip).
 
     -   `speciesLayersStart` -- same as `rawBiomassMapStart`, but with respect
-        to species % cover data.
+        to species (ref:percent) cover data.
 
     -   `speciesLayersEnd` -- same as `rawBiomassMapEnd`, but with respect to
-        species % cover data.
+        species (ref:percent) cover data.
 
     -   `studyArea` -- shapefile. A `SpatialPolygonsDataFrame` with a single
         polygon determining the where the simulation will take place. This is
