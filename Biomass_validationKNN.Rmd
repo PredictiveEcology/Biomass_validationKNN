@@ -25,6 +25,7 @@ always_allow_html: true
 <!-- the following are text references used in captions for LaTeX compatibility -->
 
 (ref:Biomass-validationKNN) *Biomass_validationKNN*
+
 (ref:percent) %
 
 ```{r setup-Biomass-validationKNN, include=FALSE}
@@ -56,7 +57,8 @@ download.file(url = "https://img.shields.io/badge/Get%20help-Report%20issues-%3C
 ```
 
 [![made-with-Markdown](figures/markdownBadge.png)](http://commonmark.org)
-[![Generic badge](figures/genericBadge.png)](https://github.com/PredictiveEcology/Biomass_validationKNN/issues)
+[![Generic
+badge](figures/genericBadge.png)](https://github.com/PredictiveEcology/Biomass_validationKNN/issues)
 
 <!-- if knitting to pdf remember to add the pandoc_args: ["--extract-media", "."] option to yml in order to get the badge images -->
 
@@ -194,9 +196,9 @@ corresponding years of observed data. It was designed to compare the observed
 data for years 2001 (start point for the simulation) and 2011 (i.e., after 10
 years of simulation) of the kNN forest layers of the Canadian National Forest
 Inventory -- these are currently the only available FAIR datasets [*sensu*
-@StallEtAl2019]) on stand biomass and species (ref:percent) cover changes across Canada.
-However, the user can supply other sources of observed data, as long as they
-have an identical format.
+@StallEtAl2019]) on stand biomass and species (ref:percent) cover changes across
+Canada. However, the user can supply other sources of observed data, as long as
+they have an identical format.
 
 The validation is done both visually (using barplots and boxplots) and using two
 statistics: mean absolute deviation of simulated biomass (per species) and the
@@ -332,11 +334,11 @@ template.
 #### Input objects
 
 *Biomass_validationKNN* requires the following input data layers: land-cover
-change (change type and year), fire perimeters, (ref:percent) species cover, stand age and
-stand biomass. By default, the module will take these from National Forest
-Inventory kNN layers for years 2001 and 2011. We recommend that the user
-supplies layers used to initialise the simulation as the starting input layers
-(2001 if that is the starting point) to guarantee that they match. Table
+change (change type and year), fire perimeters, (ref:percent) species cover,
+stand age and stand biomass. By default, the module will take these from
+National Forest Inventory kNN layers for years 2001 and 2011. We recommend that
+the user supplies layers used to initialise the simulation as the starting input
+layers (2001 if that is the starting point) to guarantee that they match. Table
 \@ref(tab:moduleInputs2-Biomass-validationKNN) shows the full list of input
 objects used by the module.
 
