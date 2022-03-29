@@ -543,21 +543,20 @@ outputs in temporary directories.
 
 ```{r module usage example setup -Biomass-validationKNN, eval = FALSE}
 tempDir <- tempdir()
-spadesModulesDirectory <- file.path(tempDir, "modules")
 paths <- list(inputPath = file.path(tempDir, "inputs"), 
                  cachePath = file.path(tempDir, "cache"), 
-                 modulePath = spadesModulesDirectory, 
+                 modulePath = file.path(tempDir, "modules"), 
                  outputPath = file.path(tempDir, "outputs"))
 
-getModule("PredictiveEcology/Biomass_core", modulePath = spadesModulesDirectory, overwrite = TRUE)
-getModule("PredictiveEcology/Biomass_validationKNN", modulePath = spadesModulesDirectory, overwrite = TRUE)
+getModule("PredictiveEcology/Biomass_core", modulePath = paths$modulePath, overwrite = TRUE)
+getModule("PredictiveEcology/Biomass_validationKNN", modulePath = paths$modulePath, overwrite = TRUE)
 
 ## by default the repository branch name is appended to the module folder name.
 ## so we change the folder name to remove the "-master" suffix.
-file.rename(c(file.path(spadesModulesDirectory, "Biomass_core-master"),
-              file.path(spadesModulesDirectory, "Biomass_validationKNN-master")),
-            c(file.path(spadesModulesDirectory, "Biomass_core"),
-              file.path(spadesModulesDirectory, "Biomass_validationKNN")))
+file.rename(c(file.path(paths$modulePath, "Biomass_core-master"),
+              file.path(paths$modulePath, "Biomass_validationKNN-master")),
+            c(file.path(paths$modulePath, "Biomass_core"),
+              file.path(paths$modulePath, "Biomass_validationKNN")))
 ```
 
 ### Setup simulation
