@@ -171,7 +171,7 @@ knitr::kable(df_outputs,
 
 and saves the validation figures in the output path defined in
 `getPaths(sim)$outputPath` (which was defined as `paths$outputPath`). Tables are
-not saved unless specified via `spades(outputs = data.frame(...), ...)`. If not
+not saved unless specified via `spades(..., outputs = data.frame(...))`. If not
 saving objects to disk (such as tables), these can be looked at using, e.g.,
 `mySimValidation$logLikelihood`.
 
@@ -415,7 +415,7 @@ following are particularly important and deserve special attention:
 
     -   `simulationOutputs` -- OPTIONAL. A `data.frame` that has the same
         structure as the `data.frame`'s specifying outputs to be saved in
-        `spades(…, outputs = data.frame(…))`. We advise passing the same
+        `spades(..., outputs = data.frame(...))`. We advise passing the same
         `data.frame` that was supplied to `spades` during the simulation call,
         but filtered by the relevant `cohortData` and `pixelGroupMap` objects
         and, potentially, with file paths corrected to match the current working
