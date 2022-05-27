@@ -29,24 +29,26 @@ defineModule(sim, list(
                                  "the species cover layers for simulation set up.")),
     defineParameter("deciduousCoverDiscount", "numeric", 0.8418911, NA, NA,
                     desc = paste("This was estimated with data from NWT on March 18, 2020 and may or may not be universal.",
-                                 "Should be the same as the one used when preparing 'cohortData' in the simulation set up.")),
-    defineParameter("LCChangeYr", "integer", c(2001:2011), 1985, 2015,
-                    desc = paste("An integer or vector of integers of the validation period years, defining which",
+                                 "Should be the same as the one used when preparing `cohortData` in the simulation set up.")),
+    defineParameter("LCChangeYr", "integer", NULL, 1900, NA,
+                    desc = paste("OPTIONAL. An integer or vector of integers of the validation period years, defining which",
                                  "years of land-cover changes (i.e. disturbances) should be excluded.",
-                                 "Only used if rstLCChangeYr is not NULL.",
+                                 "`NULL` by default, which presumes no subsetting based on years is done internally (either",
+                                 "the user supplies a pre-filtered `rstLCChange`, or no filtering is desired). If not `NULL`",
+                                 "`rstLCChangeYr` is used to filter disturbed pixels within the specified years.",
                                  "See https://opendata.nfis.org/mapserver/nfis-change_eng.html for more information.")),
     defineParameter("minCoverThreshold", "numeric", 5, 0, 100,
                     desc = paste("Cover that is equal to or below this number will be omitted from the dataset",
-                                 "Should be the same as the one used when preparing 'cohortData' in the simulation set up.")),
+                                 "Should be the same as the one used when preparing `cohortData` in the simulation set up.")),
     defineParameter("obsDeltaAgeB", "logical", TRUE, NA, NA,
                     desc = paste("When TRUE, the observed changes in biomass and age (deltaB, deltaAge) between",
                                  "the two validation years will be plotted as maps and scatterplots")),
     defineParameter("pixelGroupBiomassClass", "numeric", 100, NA, NA,
-                    desc = paste("When assigning pixelGroup membership, this defines the resolution of biomass that will be",
+                    desc = paste("When assigning `pixelGroup` membership, this defines the resolution of biomass that will be",
                                  "considered 'the same pixelGroup', e.g., if it is 100, then 5160 and 5240 will be the same",
-                                 "Should be the same as the one used when preparing 'cohortData' in the simulation set up.")),
+                                 "Should be the same as the one used when preparing `cohortData` in the simulation set up.")),
     defineParameter("sppEquivCol", "character", "Boreal", NA, NA,
-                    desc =  "The column in sim$specieEquivalency data.table to use as a naming convention"),
+                    "The column in `sim$sppEquiv` data.table to use as a naming convention"),
     defineParameter("validationReps", "integer", 1:10, NA, NA,
                     desc = paste("The simulation repetitions for the validation. Defaults to 1:10. Set to NA if not using repetitions",
                                  "(i.e. only one run)")),
@@ -57,43 +59,44 @@ defineModule(sim, list(
     defineParameter(".plots", "character", default = c("object", "png"),
                     desc = paste("Passed to `types` in Plots (see ?Plots). There are a few plots that are made within this module, if set.",
                                  "Note that plots (or their data) are saved in file.path(outputPath(sim), 'figures').",
-                                 "If NA plotting is off completely (this includes saving).")),
-    defineParameter(".saveInitialTime", "numeric", NA, NA, NA, desc = "This describes the simulation time at which the first save event should occur"),
-    defineParameter(".saveInterval", "numeric", NA, NA, NA, desc = "This describes the simulation time interval between save events"),
+                                 "If `NA`, plotting is off completely (this includes plot saving).")),
+    defineParameter(".saveInitialTime", "numeric", NA, NA, NA,
+                    desc = "This describes the simulation time at which the first save event should occur"),
+    defineParameter(".saveInterval", "numeric", NA, NA, NA,
+                    desc = "This describes the simulation time interval between save events"),
     defineParameter(".studyAreaName", "character", NA, NA, NA,
-                    "Human-readable name for the study area used. If NA, a hash of studyArea will be used."),
+                    "Human-readable name for the study area used. If `NA`, a hash of `studyArea` will be used."),
     defineParameter(".useCache", "logical", "init", NA, NA,
                     desc = "Controls cache; caches the init event by default")
   ),
   inputObjects = bind_rows(
     expectsInput("allCohortData", "data.table",
-                 desc = paste("All 'cohortData' tables saved during the simulation, particularly for the validation years.",
+                 desc = paste("All `cohortData` tables saved during the simulation, particularly for the validation years.",
                               "If not supplied, the module will attempt to retrieve them using the 'simulationOutputs' table")),
     expectsInput("biomassMap", "RasterLayer",
-                 desc = paste("total biomass raster layer in study area, filtered for pixels covered by cohortData.",
+                 desc = paste("total biomass raster layer in study area (in g/m^2), filtered for pixels covered by `cohortData`.",
                               "Only used to calculate total no. of pixels being simulated",
-                              "If not supplied, will default to 'rawBiomassMapStart'")),
+                              "If not supplied, will default to `rawBiomassMapStart`")),
     expectsInput("firePerimeters", "sf",
                  desc = paste("A map of fire perimeters in the study area that can be used to exclude pixels",
                               "that have been burnt during the validation period. If burnt pixels are not to be excluded",
-                              "Provide an empty sf object with the same properties as the default. Defaults to the latest Canadian",
+                              "Provide an empty `sf` object with the same properties as the default. Defaults to the latest Canadian",
                               "Wildland Fire Information System National Burned Area Composite,",
-                              "subset to fires occuring up to last validation year (inclusively). Source URL determined by 'fireURL'"),
+                              "subset to fires occuring up to last validation year (inclusively). Source URL determined by `fireURL`"),
                  sourceURL = NA),
     expectsInput("fireURL", "character",
-                 desc = paste("A url to a fire database, such as the Canadian National Fire Database,",
+                 desc = paste("A URL to a fire database, such as the Canadian National Fire Database,",
                               "that is a zipped shapefile with fire polygons, an attribute (i.e., a column) named 'Year'.",
-                              "If supplied (omitted with NULL or NA), this will be used to 'update' age pixels on standAgeMap",
+                              "If supplied (omitted with NULL or NA), this will be used to 'update' age pixels on `standAgeMap`",
                               "with 'time since fire' as derived from this fire polygons map"),
                  sourceURL = "https://cwfis.cfs.nrcan.gc.ca/downloads/nfdb/fire_poly/current_version/NFDB_poly.zip"),
     expectsInput("pixelGroupMapStk", "RasterStack",
-                 desc = paste("A stack of pixelGroupMaps saved during the simulation, particularly for the validation years.",
+                 desc = paste("A stack of `pixelGroupMap`s saved during the simulation, particularly for the validation years.",
                               "If not supplied, the module will attempt to make it using the 'simulationOutputs' table")),
     expectsInput("rawBiomassMapStart", "RasterLayer",
                  desc = paste("observed total biomass raster layer in study area at the first year of the validation period.",
                               "Defaults to the Canadian Forestry Service, National Forest Inventory, kNN-derived",
-                              "total aboveground biomass map from 2001 (in tonnes/ha). If necessary, biomass values",
-                              "are rescaled to match changes in resolution.",
+                              "total aboveground biomass map from 2001 (in ton/ha).",
                               "See https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990",
                               "for metadata."),
                  sourceURL = paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
@@ -103,34 +106,34 @@ defineModule(sim, list(
     expectsInput("rawBiomassMapEnd", "RasterLayer",
                  desc = paste("observed total biomass raster layer in study area at the last year of the validation period.",
                               "Defaults to the Canadian Forestry Service, National Forest Inventory, kNN-derived",
-                              "total aboveground biomass map from 2011 (in tonnes/ha). If necessary, biomass values",
-                              "are rescaled to match changes in resolution.",
+                              "total aboveground biomass map from 2011 (in ton/ha)",
                               "See https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990"),
                  sourceURL = paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
                                     "canada-forests-attributes_attributs-forests-canada/2011-attributes_attributs-2011/",
                                     "NFI_MODIS250m_2011_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif")),
     expectsInput("rasterToMatch", "RasterLayer",
-                 desc = paste("A raster of the studyArea in the same resolution and projection as rawBiomassMapStart.",
+                 desc = paste("A raster of the `studyArea` in the same resolution and projection as `rawBiomassMapStart`.",
                               "This is the scale used for all *outputs* for use in the simulation.")),
     expectsInput("rstLCChange", "RasterLayer",
                  desc = paste("A mask-type map of land cover changes in the study area that can be used to exclude pixels",
                               "that have been disturbed during the validation period. If disturbed pixels are not to be excluded",
                               "Provide an empty sf object with the same properties as the default. Defaults to Canada's forest",
                               "change map between 1985-2011 (CFS), filtered for years 2001-2011 (inclusively)",
-                              "and all disturbances collapsed (map only has values of 1 and NA). See parameter LCChangeYr",
+                              "and all disturbances collapsed (map only has values of 1 and NA). See `P(sim)$LCChangeYr` parameter",
                               "to change the period of disturbances, and",
                               "https://opendata.nfis.org/mapserver/nfis-change_eng.html for more information."),
                  sourceURL = "https://opendata.nfis.org/downloads/forest_change/C2C_change_type_1985_2011.zip"),
     expectsInput("rstLCChangeYr", "RasterLayer",
                  desc = paste("An OPTIONAL map of land cover change years in the study area used to exclude pixels that have",
-                              "been disturbed during the validation period. Defaults to Canada's forest",
-                              "change national map between 1985-2011 (CFS). By default disturbances are subset to",
-                              " to years 2001-2011 (inclusively; see parameter LCChangeYr).",
+                              "been disturbed during the validation period. It defaults to Canada's forest",
+                              "change year national map between 1985-2011 (CFS). If `P(sim)$LCChangeYr` is not `NULL`,",
+                              "this layer is used to filted disturbed pixels that fall within the years specified by ",
+                              "`P(sim)$LCChangeYr`. If `P(sim)$LCChangeYr` is `NULL` this layer is not used.",
                               "See https://opendata.nfis.org/mapserver/nfis-change_eng.html for more information."),
                  sourceURL = "https://opendata.nfis.org/downloads/forest_change/C2C_change_year_1985_2011.zip"),
     expectsInput("simulationOutputs", "data.table",
-                 desc = paste("An OPTIONAL table listing simulation outputs (as passed to 'spades()', or 'experiment",
-                              "that will be used to make 'allCohortData', 'pixelGroupMapStk',",
+                 desc = paste("An OPTIONAL table listing simulation outputs (as passed to `spades()`, or `experiment`)",
+                              "that will be used to make `allCohortData`, `pixelGroupMapStk`,",
                               "if these are not provided.")),
     expectsInput("speciesLayersStart", "RasterStack",
                  desc = paste("observed cover percentage raster layers by species in Canada species map,",
@@ -142,7 +145,7 @@ defineModule(sim, list(
                  sourceURL = paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
                                     "canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/")),
     expectsInput("speciesLayersEnd", "RasterStack",
-                 desc = paste("observed cover percentage raster layers by species in Canada species map used for validation",
+                 desc = paste("observed percent cover raster layers by species in Canada used for validation",
                               "at the last year of the validation period.",
                               "Defaults to the Canadian Forestry Service, National Forest Inventory,",
                               "kNN-derived species cover maps from 2011 -",
@@ -150,9 +153,12 @@ defineModule(sim, list(
                  sourceURL = paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
                                     "canada-forests-attributes_attributs-forests-canada/2011-attributes_attributs-2011/")),
     expectsInput("sppColorVect", "character",
-                 desc = "named character vector of hex colour codes corresponding to each species"),
+                 desc = paste("A named vector of colors to use for plotting.",
+                              "The names must be in sim$sppEquiv[[sim$sppEquivCol]],",
+                              "and should also contain a color for 'Mixed'"),
+                 sourceURL = NA),
     expectsInput("sppEquiv", "data.table",
-                 desc = "table of species equivalencies. See LandR::sppEquivalencies_CA."),
+                 desc = "table of species equivalencies. See `LandR::sppEquivalencies_CA`."),
     expectsInput("standAgeMapStart", "RasterLayer",
                  desc =  paste("observed stand age map in study area, at the first year of the validation period",
                                "Defaults to the Canadian Forestry Service, National Forest Inventory,",
@@ -171,8 +177,7 @@ defineModule(sim, list(
                                     "canada-forests-attributes_attributs-forests-canada/2011-attributes_attributs-2011/",
                                     "NFI_MODIS250m_2011_kNN_Structure_Stand_Age_v1.tif")),
     expectsInput("studyArea", "SpatialPolygonsDataFrame",
-                 desc = paste("Polygon to use as the study area.",
-                              "Defaults to  an area in Southwestern Alberta, Canada.")),
+                 desc = paste("Polygon to use as the study area. Must be provided by the user")),
   ),
   outputObjects = bind_rows(
     createsOutput("logLikelihood", "data.table",
@@ -191,7 +196,7 @@ defineModule(sim, list(
                                "has higher 'relAbund'; 'countDom') and species changes in biomass, as 2011 minus 2001 ('deltaB').",
                                "Observed data rows are labelled as 'observed' in 'dataType' column. In species dominance, pixels",
                                "with >= 2 species with max(B) and pixels with no B  are classified as 'Mixed' and 'No veg.',",
-                               "respectively in the 'speciesCode' column - note that this is 'vegType' column in 'pixelCohortData'.")),
+                               "respectively in the 'speciesCode' column - note that this is 'vegType' column in `pixelCohortData`.")),
     createsOutput("pixelCohortData", "data.table",
                   desc = paste("A table containing observed and simulated pixel-level data (by year and repetition, 'rep',",
                                "in the case of simulated data) on species biomass (summed across cohorts, 'B'),",
@@ -204,7 +209,7 @@ defineModule(sim, list(
                   desc = paste("Mean absolute deviance values calculated on pixel-level relative abundances and deltaB,",
                                "per repetition and year (except for deltaB, which is integrated across years)")),
     createsOutput("pixelVars", "data.table",
-                  desc = paste("The same as 'landscapeVars', but variables are calculated at the pixel-level")),
+                  desc = paste("The same as `landscapeVars`, but variables are calculated at the pixel-level")),
     createsOutput("rstDisturbedPix", "RasterLayer",
                   desc = paste("Raster of pixel IDs (as a mask) that have been disturbed by fire or suffered land-cover",
                                "changes during the validation period. These pixels are excluded form the validation.")),
@@ -215,11 +220,11 @@ defineModule(sim, list(
                   desc = paste("observed total biomass raster layer in study area at the last year of the validation period.",
                                "Filtered to exclude pixels that were disturbed during the validation period")),
     createsOutput("speciesLayersStart", "RasterStack",
-                  desc = paste("observed cover percentage raster layers by species in Canada species map,",
+                  desc = paste("observed percent cover raster layers by species in Canada",
                                "at the first year of the validation period.",
                                "Filtered to exclude pixels that were disturbed during the validation period")),
     createsOutput("speciesLayersEnd", "RasterStack",
-                  desc = paste("observed cover percentage raster layers by species in Canada species map,",
+                  desc = paste("observed percent cover raster layers by species in Canada",
                                "at the last year of the validation period.",
                                "Filtered to exclude pixels that were disturbed during the validation period")),
     createsOutput("standAgeMapStart", "RasterLayer",
@@ -339,6 +344,12 @@ Init <- function(sim) {
     sim$rstLCChange <- postProcess(sim$rstLCChange, rasterToMatch = sim$rasterToMatch)
   }
 
+  if (!is.null(P(sim)$LCChangeYr)) {
+    if (!compareRaster(sim$rstLCChangeYr, sim$rasterToMatch, stopiffalse = FALSE)) {
+      sim$rstLCChangeYr <- postProcess(sim$rstLCChangeYr, rasterToMatch = sim$rasterToMatch)
+    }
+  }
+
   ## EXCLUDE DISTURBED PIXELS FROM VALIDATION  -----------------------------------
   ## make a template raster with IDs
   rasterToMatchIDs <- sim$rasterToMatch
@@ -350,6 +361,17 @@ Init <- function(sim) {
     inFireIDs <- inFireIDs[!is.na(inFireIDs)] ## faster than na.omit
   } else {
     inFireIDs <- integer(0)
+  }
+
+  ## only keep pixels that have been disturbed during the validation period
+  ## convert years to the map's format
+  if (!is.null(P(sim)$LCChangeYr)) {
+    yrs <- P(sim)$LCChangeYr - 1900
+    pixKeep <- !is.na(getValues(sim$rstLCChange)) &
+      getValues(sim$rstLCChangeYr) %in% yrs
+
+    sim$rstLCChange[!pixKeep] <- NA
+    sim$rstLCChangeYr[!pixKeep] <- NA
   }
 
   ## get pixels inside LCC pixels
@@ -1058,13 +1080,13 @@ obsrvdDeltaMapsEvent <- function(sim) {
 
     noScreenTypes <- setdiff(P(sim)$.plots, "screen")
     if (length(noScreenTypes)) {
-      Plots(plot4, types = noScreenTypes, filename = "observedDeltaBDeltaAge_lm",
+      Plots(plot4, types = noScreenTypes, filename = "observedDeltaBDeltaAge",
             path = file.path(mod$plotPath),
             deviceArgs = list(width = 7, height = 5, units = "in", res = 300))
       Plots(plot5, types = noScreenTypes, filename = "observedDeltaB_yearGap",
             path = file.path(mod$plotPath),
             deviceArgs = list(width = 5, height = 4, units = "in", res = 300))
-      Plots(plot9, types = noScreenTypes, filename = "observedDeltaBDeltaAge_lmADJ",
+      Plots(plot9, types = noScreenTypes, filename = "observedDeltaBDeltaAge_ADJ",
             path = file.path(mod$plotPath),
             deviceArgs = list(width = 7, height = 5, units = "in", res = 300))
       Plots(plot10, types = noScreenTypes, filename = "observedDeltaB_yearGapADJ",
@@ -1253,8 +1275,6 @@ deltaBComparisonsEvent <- function(sim) {
   ## Study area raster and shapefile -------------------------------------------
   if (!suppliedElsewhere("studyArea", sim)) {
     stop("Please provide a 'studyArea' polygon")
-    # message("'studyArea' was not provided by user. Using a polygon (6250000 m^2) in southwestern Alberta, Canada")
-    # sim$studyArea <- randomStudyArea(seed = 1234, size = (250^2)*100)  # Jan 2021 we agreed to force user to provide a SA/SAL
   }
 
   if (is.na(P(sim)$.studyAreaName)) {
@@ -1343,7 +1363,6 @@ deltaBComparisonsEvent <- function(sim) {
 
     ## need the year of change map to subset CFSs land-cover change type map.
     LCChangeFilename <- "C2C_change_type_1985_2011.tif"
-    LCChangeYrFilename <- "C2C_change_year_1985_2011.tif"
     sim$rstLCChange <- Cache(prepInputs,
                              targetFile = LCChangeFilename,
                              archive = file.path(dPath, "C2C_change_type_1985_2011.zip"),
@@ -1361,7 +1380,12 @@ deltaBComparisonsEvent <- function(sim) {
                              omitArgs = c("destinationPath", "targetFile", "userTags"))
     ## convert to mask
     sim$rstLCChange[!is.na(sim$rstLCChange)] <- 1
+  }
 
+  ## Check that rstLCChange is a mask and matches RTM
+  assertRstLCChange(sim$rstLCChange, sim$rasterToMatch)
+  if (!suppliedElsewhere("rstLCChangeYr", sim) & !is.null(P(sim)$LCChangeYr)) {
+    LCChangeYrFilename <- "C2C_change_year_1985_2011.tif"
     sim$rstLCChangeYr <- Cache(prepInputs,
                                targetFile = LCChangeYrFilename,
                                archive = asPath("C2C_change_year_1985_2011.zip"),
@@ -1377,19 +1401,7 @@ deltaBComparisonsEvent <- function(sim) {
                                overwrite = TRUE,
                                userTags = c("rstLCChangeYr", cacheTags),
                                omitArgs = c("destinationPath", "targetFile", "userTags"))
-
-    ## only keep pixels that have been disturbed during the validation period
-    ## convert years to the map's format
-    yrs <- P(sim)$LCChangeYr - 1900
-    pixKeep <- !is.na(getValues(sim$rstLCChange)) &
-      getValues(sim$rstLCChangeYr) %in% yrs
-
-    sim$rstLCChange[!pixKeep] <- NA
-    sim$rstLCChangeYr[!pixKeep] <- NA
   }
-
-  ## Check that rstLCChange is a mask and matches RTM
-  assertRstLCChange(sim$rstLCChange, sim$rasterToMatch)
 
   ## Fire perimeter data ---------------------------------------------------
 
@@ -1618,21 +1630,34 @@ deltaBComparisonsEvent <- function(sim) {
       cohortDataOutputs <- sim$simulationOutputs[objectName == "cohortData"]
 
       ## check that the selected years and reps exist in outputs table
+      ## make a reps vector that aligns with file naming
+      if (!any(is.na(P(sim)$validationReps))) {
+        if (all(grepl("rep[[:digit:]]", cohortDataOutputs$file))) {
+          reps <- paste("rep", P(sim)$validationReps, sep = "")
+        } else {
+          stop(paste("Simulation output paths should contain 'rep' in the",
+                     "folder or file name to identify different replicate outputs"))
+        }
+
+        repsWzeros <- sub("(rep)([[:digit:]])$", "\\10\\2", reps)
+        if (all(grepl(paste(repsWzeros, collapse = "|"), cohortDataOutputs$file))) {
+          reps <- repsWzeros
+        }
+      }
+
       if (!any(is.na(P(sim)$validationReps))) {
         out <- lapply(P(sim)$validationYears, FUN = function(y, cohortDataOutputs, reps) {
           fileNames <- cohortDataOutputs[saveTime == y, file]
-          reps <- paste("rep", reps, sep = "")
-          reps <- sub("(rep)([[:digit:]])$", "\\10\\2", reps)
           out <- vapply(reps, FUN = function(x) any(grepl(x, fileNames)), FUN.VALUE = logical(1))
           out2 <- which(!out)
           if (length(out2))
-            stop(paste("Missing 'cohortData' outputs for year", y, "and rep(s)", paste(out2, collapse = ", ")))
-        }, cohortDataOutputs = cohortDataOutputs, reps = P(sim)$validationReps)
+            stop(paste("Missing `cohortData` outputs for year", y, "and rep(s)", paste(out2, collapse = ", ")))
+        }, cohortDataOutputs = cohortDataOutputs, reps = reps)
       } else {
         out <- lapply(P(sim)$validationYears, FUN = function(y, cohortDataOutputs) {
           fileNames <- cohortDataOutputs[saveTime == y, file]
           if (!length(fileNames))
-            stop(paste("Missing 'cohortData' outputs for year", y))
+            stop(paste("Missing `cohortData` outputs for year", y))
         }, cohortDataOutputs = cohortDataOutputs)
       }
 
@@ -1641,9 +1666,7 @@ deltaBComparisonsEvent <- function(sim) {
 
       ## subset to validation reps and add reps column
       if (!any(is.na(P(sim)$validationReps))) {
-        repsStr <- paste("rep", P(sim)$validationReps, sep = "")
-        repsStr <- sub("(rep)([[:digit:]])$", "\\10\\2", repsStr)
-        repsStr <- paste(repsStr, sep = "", collapse = "|" )
+        repsStr <- paste(reps, sep = "", collapse = "|" )
         cohortDataOutputs <- cohortDataOutputs[grepl(repsStr, file)]
         cohortDataOutputs[, rep := sub("(.*rep)([[:digit:]]*)(\\/.*)", "\\2", file)]
       } else {
@@ -1678,13 +1701,11 @@ deltaBComparisonsEvent <- function(sim) {
       if (!any(is.na(P(sim)$validationReps))) {
         out <- lapply(P(sim)$validationYears, FUN = function(y, pixelGroupMapOutputs, reps) {
           fileNames <- pixelGroupMapOutputs[saveTime == y, file]
-          reps <- paste("rep", reps, sep = "")
-          reps <- sub("(rep)([[:digit:]])$", "\\10\\2", reps)
           out <- vapply(reps, FUN = function(x) any(grepl(x, fileNames)), FUN.VALUE = logical(1))
           out2 <- which(!out)
           if (length(out2))
             stop(paste("Missing 'pixelGroupMap' outputs for year", y, "and rep(s)", paste(out2, collapse = ", ")))
-        }, pixelGroupMapOutputs = pixelGroupMapOutputs, reps = P(sim)$validationReps)
+        }, pixelGroupMapOutputs = pixelGroupMapOutputs, reps = reps)
       } else {
         out <- lapply(P(sim)$validationYears, FUN = function(y, pixelGroupMapOutputs) {
           fileNames <- pixelGroupMapOutputs[saveTime == y, file]
@@ -1698,9 +1719,7 @@ deltaBComparisonsEvent <- function(sim) {
 
       ## subset to validation reps and add reps column
       if (!any(is.na(P(sim)$validationReps))) {
-        repsStr <- paste("rep", P(sim)$validationReps, sep = "")
-        repsStr <- sub("(rep)([[:digit:]])$", "\\10\\2", repsStr)
-        repsStr <- paste(repsStr, sep = "", collapse = "|" )
+        repsStr <- paste(reps, sep = "", collapse = "|" )
         pixelGroupMapOutputs <- pixelGroupMapOutputs[grepl(repsStr, file)]
         pixelGroupMapOutputs[, rep := sub("(.*rep)([[:digit:]]*)(\\/.*)", "\\2", file)]
       } else {
