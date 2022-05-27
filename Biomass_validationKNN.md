@@ -1,7 +1,7 @@
 ---
 title: "LandR _Biomass_validationKNN_ Manual"
 subtitle: "v.0.0.2.9001"
-date: "Last updated: 2022-02-25"
+date: "Last updated: 2022-03-26"
 output:
   bookdown::html_document2:
     toc: true
@@ -22,11 +22,21 @@ always_allow_html: true
 
 # LandR *Biomass_validationKNN* Module
 
+<!-- the following are text references used in captions for LaTeX compatibility -->
+
+(ref:Biomass-validationKNN) *Biomass_validationKNN*
+
+(ref:percent) %
 
 
-[![made-with-Markdown](https://img.shields.io/badge/Made%20with-Markdown-1f425f.svg)](http://commonmark.org)
+
+
+
+[![made-with-Markdown](figures/markdownBadge.png)](http://commonmark.org)
 [![Generic
-badge](https://img.shields.io/badge/Get%20help-Report%20issues-%3CCOLOR%3E.svg)](https://github.com/PredictiveEcology/Biomass_validationKNN/issues)
+badge](figures/genericBadge.png)](https://github.com/PredictiveEcology/Biomass_validationKNN/issues)
+
+<!-- if knitting to pdf remember to add the pandoc_args: ["--extract-media", "."] option to yml in order to get the badge images -->
 
 **This documentation is work in progress. Potential discrepancies and omissions
 may exist for the time being. If you find any, do contact us using the link
@@ -34,7 +44,7 @@ above\^\^**
 
 #### Authors:
 
-Yong Luo <yluo1@lakeheadu.ca> [aut], Eliot J B McIntire <eliot.mcintire@canada.ca> [aut, cre], Jean Marchal <jean.d.marchal@gmail.com> [ctb], Alex M. Chubaty <achubaty@for-cast.ca> [ctb], Ceres Barros <cbarros@mail.ubc.ca> [ctb]
+Ceres Barros <cbarros@mail.ubc.ca> [aut, cre]
 <!-- ideally separate authors with new lines, '\n' not working -->
 
 ## Module Overview
@@ -53,10 +63,14 @@ produces/saves validation plots.
 
 *Biomass_validationKNN* requires access to outputs of simulations from
 *Biomass_core*, and internet access to retrieve the observed kNN datasets used
-for validation. We advise future users to run *Biomass_validationKNN* with
-defaults and inspect what the objects are like before supplying their own data,
-or alternative data URLs. We expect the number of validation modules to increase
-as other validation approaches are developed based on project needs.
+for validation. Raw data layers downloaded by the module are saved in
+`dataPath(sim)`, which can be controlled via
+`options(reproducible.destinationPath = ...)`.
+
+We advise future users to run *Biomass_validationKNN* with defaults and inspect
+what the objects are like before supplying their own data, or alternative data
+URLs. We expect the number of validation modules to increase as other validation
+approaches are developed based on project needs.
 
 The module is able to compile all simulation output data provided that the user
 supplies the object names and their file paths via the `simulationOutputs` input
@@ -68,11 +82,21 @@ Key parameters are those defining simulation years and replicates,
 (`validationYears`, `validationReps`) and plot control (`.plots`). Here's the
 full list of parameters:
 
-Table \@ref(tab:moduleInputs-Biomass-validationKNN) shows a full list of input objects that
-*Biomass_validationKNN* expects.
+Below are the full lists of input objects (Table
+\@ref(tab:moduleInputs-Biomass-validationKNN)) and parameters (Table
+\@ref(tab:moduleParams-Biomass-validationKNN)) that *Biomass_validationKNN*
+expects. The only input that **must** be provided (i.e., *Biomass_validationKNN*
+does not have a default for) is `studyArea`. All other input objects and
+parameters have internal defaults (see Tables
+\@ref(tab:moduleInputs2-Biomass-validationKNN) and
+\@ref(tab:moduleParams2-Biomass-validationKNN)). Objects suffixed with `*Start`
+correspond to the same objects in the simulation without this suffix (e.g.
+`rawBiomassMapStart` is `rawBiomassMap` in the simulation), whereas other
+objects like `studyArea` and `rasterToMatch` have the same names in the
+simulation and should be exactly the same object.
 
 <table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleInputs-Biomass-validationKNN)List of _Biomass_validationKNN_  input objects and their description.</caption>
+<caption>(\#tab:moduleInputs-Biomass-validationKNN)List of (ref:Biomass-validationKNN) input objects and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> objectName </th>
@@ -122,7 +146,7 @@ Table \@ref(tab:moduleInputs-Biomass-validationKNN) shows a full list of input o
   </tr>
   <tr>
    <td style="text-align:left;"> simulationOutputs </td>
-   <td style="text-align:left;"> An OPTIONAL table listing simulation outputs (as passed to `spades()`, or `experiment) that will be used to make `allCohortData`, `pixelGroupMapStk`, if these are not provided. </td>
+   <td style="text-align:left;"> An OPTIONAL table listing simulation outputs (as passed to `spades()`, or `experiment`) that will be used to make `allCohortData`, `pixelGroupMapStk`, if these are not provided. </td>
   </tr>
   <tr>
    <td style="text-align:left;"> speciesLayersStart </td>
@@ -134,7 +158,7 @@ Table \@ref(tab:moduleInputs-Biomass-validationKNN) shows a full list of input o
   </tr>
   <tr>
    <td style="text-align:left;"> sppColorVect </td>
-   <td style="text-align:left;"> named character vector of hex colour codes corresponding to each species </td>
+   <td style="text-align:left;"> A named vector of colors to use for plotting. The names must be in sim$sppEquiv[[sim$sppEquivCol]], and should also contain a color for 'Mixed' </td>
   </tr>
   <tr>
    <td style="text-align:left;"> sppEquiv </td>
@@ -155,19 +179,8 @@ Table \@ref(tab:moduleInputs-Biomass-validationKNN) shows a full list of input o
 </tbody>
 </table>
 
-Below is the full list of input objects that *Biomass_validationKNN* expects
-(Table \@ref(tab:moduleParams-Biomass-validationKNN)). Of these, the only input that **must** be
-provided (i.e. *Biomass_validationKNN* does not have a default for) is
-`studyArea`. Objects suffixed with `*Start` correspond to the same objects in
-the simulation without this suffix (e.g. `rawBiomassMapStart` is `rawBiomassMap`
-in the simulation). Order objects like `studyArea` and `rasterToMatch` have the
-same names in the simulation.
-
-We advise users to **supply the *exact same objects*** as those used in the
-simulations wherever possible - see example below.
-
 <table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleParams-Biomass-validationKNN)List of _Biomass_validationKNN_ parameters and their description.</caption>
+<caption>(\#tab:moduleParams-Biomass-validationKNN)List of (ref:Biomass-validationKNN) parameters and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> paramName </th>
@@ -201,7 +214,7 @@ simulations wherever possible - see example below.
   </tr>
   <tr>
    <td style="text-align:left;"> sppEquivCol </td>
-   <td style="text-align:left;"> The column in `sim$specieEquivalency` data.table to use as a naming convention </td>
+   <td style="text-align:left;"> The column in `sim$sppEquiv` data.table to use as a naming convention </td>
   </tr>
   <tr>
    <td style="text-align:left;"> validationReps </td>
@@ -238,10 +251,10 @@ simulations wherever possible - see example below.
 </tbody>
 </table>
 
-## Events
+### Events
 
 The following events take place during a *Biomass_validationKNN* run. Note that
-this module only runs once (in one "timestep").
+this module only runs once (in one "time step").
 
 -   Module initiation (`init` event) - prepares both the observed and simulated
     data to be compared
@@ -264,10 +277,11 @@ this module only runs once (in one "timestep").
 
 ### Module outputs
 
-The module produces the following outputs (Table \@ref(tab:moduleOutputs-Biomass-validationKNN)):
+The module produces the following outputs (Table
+\@ref(tab:moduleOutputs-Biomass-validationKNN)):
 
 <table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleOutputs-Biomass-validationKNN)List of _Biomass_validationKNN_ output objects and their description.</caption>
+<caption>(\#tab:moduleOutputs-Biomass-validationKNN)List of (ref:Biomass-validationKNN) output objects and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> objectName </th>
@@ -342,8 +356,7 @@ Intended to be used with *Biomass_core* and any other modules that link to it
 and affect cohort biomass (e.g., via `cohortData` table). You can see all
 *potential* module linkages within the LandR ecosystem
 [here](https://rpubs.com/PredictiveEcology/LandR_Module_Ecosystem). Select
-*Biomass_validationKNN* from the dropdown menu to see linkages with
-*Biomass_validationKNN*.
+*Biomass_validationKNN* from the drop-down menu to see linkages.
 
 ### Getting help
 
@@ -358,9 +371,9 @@ corresponding years of observed data. It was designed to compare the observed
 data for years 2001 (start point for the simulation) and 2011 (i.e., after 10
 years of simulation) of the kNN forest layers of the Canadian National Forest
 Inventory -- these are currently the only available FAIR datasets [*sensu*
-@StallEtAl2019]) on stand biomass and species % cover changes across Canada.
-However, the user can supply other sources of observed data, as long as they
-have an identical format.
+@StallEtAl2019]) on stand biomass and species (ref:percent) cover changes across
+Canada. However, the user can supply other sources of observed data, as long as
+they have an identical format.
 
 The validation is done both visually (using barplots and boxplots) and using two
 statistics: mean absolute deviation of simulated biomass (per species) and the
@@ -432,25 +445,27 @@ sum of negative log-likelihoods (SNLL) of simulated species biomasses, $\Delta$B
 landscape-level), with respect to their observed counterparts. More precisely,
 let $\ell$ be the log-likelihood function denoting the probability of observing
 $x$ of $X$ (a random variable following a continuous probability distribution
-$f(x)$), given a parameter $\theta$: 
+$f(x)$), given a parameter $\theta$:
 
+```{=tex}
 \begin{equation}
   \ell(\theta \mid x) = f(x)
   (\#eq:loglik)
 \end{equation}
-
+```
 In our case, $\theta$ is equivalent to the model's starting conditions and
 structure, $X$ is the observed data with $x$ being the simulated values, and
 $f(x)$ the continuous probability distribution of $X$. For each variable that we
 wanted to evaluate and for each simulation replicate, Equation \@ref(eq:loglik)
 is applied to calculate the SNLL estimated for each value of $x$ at the pixel or
-landscape-level, $i$: 
+landscape-level, $i$:
 
+```{=tex}
 \begin{equation}
   -\sum_{i = 1}^{N} \ell(\theta \mid x_{i})
   (\#eq:negsumloglik)
 \end{equation}
-
+```
 where $N$ is equal to total number of pixels. At the landscape scale $N = 1$.
 
 For species biomass and species presences, we draw the probability of observing
@@ -461,15 +476,15 @@ $n_{i} = \sum_{j = 1}^{K} X_{i,j}$ ($X$ being the observed values of biomass of
 $j = 1, ..., K$ species in a pixel/landscape $i$) and $\mathrm{p_{i}}$ is the
 vector of simulated values $x_{i,j}$.
 
-**The computation of SNLL for $\Delta$B is still under development**. We have implemented the following, approach:
-For $\Delta$B, we draw the
-probability of observing $x_{i,j}$ (the simulated $\Delta$B of $j = 1, ..., K$
-species in a pixel/landscape $i$) from a multivariate Gaussian distribution,
+**The computation of SNLL for** $\Delta$B is still under development. We have
+implemented the following, approach: For $\Delta$B, we draw the probability of
+observing $x_{i,j}$ (the simulated $\Delta$B of $j = 1, ..., K$ species in a
+pixel/landscape $i$) from a multivariate Gaussian distribution,
 $f(x_{i}) = \mathcal {N}(\mu_{i}, \mathrm{M}_{i})$, where $\mu_{i}$ is the
 vector of observed mean $\Delta$B for each species $j = 1, ..., K$, and
 $\mathrm{M}$ is the observed $K * K$ variance-covariance matrix of species
-$\Delta$B. Unfortunately this is presenting problems, due to
-$\mathrm{M}$ not being strictly positive definite.
+$\Delta$B. Unfortunately this is presenting problems, due to $\mathrm{M}$ not
+being strictly positive definite.
 
 After calculating SNLL across pixels (or for a landscape), values are averaged
 across replicates for an overall model estimate and exported in the
@@ -484,7 +499,7 @@ for a good summary of these two distributions and their use in SNLL estimation.
 ### Initialization, inputs and parameters
 
 *Biomass_validationKNN* initializes itself and prepares all inputs provided that
-it has access to outputs of simulations from Biomass_core, and internet access
+it has access to outputs of simulations from *Biomass_core*, and internet access
 to retrieve the observed kNN datasets used for validation. Future users should
 run *Biomass_validationKNN* with defaults and inspect what the objects are like
 before supplying their own data, or alternative data URLs. Alternatively, users
@@ -494,16 +509,16 @@ template.
 #### Input objects
 
 *Biomass_validationKNN* requires the following input data layers: land-cover
-change (change type and year), fire perimeters, % species cover, stand age and
-stand biomass. By default, the module will take these from National Forest
-Inventory kNN layers for years 2001 and 2011. We recommend that the user
-supplies layers used to initialise the simulation as the starting input layers
-(2001 if that is the starting point) to guarantee that they match. Table
-\@ref(tab:moduleInputs2-Biomass-validationKNN) shows the full list of input objects used by the
-module.
+change (change type and year), fire perimeters, (ref:percent) species cover,
+stand age and stand biomass. By default, the module will take these from
+National Forest Inventory kNN layers for years 2001 and 2011. We recommend that
+the user supplies layers used to initialise the simulation as the starting input
+layers (2001 if that is the starting point) to guarantee that they match. Table
+\@ref(tab:moduleInputs2-Biomass-validationKNN) shows the full list of input
+objects used by the module.
 
 <table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleInputs2-Biomass-validationKNN)List of _Biomass_validationKNN_ input objects and their description.</caption>
+<caption>(\#tab:moduleInputs2-Biomass-validationKNN)List of (ref:Biomass-validationKNN) input objects and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> objectName </th>
@@ -576,7 +591,7 @@ module.
   <tr>
    <td style="text-align:left;"> simulationOutputs </td>
    <td style="text-align:left;"> data.table </td>
-   <td style="text-align:left;"> An OPTIONAL table listing simulation outputs (as passed to `spades()`, or `experiment) that will be used to make `allCohortData`, `pixelGroupMapStk`, if these are not provided. </td>
+   <td style="text-align:left;"> An OPTIONAL table listing simulation outputs (as passed to `spades()`, or `experiment`) that will be used to make `allCohortData`, `pixelGroupMapStk`, if these are not provided. </td>
    <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
@@ -594,7 +609,7 @@ module.
   <tr>
    <td style="text-align:left;"> sppColorVect </td>
    <td style="text-align:left;"> character </td>
-   <td style="text-align:left;"> named character vector of hex colour codes corresponding to each species </td>
+   <td style="text-align:left;"> A named vector of colors to use for plotting. The names must be in sim$sppEquiv[[sim$sppEquivCol]], and should also contain a color for 'Mixed' </td>
    <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
@@ -624,8 +639,8 @@ module.
 </tbody>
 </table>
 
-Of the inputs in Table \@ref(tab:moduleInputs2-Biomass-validationKNN), the following are particularly
-important and deserve special attention:
+Of the inputs in Table \@ref(tab:moduleInputs2-Biomass-validationKNN), the
+following are particularly important and deserve special attention:
 
 -   **Spatial layers**
 
@@ -666,10 +681,10 @@ important and deserve special attention:
         (CFS)](https://opendata.nfis.org/downloads/forest_change/C2C_change_year_1985_2011.zip).
 
     -   `speciesLayersStart` -- same as `rawBiomassMapStart`, but with respect
-        to species % cover data.
+        to species (ref:percent) cover data.
 
     -   `speciesLayersEnd` -- same as `rawBiomassMapEnd`, but with respect to
-        species % cover data.
+        species (ref:percent) cover data.
 
     -   `studyArea` -- shapefile. A `SpatialPolygonsDataFrame` with a single
         polygon determining the where the simulation will take place. This is
@@ -705,11 +720,11 @@ important and deserve special attention:
 
 #### Parameters
 
-Table \@ref(tab:moduleParams2-Biomass-validationKNN) lists all parameters used in
-*Biomass_validationKNN* and their detailed information.
+Table \@ref(tab:moduleParams2-Biomass-validationKNN) lists all parameters used
+in *Biomass_validationKNN* and their detailed information.
 
 <table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleParams2-Biomass-validationKNN)List of _Biomass_validationKNN_ parameters and their description.</caption>
+<caption>(\#tab:moduleParams2-Biomass-validationKNN)List of (ref:Biomass-validationKNN) parameters and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> paramName </th>
@@ -775,7 +790,7 @@ Table \@ref(tab:moduleParams2-Biomass-validationKNN) lists all parameters used i
    <td style="text-align:left;"> Boreal </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> The column in `sim$specieEquivalency` data.table to use as a naming convention </td>
+   <td style="text-align:left;"> The column in `sim$sppEquiv` data.table to use as a naming convention </td>
   </tr>
   <tr>
    <td style="text-align:left;"> validationReps </td>
@@ -844,17 +859,18 @@ Table \@ref(tab:moduleParams2-Biomass-validationKNN) lists all parameters used i
 </tbody>
 </table>
 
-Of the parameters listed in Table \@ref(tab:moduleParams2-Biomass-validationKNN), the following are
-particularly important:
+Of the parameters listed in Table
+\@ref(tab:moduleParams2-Biomass-validationKNN), the following are particularly
+important:
 
 -   `LCChangeYr` -- integer. Optional parameter defining the years of
     disturbance that should be filtered out of the analysis using the
     `rstLCChangeYr` layer. This parameter is set to `NULL` by default, meaning
     that `rstLCChangeYr` will not be used.
 
--   `sppEquivCol` -- character. the column name in `specieEquivalency`
+-   `sppEquivCol` -- character. the column name in `speciesEquivalency`
     data.table that defines the naming convention to use throughout the
-    simulation. The user needs to make sure the is
+    simulation.
 
 -   `validationReps` -- integer. which simulation replicates should be used for
     the validation.
@@ -1090,17 +1106,17 @@ Here are some of the output figures automatically produced by
 *Biomass_validationKNN*
 
 <div class="figure">
-<img src="figures/LandscapeComparisons_PresAbs.png" alt="_Biomass_validationKNN_ automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left)." width="50%" /><img src="figures/PixelComparisons_relB.png" alt="_Biomass_validationKNN_ automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left)." width="50%" />
-<p class="caption">(\#fig:fig-Biomass-validationKNNOutPlots)_Biomass_validationKNN_ automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left).</p>
+<img src="D:/GitHub/Biomass_validationKNN/figures/LandscapeComparisons_PresAbs.png" alt="(ref:Biomass-validationKNN) automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left)." width="50%" /><img src="D:/GitHub/Biomass_validationKNN/figures/PixelComparisons_relB.png" alt="(ref:Biomass-validationKNN) automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left)." width="50%" />
+<p class="caption">(\#fig:fig-Biomass-validationKNNOutPlots)(ref:Biomass-validationKNN) automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left).</p>
 </div>
 
 <div class="figure">
-<img src="figures/landscapeMAD.png" alt="A plot of landscape-wide mean absolute deviations (MAD) from (top to bottom) observed mean relative abundance, no. of presences, no. of pixels where the species is dominant and $\Delta$B." width="672" />
+<img src="D:/GitHub/Biomass_validationKNN/figures/landscapeMAD.png" alt="A plot of landscape-wide mean absolute deviations (MAD) from (top to bottom) observed mean relative abundance, no. of presences, no. of pixels where the species is dominant and $\Delta$B." width="672" />
 <p class="caption">(\#fig:fig-Biomass-validationKNNOutPlots2)A plot of landscape-wide mean absolute deviations (MAD) from (top to bottom) observed mean relative abundance, no. of presences, no. of pixels where the species is dominant and $\Delta$B.</p>
 </div>
 
 <div class="figure">
-<img src="figures/observedDeltaBDeltaAge.png" alt="Diagnostic plot of observed changes in biomass and age $\Delta$B and $\Delta$Age, respectively)." width="672" />
+<img src="D:/GitHub/Biomass_validationKNN/figures/observedDeltaBDeltaAge.png" alt="Diagnostic plot of observed changes in biomass and age $\Delta$B and $\Delta$Age, respectively)." width="672" />
 <p class="caption">(\#fig:fig-Biomass-validationKNNOutPlots3)Diagnostic plot of observed changes in biomass and age $\Delta$B and $\Delta$Age, respectively).</p>
 </div>
 

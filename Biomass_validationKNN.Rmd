@@ -26,10 +26,12 @@ always_allow_html: true
 
 (ref:Biomass-validationKNN) *Biomass_validationKNN*
 
+(ref:percent) %
+
 ```{r setup-Biomass-validationKNN, include=FALSE}
 ## set cache.rebuild = TRUE whenever there are changes to the module code/metadata
 knitr::opts_chunk$set(echo = TRUE, eval = FALSE, warning = FALSE, 
-                      cache = 2, cache.rebuild = FALSE, results = "hold", dpi = 300)
+                      cache = TRUE, cache.rebuild = FALSE, results = "hold", dpi = 300)
 
 ## get citation style
 if (!file.exists("citations/ecology-letters.csl")) {
@@ -55,6 +57,7 @@ download.file(url = "https://img.shields.io/badge/Get%20help-Report%20issues-%3C
 ```
 
 [![made-with-Markdown](figures/markdownBadge.png)](http://commonmark.org)
+
 [![Generic badge](figures/genericBadge.png)](https://github.com/PredictiveEcology/Biomass_validationKNN/issues)
 
 <!-- if knitting to pdf remember to add the pandoc_args: ["--extract-media", "."] option to yml in order to get the badge images -->
@@ -110,7 +113,7 @@ expects. The only input that **must** be provided (i.e., *Biomass_validationKNN*
 does not have a default for) is `studyArea`. All other input objects and
 parameters have internal defaults (see Tables
 \@ref(tab:moduleInputs2-Biomass-validationKNN) and
-\@ref(tab:moduleParams2-Biomass-validationKNN). Objects suffixed with `*Start`
+\@ref(tab:moduleParams2-Biomass-validationKNN)). Objects suffixed with `*Start`
 correspond to the same objects in the simulation without this suffix (e.g.
 `rawBiomassMapStart` is `rawBiomassMap` in the simulation), whereas other
 objects like `studyArea` and `rasterToMatch` have the same names in the
@@ -120,14 +123,16 @@ simulation and should be exactly the same object.
 df_inputs <- SpaDES.core::moduleInputs("Biomass_validationKNN", "..")[, c(1, 3)]  ## name + desc only
 knitr::kable(df_inputs,
              caption = "List of (ref:Biomass-validationKNN) input objects and their description.") %>%
-  kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
+  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE) %>%
+  kableExtra::column_spec(column = 2, width = "40em")
 ```
 
 ```{r moduleParams-Biomass-validationKNN, echo = FALSE, eval = TRUE, message = FALSE}
 df_params <- SpaDES.core::moduleParams("Biomass_validationKNN", "..")[, c(1, 6)] ## name + desc only
 knitr::kable(df_params,
              caption = "List of (ref:Biomass-validationKNN) parameters and their description.") %>%
-  kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
+  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE) %>%
+  kableExtra::column_spec(column = 2, width = "40em")
 ```
 
 ### Events
@@ -163,12 +168,13 @@ The module produces the following outputs (Table
 df_outputs <- SpaDES.core::moduleOutputs("Biomass_validationKNN", "..")[, c(1, 3)] ## name + desc only
 knitr::kable(df_outputs,
              caption = "List of (ref:Biomass-validationKNN) output objects and their description.") %>%
-  kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
+  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE) %>%
+  kableExtra::column_spec(column = 2, width = "40em")
 ```
 
 and saves the validation figures in the output path defined in
 `getPaths(sim)$outputPath` (which was defined as `paths$outputPath`). Tables are
-not saved unless specified via `spades(outputs = data.frame(...), ...)`. If not
+not saved unless specified via `spades(..., outputs = data.frame(...))`. If not
 saving objects to disk (such as tables), these can be looked at using, e.g.,
 `mySimValidation$logLikelihood`.
 
@@ -193,9 +199,9 @@ corresponding years of observed data. It was designed to compare the observed
 data for years 2001 (start point for the simulation) and 2011 (i.e., after 10
 years of simulation) of the kNN forest layers of the Canadian National Forest
 Inventory -- these are currently the only available FAIR datasets [*sensu*
-@StallEtAl2019]) on stand biomass and species % cover changes across Canada.
-However, the user can supply other sources of observed data, as long as they
-have an identical format.
+@StallEtAl2019]) on stand biomass and species (ref:percent) cover changes across
+Canada. However, the user can supply other sources of observed data, as long as
+they have an identical format.
 
 The validation is done both visually (using barplots and boxplots) and using two
 statistics: mean absolute deviation of simulated biomass (per species) and the
@@ -331,11 +337,11 @@ template.
 #### Input objects
 
 *Biomass_validationKNN* requires the following input data layers: land-cover
-change (change type and year), fire perimeters, % species cover, stand age and
-stand biomass. By default, the module will take these from National Forest
-Inventory kNN layers for years 2001 and 2011. We recommend that the user
-supplies layers used to initialise the simulation as the starting input layers
-(2001 if that is the starting point) to guarantee that they match. Table
+change (change type and year), fire perimeters, (ref:percent) species cover,
+stand age and stand biomass. By default, the module will take these from
+National Forest Inventory kNN layers for years 2001 and 2011. We recommend that
+the user supplies layers used to initialise the simulation as the starting input
+layers (2001 if that is the starting point) to guarantee that they match. Table
 \@ref(tab:moduleInputs2-Biomass-validationKNN) shows the full list of input
 objects used by the module.
 
@@ -343,7 +349,7 @@ objects used by the module.
 df_inputs <- SpaDES.core::moduleInputs("Biomass_validationKNN", "..")
 knitr::kable(df_inputs, 
              caption = "List of (ref:Biomass-validationKNN) input objects and their description.") %>%
-  kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
+  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
 ```
 
 Of the inputs in Table \@ref(tab:moduleInputs2-Biomass-validationKNN), the
@@ -388,10 +394,10 @@ following are particularly important and deserve special attention:
         (CFS)](https://opendata.nfis.org/downloads/forest_change/C2C_change_year_1985_2011.zip).
 
     -   `speciesLayersStart` -- same as `rawBiomassMapStart`, but with respect
-        to species % cover data.
+        to species (ref:percent) cover data.
 
     -   `speciesLayersEnd` -- same as `rawBiomassMapEnd`, but with respect to
-        species % cover data.
+        species (ref:percent) cover data.
 
     -   `studyArea` -- shapefile. A `SpatialPolygonsDataFrame` with a single
         polygon determining the where the simulation will take place. This is
@@ -412,7 +418,7 @@ following are particularly important and deserve special attention:
 
     -   `simulationOutputs` -- OPTIONAL. A `data.frame` that has the same
         structure as the `data.frame`'s specifying outputs to be saved in
-        `spades(…, outputs = data.frame(…))`. We advise passing the same
+        `spades(..., outputs = data.frame(...))`. We advise passing the same
         `data.frame` that was supplied to `spades` during the simulation call,
         but filtered by the relevant `cohortData` and `pixelGroupMap` objects
         and, potentially, with file paths corrected to match the current working
@@ -434,7 +440,8 @@ in *Biomass_validationKNN* and their detailed information.
 df_params <- SpaDES.core::moduleParams("Biomass_validationKNN", "..")
 knitr::kable(df_params,
              caption = "List of (ref:Biomass-validationKNN) parameters and their description.") %>%
-  kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
+  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE) %>%
+  kableExtra::landscape(.)
 ```
 
 Of the parameters listed in Table
@@ -540,21 +547,20 @@ outputs in temporary directories.
 
 ```{r module usage example setup -Biomass-validationKNN, eval = FALSE}
 tempDir <- tempdir()
-spadesModulesDirectory <- file.path(tempDir, "modules")
 paths <- list(inputPath = file.path(tempDir, "inputs"), 
                  cachePath = file.path(tempDir, "cache"), 
-                 modulePath = spadesModulesDirectory, 
+                 modulePath = file.path(tempDir, "modules"), 
                  outputPath = file.path(tempDir, "outputs"))
 
-getModule("PredictiveEcology/Biomass_core", modulePath = spadesModulesDirectory, overwrite = TRUE)
-getModule("PredictiveEcology/Biomass_validationKNN", modulePath = spadesModulesDirectory, overwrite = TRUE)
+getModule("PredictiveEcology/Biomass_core", modulePath = paths$modulePath, overwrite = TRUE)
+getModule("PredictiveEcology/Biomass_validationKNN", modulePath = paths$modulePath, overwrite = TRUE)
 
 ## by default the repository branch name is appended to the module folder name.
 ## so we change the folder name to remove the "-master" suffix.
-file.rename(c(file.path(spadesModulesDirectory, "Biomass_core-master"),
-              file.path(spadesModulesDirectory, "Biomass_validationKNN-master")),
-            c(file.path(spadesModulesDirectory, "Biomass_core"),
-              file.path(spadesModulesDirectory, "Biomass_validationKNN")))
+file.rename(c(file.path(paths$modulePath, "Biomass_core-master"),
+              file.path(paths$modulePath, "Biomass_validationKNN-master")),
+            c(file.path(paths$modulePath, "Biomass_core"),
+              file.path(paths$modulePath, "Biomass_validationKNN")))
 ```
 
 ### Setup simulation
@@ -678,18 +684,18 @@ mySimValidation <- simInitAndSpades(times = validationTimes
 Here are some of the output figures automatically produced by
 *Biomass_validationKNN*
 
-```{r fig-Biomass-validationKNNOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', out.width = "50%", fig.cap = "(ref:Biomass-validationKNN) automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left)."}
+```{r fig-Biomass-validationKNNOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', out.width = "70%", fig.cap = "(ref:Biomass-validationKNN) automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left)."}
 ## make sure all include_graphics have wd attached to figure path
 ## this is necessary to knit to pdf using child Rmds - see https://stackoverflow.com/questions/61065560/cant-compile-rmarkdown-pdf-with-image-in-child-rmd-latex-error-image-file
 knitr::include_graphics(normalizePath(c("figures/LandscapeComparisons_PresAbs.png",
                                         "figures/PixelComparisons_relB.png"), winslash = "/"))
 ```
 
-```{r fig-Biomass-validationKNNOutPlots2, echo = FALSE, eval = TRUE, fig.show='hold', fig.cap = "A plot of landscape-wide mean absolute deviations (MAD) from (top to bottom) observed mean relative abundance, no. of presences, no. of pixels where the species is dominant and $\\Delta$B."}
+```{r fig-Biomass-validationKNNOutPlots2, echo = FALSE, eval = TRUE, fig.show='hold', out.width = "70%", fig.cap = "A plot of landscape-wide mean absolute deviations (MAD) from (top to bottom) observed mean relative abundance, no. of presences, no. of pixels where the species is dominant and $\\Delta$B."}
 knitr::include_graphics(normalizePath(c("figures/landscapeMAD.png"), winslash = "/"))
 ```
 
-```{r fig-Biomass-validationKNNOutPlots3, echo = FALSE, eval = TRUE, fig.show='hold', fig.cap = "Diagnostic plot of observed changes in biomass and age $\\Delta$B and $\\Delta$Age, respectively)."}
+```{r fig-Biomass-validationKNNOutPlots3, echo = FALSE, eval = TRUE, fig.show='hold', out.width = "70%", fig.cap = "Diagnostic plot of observed changes in biomass and age $\\Delta$B and $\\Delta$Age, respectively)."}
 knitr::include_graphics(normalizePath(c("figures/observedDeltaBDeltaAge.png"), winslash = "/"))
 ```
 
