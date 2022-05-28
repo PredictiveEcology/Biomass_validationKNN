@@ -5,6 +5,7 @@ output:
   bookdown::html_document2:
     toc: true
     toc_float: true
+    toc_depth: 4
     theme: sandstone
     number_sections: false
     df_print: paged
@@ -63,9 +64,9 @@ download.file(url = paste0("https://img.shields.io/badge/Biomass_validationKNN-"
               mode = 'wb')
 ```
 
-[![module-version-Badge](figures/moduleVersionBadge.png)](https://github.com/CeresBarros/Biomass_validationKNN/commit/9250d68f905b8828d7965c733ab436e8a01fdf17)
+[![module-version-Badge](`r normalizePath('figures/moduleVersionBadge.png')`)](https://github.com/CeresBarros/Biomass_validationKNN/commit/9250d68f905b8828d7965c733ab436e8a01fdf17)
 
-[![Issues-badge](figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_validationKNN/issues)
+[![Issues-badge](`r normalizePath('figures/issuesBadge.png')`)](https://github.com/PredictiveEcology/Biomass_validationKNN/issues)
 
 <!-- if knitting to pdf remember to add the pandoc_args: ["--extract-media", "."] option to yml in order to get the badge images -->
 
@@ -391,8 +392,8 @@ following deserve special attention:
     `data.frame` that was supplied to `spades` during the simulation call, but
     filtered by the relevant `cohortData` and `pixelGroupMap` objects and,
     potentially, with file paths corrected to match the current working
-    directory (see [Usage example]). Only used if `allCohortData` and
-    `pixelGroupMapStk` are not supplied.
+    directory (see [Usage example](#bvalid-example)). Only used if
+    `allCohortData` and `pixelGroupMapStk` are not supplied.
 
 -   `pixelGroupMap` -- a raster layer with *pixelGroup* IDs per pixel. Pixels
     are always grouped based on identical *ecoregionGroup*, *speciesCode*, *age*
@@ -464,24 +465,26 @@ The module then compiles all simulation output data provided that the user
 supplies the object names and their file paths via the `simulationOutputs` input
 object. Alternatively, the user may pass the pre-compiled outputs (namely the
 `cohortData` and `pixelGroupMap` objects) via the `allCohortData` and
-`pixelGroupMapStk` input objects. See [list of input objects](#bvalid-inputs-list)
-for more detail.
+`pixelGroupMapStk` input objects. See [list of input
+objects](#bvalid-inputs-list) for more detail.
 
 Future users should run *Biomass_validationKNN* with defaults and inspect what
 the objects are like before supplying their own data, or alternative data URLs.
 Alternatively, users may develop their own validation modules using
-*Biomass_validationKNN* as a template. We expect the number of validation modules 
-to increase as other validation approaches are developed based on project needs.
+*Biomass_validationKNN* as a template. We expect the number of validation
+modules to increase as other validation approaches are developed based on
+project needs.
 
-The general flow of *Biomass_validationKNN* processes is (note that
-this module only runs once, i.e. in one "time step"):
+The general flow of *Biomass_validationKNN* processes is (note that this module
+only runs once, i.e. in one "time step"):
 
 1.  Preparation of all necessary objects, namely obtaining the observed data
     layers from on-line repositories (or if available stored local copies) and
     the compiling simulated data if the user has not done so previously (see
     [list of input objects](#bvalid-inputs-list)) -- (`init` event).
 
-2.  Calculation of summary variables for validation (`calculateValidVars` event), namely :
+2.  Calculation of summary variables for validation (`calculateValidVars`
+    event), namely :
 
     -   relative biomass per species per pixel and across the landscape (per
         year and per replicate)
@@ -493,12 +496,13 @@ this module only runs once, i.e. in one "time step"):
 
     -   species presences across the landscape
 
-3.  Calculation of validation statistics (`validationStats` event), namely mean absolute deviations (MAD)
-    and sum of negative log-likelihoods (SNLL).
+3.  Calculation of validation statistics (`validationStats` event), namely mean
+    absolute deviations (MAD) and sum of negative log-likelihoods (SNLL).
 
 4.  Assessment of the relationship between observed $\Delta$B and observed
     $\Delta$Age (`obsDeltaMaps` event) -- this is an optional visual diagnostic
-    of the observed data that produces scatterplots of $\Delta$B \~ $\Delta$Age of three types:
+    of the observed data that produces scatterplots of $\Delta$B \~ $\Delta$Age
+    of three types:
 
     -   With raw observed values of $\Delta$B and $\Delta$Age
 
@@ -518,7 +522,8 @@ this module only runs once, i.e. in one "time step"):
         analyses when validating succession dynamics in the absence of
         disturbance - the default option.
 
-5.  Plots (`landscapeWidePlots`, `pixelLevelPlots` and `deltaBComparisons` events):
+5.  Plots (`landscapeWidePlots`, `pixelLevelPlots` and `deltaBComparisons`
+    events):
 
     -   Barplots of landscape-wide and pixel-level comparisons between observed
         and simulated data, with respect to relative biomass, dominance and
@@ -706,9 +711,6 @@ knitr::include_graphics(normalizePath(c("figures/landscapeMAD.png"), winslash = 
 knitr::include_graphics(normalizePath(c("figures/observedDeltaBDeltaAge.png"), winslash = "/"))
 ```
 
-[^biomass_validationknn-1]: Raw data layers downloaded by the module are saved
-    in \`dataPath(sim)\`, which can be controlled via
-    \`options(reproducible.destinationPath = ...)\`.
+[^biomass_validationknn-1]: Raw data layers downloaded by the module are saved in \`dataPath(sim)\`, which can be controlled via \`options(reproducible.destinationPath = ...)\`.
 
 ## References {#bvalid-refs}
-
