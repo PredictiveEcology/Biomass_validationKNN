@@ -1,6 +1,5 @@
 ---
 title: "LandR _Biomass_validationKNN_ Manual"
-subtitle: "v.`r SpaDES.core::moduleMetadata(module = 'Biomass_validationKNN', path = '..')$version`"
 date: "Last updated: `r Sys.Date()`"
 output:
   bookdown::html_document2:
