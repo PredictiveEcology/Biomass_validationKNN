@@ -19,8 +19,6 @@ link-citations: true
 always_allow_html: true
 ---
 
-# LandR *Biomass_validationKNN* Module
-
 <!-- the following are text references used in captions for LaTeX compatibility -->
 
 (ref:Biomass-validationKNN) *Biomass_validationKNN*
