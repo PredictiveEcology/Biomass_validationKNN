@@ -491,6 +491,9 @@ it has access to outputs of simulations from *Biomass_core*, and internet access
 to retrieve the observed kNN datasets used for
 validation[^biomass_validationknn-1].
 
+[^1]: Raw data layers downloaded by the module are saved in \`dataPath(sim)\`,
+    which can be controlled via \`options(reproducible.destinationPath = ...)\`.
+
 The module then compiles all simulation output data provided that the user
 supplies the object names and their file paths via the `simulationOutputs` input
 object. Alternatively, the user may pass the pre-compiled outputs (namely the
