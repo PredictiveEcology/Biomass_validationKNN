@@ -68,21 +68,21 @@ download.file(url = paste0("https://img.shields.io/badge/Biomass_validationKNN-"
 
 ``` {r moduleBadge-Biomass-validationKNN, echo = FALSE, eval = TRUE, cache = FALSE, results = "asis"}
 ## try to automatically get the commit URL and the path to the badge image
-badgeURL <-  if (!git2r::is_detached()){
+badgeURL <- if (!git2r::is_detached()) {
   commitSHA <- git2r::sha(git2r::revparse_single(".", "HEAD"))
-  repo <- sub(".*github.com:", "https://github.com/",
+  repo <- sub("[.]git$", "/commit/",
               git2r::branch_remote_url(git2r::branch_get_upstream(git2r::repository_head("."))))
-  repo <- sub(".git$", "/commit/", repo)
   paste0(repo, commitSHA)
 } else {
   ## if detached point to the first remote
-  badgeURL <- git2r::remote_url()[1]
+  git2r::remote_url()[1]
 }
+badgeURL <- sub(".*github[.]com:", "https://github.com/", badgeURL)
 
 badgePath <- normPath("figures/moduleVersionBadge.png")
 
 ## make string of markdown code to be executed as-is
-cat(paste0("[![module-version-Badge](", badgePath, ")](", badgeURL,")"))
+cat(paste0("[![module-version-Badge](", badgePath, ")](", badgeURL, ")"))
 ```
 
 ``` {r issuesBadge-Biomass-validationKNN, echo = FALSE, eval = TRUE, cache = FALSE, results = "asis"}
@@ -432,9 +432,9 @@ and *B* composition, even if the user supplies other initial groupings
 
 ```{r moduleInputs2-Biomass-validationKNN, echo = FALSE, eval = TRUE, message = FALSE}
 df_inputs <- SpaDES.core::moduleInputs("Biomass_validationKNN", "..")
-knitr::kable(df_inputs, 
-             caption = "List of (ref:Biomass-validationKNN) input objects and their description.") %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+caption <- "List of (ref:Biomass-validationKNN) input objects and their description."
+knitr::kable(df_inputs, caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("repeat_header"))
 ```
 
 ### List of parameters {#bvalid-params-list}
@@ -466,9 +466,9 @@ simulation year.
 
 ```{r moduleParams2-Biomass-validationKNN, echo = FALSE, eval = TRUE, message = FALSE}
 df_params <- SpaDES.core::moduleParams("Biomass_validationKNN", "..")
-knitr::kable(df_params,
-             caption = "List of (ref:Biomass-validationKNN) parameters and their description.") %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE) %>%
+caption <- "List of (ref:Biomass-validationKNN) parameters and their description."
+knitr::kable(df_params,caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("repeat_header")) %>% 
   kableExtra::landscape(.)
 ```
 
@@ -479,9 +479,9 @@ The module produces the following outputs (Table
 
 ```{r moduleOutputs-Biomass-validationKNN, echo = FALSE, eval = TRUE, message = FALSE}
 df_outputs <- SpaDES.core::moduleOutputs("Biomass_validationKNN", "..")
-knitr::kable(df_outputs,
-             caption = "List of (ref:Biomass-validationKNN) output objects and their description.") %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE) %>%
+caption <- "List of (ref:Biomass-validationKNN) output objects and their description."
+knitr::kable(df_outputs, caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("repeat_header")) %>%
   kableExtra::column_spec(column = 3, width = "40em")
 ```
 
