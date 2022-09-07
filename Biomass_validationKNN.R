@@ -16,8 +16,10 @@ defineModule(sim, list(
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("README.txt", "Biomass_validationKNN.Rmd"),
-  reqdPkgs = list("crayon", "raster", "achubaty/amc", "mclust",
-                  "sf", "XML", "RCurl", "ggplot2", "ggpubr", "scales",
+  reqdPkgs = list("achubaty/amc", "crayon", "ggplot2", "ggpubr",
+                  "mclust", "raster", "RCurl", "scales", "sf", "XML",
+                  # "curl", "httr", ## called directly by this module, but pulled in by LandR (Sep 6th 2022).
+                  ## Excluded because loading is not necessary (just installation)
                   "PredictiveEcology/LandR@development (>=1.0.5)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development (>= 1.2.7.9011)",
@@ -65,6 +67,10 @@ defineModule(sim, list(
                     desc = "This describes the simulation time at which the first save event should occur"),
     defineParameter(".saveInterval", "numeric", NA, NA, NA,
                     desc = "This describes the simulation time interval between save events"),
+    defineParameter(".sslVerify", "integer", curl::curl_options("^ssl_verifypeer$"), NA , NA,
+                    paste("Passed to `httr::config(ssl_verifypeer = P(sim)$sslVerify)` when downloading KNN",
+                          "(NFI) datasets. Set to 0L if necessary to bypass checking the SSL certificate (this",
+                          "may be necessary when NFI's FTP website SSL certificate is down/out-of-date).")),
     defineParameter(".studyAreaName", "character", NA, NA, NA,
                     "Human-readable name for the study area used. If `NA`, a hash of `studyArea` will be used."),
     defineParameter(".useCache", "logical", "init", NA, NA,
@@ -1299,7 +1305,7 @@ deltaBComparisonsEvent <- function(sim) {
 
   if (!suppliedElsewhere("rawBiomassMapStart", sim) || needRTM) {
     rawBiomassMapFilename <- "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
-    # httr::with_config(config = httr::config(ssl_verifypeer = 0L), { ## TODO: re-enable verify
+    httr::with_config(config = httr::config(ssl_verifypeer =  P(sim)$.sslVerify), {
     #necessary for KNN
     sim$rawBiomassMapStart <- Cache(prepInputs,
                                     url = extractURL("rawBiomassMapStart"),
@@ -1314,7 +1320,7 @@ deltaBComparisonsEvent <- function(sim) {
                                     overwrite = TRUE,
                                     userTags = c(cacheTags, "rawBiomassMapStart"),
                                     omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
-    # })
+    })
 
     ## if using custom raster resolution, need to allocate biomass proportionally to each pixel
     ## if no rawBiomassMapStart/RTM/RTMLarge were suppliedElsewhere, the "original" pixel size respects
@@ -1560,7 +1566,7 @@ deltaBComparisonsEvent <- function(sim) {
   ## Biomass layers ----------------------------------------------------
   if (!suppliedElsewhere("rawBiomassMapEnd", sim)) {
     rawBiomassValFileName <- "NFI_MODIS250m_2011_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
-    # httr::with_config(config = httr::config(ssl_verifypeer = 0L), { ## TODO: re-enable verify
+    httr::with_config(config = httr::config(ssl_verifypeer =  P(sim)$.sslVerify), {
     #necessary for KNN
     sim$rawBiomassMapEnd <- Cache(prepInputs,
                                   targetFile = rawBiomassValFileName,
@@ -1576,7 +1582,7 @@ deltaBComparisonsEvent <- function(sim) {
                                   overwrite = TRUE,
                                   userTags = c(cacheTags, "rawBiomassMapEnd"),
                                   omitArgs = c("userTags"))
-    # })
+    })
   }
 
   if (!suppliedElsewhere("biomassMap", sim)) {
@@ -1585,7 +1591,7 @@ deltaBComparisonsEvent <- function(sim) {
 
   ## Age layers ----------------------------------------------------
   if (!suppliedElsewhere("standAgeMapStart", sim)) {
-    # httr::with_config(config = httr::config(ssl_verifypeer = 0L), {
+    httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
     sim$standAgeMapStart <- Cache(LandR::prepInputsStandAgeMap,
                                   destinationPath = dPath,
                                   ageURL = extractURL("standAgeMapStart"),
@@ -1599,12 +1605,12 @@ deltaBComparisonsEvent <- function(sim) {
                                   userTags = c("prepInputsStandAge_rtm", currentModule(sim), cacheTags),
                                   omitArgs = c("destinationPath", "targetFile", "overwrite",
                                                "alsoExtract", "userTags"))
-    # })
+    })
   }
 
   if (!suppliedElsewhere("standAgeMapEnd", sim)) {
     standAgeValFileName <- "NFI_MODIS250m_2011_kNN_Structure_Stand_Age_v1.tif"
-    # httr::with_config(config = httr::config(ssl_verifypeer = 0L), { ## TODO: re-enable verify
+    httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
     #necessary for KNN
     sim$standAgeMapEnd <- Cache(prepInputs,
                                 targetFile = standAgeValFileName,
@@ -1620,7 +1626,7 @@ deltaBComparisonsEvent <- function(sim) {
                                 overwrite = TRUE,
                                 userTags = c(cacheTags, "standAgeMapEnd"),
                                 omitArgs = c("userTags"))
-    # })
+    })
   }
 
   ## Cohort data -------------------------------------------
