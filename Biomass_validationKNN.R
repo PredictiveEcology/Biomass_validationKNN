@@ -357,7 +357,7 @@ Init <- function(sim) {
   rasterToMatchIDs <- setValues(rasterToMatchIDs, values = 1:ncell(rasterToMatchIDs))
 
   ## get pixels inside fire perimeters
-  if (!st_is_empty(sim$firePerimeters)) {
+  if (!all(st_is_empty(sim$firePerimeters))) {
     inFireIDs <- getValues(mask(rasterToMatchIDs, sim$firePerimeters))
     inFireIDs <- inFireIDs[!is.na(inFireIDs)] ## faster than na.omit
   } else {
