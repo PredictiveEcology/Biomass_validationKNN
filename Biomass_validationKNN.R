@@ -412,7 +412,9 @@ Init <- function(sim) {
   set(pixelTable, NULL, c("initialEcoregionCode", "rasterToMatch"), NULL)
   pixelTable <- unique(pixelTable)
 
-  validationDataStart <- LandR:::.createCohortData(pixelTable, rescale = TRUE,
+  validationDataStart <- LandR:::.createCohortData(pixelTable,
+                                                   sppColumns = grep("cover\\.", names(pixelTable), value = TRUE),
+                                                   rescale = TRUE,
                                                    minCoverThreshold = P(sim)$minCoverThreshold)
   validationDataStart <- partitionBiomass(x = P(sim)$deciduousCoverDiscount, validationDataStart)
   set(validationDataStart, NULL, "B",
@@ -436,6 +438,7 @@ Init <- function(sim) {
   pixelTable <- unique(pixelTable)
 
   validationDataEnd <- LandR:::.createCohortData(pixelTable, rescale = TRUE,
+                                                 sppColumns = grep("cover\\.", names(pixelTable), value = TRUE),
                                                  minCoverThreshold = P(sim)$minCoverThreshold)
   validationDataEnd <- partitionBiomass(x = P(sim)$deciduousCoverDiscount, validationDataEnd)
   set(validationDataEnd, NULL, "B",
