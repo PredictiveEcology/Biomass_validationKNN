@@ -23,7 +23,7 @@ defineModule(sim, list(
                   "PredictiveEcology/LandR@development (>=1.0.5)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development (>= 1.2.7.9011)",
-                  "CeresBarros/SpaDES.core@9613b6fff2cae5ab0f29d5f5c0b92db46c8932f8",
+                  "CeresBarros/SpaDES.core@9613b6fff2cae5ab0f29d5f5c0b92db46c8932f8 (>= 1.1.0.9001)",
                   "PredictiveEcology/SpaDES.tools@development"),
   parameters = rbind(
     defineParameter("coverThresh", "integer", "10", NA, NA,
