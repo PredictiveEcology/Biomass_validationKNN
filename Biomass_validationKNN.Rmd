@@ -688,9 +688,9 @@ studyArea <- Cache(randomStudyArea, size = 1e7) # cache this so it creates a ran
 speciesNameConvention <- "Boreal"
 speciesToUse <- c("Pice_Gla", "Popu_Tre", "Pinu_Con")
 
-sppEquiv <- LandR::sppEquivalencies_CA[get(speciesNameConvention) %in% speciesToUse]
+sppEquiv <- sppEquivalencies_CA[get(speciesNameConvention) %in% speciesToUse]
 # Assign a colour convention for graphics for each species
-sppColorVect <- LandR::sppColors(sppEquiv, speciesNameConvention,
+sppColorVect <- sppColors(sppEquiv, speciesNameConvention,
                                  newVals = "Mixed", palette = "Set1")
 
 ## Usage example
