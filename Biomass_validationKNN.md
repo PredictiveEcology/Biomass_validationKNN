@@ -1,6 +1,6 @@
 ---
 title: "LandR _Biomass_validationKNN_ Manual"
-date: "Last updated: 2022-10-20"
+date: "Last updated: 2022-10-24"
 output:
   bookdown::html_document2:
     toc: true
@@ -30,7 +30,7 @@ always_allow_html: true
 
 
 
-[![module-version-Badge](D:/GitHub/LandR-Manual/modules/Biomass_validationKNN/figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_validationKNN/commit/9fc77401431ac6220be9f206a6c2c33a965145f5)
+[![module-version-Badge](D:/GitHub/LandR-Manual/modules/Biomass_validationKNN/figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_validationKNN/commit/09bdb72202aee4d4065cc7804a39840f035728f6)
 
 [![Issues-badge](D:/GitHub/LandR-Manual/modules/Biomass_validationKNN/figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_validationKNN/issues)
 
@@ -844,41 +844,57 @@ save any objects (see Table \@ref(tab:moduleOutputs-Biomass-validationKNN)).
 
 ## Usage example {#bvalid-example}
 
-### Load `SpaDES` and other packages.
+### Set up R libraries {#bvalid-example-libs}
 
 
 ```r
-library(SpaDES)
-library(SpaDES.install)
-library(SpaDES.experiment)
-library(future)
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+tempDir <- tempdir()
+
+pkgPath <- file.path(tempDir, "packages", version$platform,
+                     paste0(version$major, ".", strsplit(version$minor, "[.]")[[1]][1]))
+dir.create(pkgPath, recursive = TRUE)
+.libPaths(pkgPath, include.site = FALSE)
+
+if (!require(Require, lib.loc = pkgPath)) {
+  install.packages("Require")
+  library(Require, lib.loc = pkgPath)
+}
+
+setLinuxBinaryRepo()
 ```
 
-### Get the modules
+### Get the module and module dependencies {#b-valid-example-pkg-mods}
 
 Because *Biomass_validationKNN* is meant to validate simulation outputs against
 observed data, we need to first run a simulation of forest dynamics with
 *Biomass_core*. To do that we get both modules' code from the PredictiveEcology
-GitHub repository. Notice that we are placing all module code, inputs and
-outputs in temporary directories.
+GitHub repository (all install all necessary packages). Notice that we are
+placing all packages, module code, inputs and outputs in temporary directories.
 
 
 ```r
-tempDir <- tempdir()
-paths <- list(inputPath = file.path(tempDir, "inputs"), 
-              cachePath = file.path(tempDir, "cache"), 
-              modulePath = file.path(tempDir, "modules"), 
-              outputPath = file.path(tempDir, "outputs"))
+Require("PredictiveEcology/SpaDES.project@6d7de6ee12fc967c7c60de44f1aa3b04e6eeb5db", 
+        require = FALSE, upgrade = FALSE, standAlone = TRUE)
 
-getModule("PredictiveEcology/Biomass_core", modulePath = paths$modulePath, overwrite = TRUE)
-getModule("PredictiveEcology/Biomass_validationKNN", modulePath = paths$modulePath, overwrite = TRUE)
+paths <- list(inputPath = normPath(file.path(tempDir, "inputs")), 
+              cachePath = normPath(file.path(tempDir, "cache")), 
+              modulePath = normPath(file.path(tempDir, "modules")), 
+              outputPath = normPath(file.path(tempDir, "outputs")))
 
-## by default the repository branch name is appended to the module folder name.
-## so we change the folder name to remove the "-master" suffix.
-file.rename(c(file.path(paths$modulePath, "Biomass_core-master"),
-              file.path(paths$modulePath, "Biomass_validationKNN-master")),
-            c(file.path(paths$modulePath, "Biomass_core"),
-              file.path(paths$modulePath, "Biomass_validationKNN")))
+SpaDES.project::getModule(modulePath = paths$modulePath,
+                          c("PredictiveEcology/Biomass_core@master",
+                            "PredictiveEcology/Biomass_validationKNN@master"),
+                          overwrite = TRUE)
+
+## make sure all necessary packages are installed:
+outs <- SpaDES.project::packagesInModules(modulePath = paths$modulePath)
+Require(c(unname(unlist(outs)), "SpaDES", "SpaDES.experiment", "future"),
+        require = FALSE, standAlone = TRUE)
+
+## load necessary packages
+Require(c("SpaDES", "LandR", "reproducible", "pemisc",
+          "SpaDES.experiment", "future"), upgrade = FALSE, install = FALSE)
 ```
 
 ### Setup simulation
@@ -893,9 +909,9 @@ studyArea <- Cache(randomStudyArea, size = 1e7) # cache this so it creates a ran
 speciesNameConvention <- "Boreal"
 speciesToUse <- c("Pice_Gla", "Popu_Tre", "Pinu_Con")
 
-sppEquiv <- LandR::sppEquivalencies_CA[get(speciesNameConvention) %in% speciesToUse]
+sppEquiv <- sppEquivalencies_CA[get(speciesNameConvention) %in% speciesToUse]
 # Assign a colour convention for graphics for each species
-sppColorVect <- LandR::sppColors(sppEquiv, speciesNameConvention,
+sppColorVect <- sppColors(sppEquiv, speciesNameConvention,
                                  newVals = "Mixed", palette = "Set1")
 
 ## Usage example
