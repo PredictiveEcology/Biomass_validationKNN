@@ -731,6 +731,9 @@ of the `SpaDES.experiment` R package [@McIntireChubaty2021], which builds a
 folder structure where simulation outputs are conveniently organised.
 
 ```{r module usage example2 -Biomass-validationKNN, eval=FALSE}
+opts <- options(reproducible.useCache = TRUE,
+                reproducible.destinationPath = paths$inputPath,
+                spades.useRequire = FALSE)
 graphics.off()
 mySimInit <- simInit(times = times,
                      params = parameters, 
