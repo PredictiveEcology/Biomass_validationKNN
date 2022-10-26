@@ -668,11 +668,13 @@ SpaDES.project::getModule(modulePath = paths$modulePath,
 
 ## make sure all necessary packages are installed:
 outs <- SpaDES.project::packagesInModules(modulePath = paths$modulePath)
-Require(c(unname(unlist(outs)), "SpaDES", "SpaDES.experiment", "future"),
+Require(c(unname(unlist(outs)),
+          "PredictiveEcology/SpaDES.experiment@development",
+          "future"),
         require = FALSE, standAlone = TRUE)
 
 ## load necessary packages
-Require(c("SpaDES", "LandR", "reproducible", "pemisc",
+Require(c("SpaDES.core", "LandR", "reproducible", "pemisc",
           "SpaDES.experiment", "future"), upgrade = FALSE, install = FALSE)
 ```
 
