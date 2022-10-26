@@ -701,7 +701,7 @@ objects <- list(studyArea = studyArea, sppEquiv = sppEquiv, sppColorVect = sppCo
 successionTimestep <- 20L
 
 ## keep default values for most parameters 
-## (ommitted from this list)
+## (omitted from this list)
 parameters <- list(
   Biomass_core = list(
     "sppEquivCol" = speciesNameConvention
@@ -754,6 +754,8 @@ mySimExperiment <- experiment2(
 Note that because we ran *Biomass_core* by itself using theoretical input data,
 we can expect the validation to reveal that the module didn't do a great job at
 reproducing observed patterns.
+
+*Note that a Google Account is needed to download some of the input files.*
 
 ```{r module usage example validation,  eval=FALSE}
 simulationOutputs <- lapply(mySimExperiment, FUN = function(x, localSimPaths) {
