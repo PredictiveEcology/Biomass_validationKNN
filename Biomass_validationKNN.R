@@ -7,20 +7,23 @@ defineModule(sim, list(
   description = "Validation module for LandR Biomass predictions of forest succession. Based on Canadian Forest Service KNN maps", #"insert module description here",
   keywords = c("validation", "ecological simulation model",
                "forest dynamics", "forest succession", "data", "prediction"),
-  authors = c(person("Ceres", "Barros", email = "cbarros@mail.ubc.ca", role = c("aut", "cre"))),
+  authors = c(person("Ceres", "Barros", email = "ceres.barros@ubc.ca", role = c("aut", "cre")),
+              person(c("Eliot"), "McIntire", email = "eliot.mcintire@nrcan-rncan.gc.ca", role = c("aut"))),
   childModules = character(0),
-  version = list(Biomass_validationKNN = "0.0.2.9001"),
+  version = list(Biomass_validationKNN = "0.0.2.9003"),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("README.txt", "Biomass_validationKNN.Rmd"),
-  reqdPkgs = list("crayon", "raster", "achubaty/amc", "mclust",
-                  "sf", "XML", "RCurl", "ggplot2", "ggpubr", "scales",
+  reqdPkgs = list("achubaty/amc", "crayon", "ggplot2", "ggpubr",
+                  "mclust", "raster", "RCurl", "scales", "sf", "XML",
+                  # "curl", "httr", ## called directly by this module, but pulled in by LandR (Sep 6th 2022).
+                  ## Excluded because loading is not necessary (just installation)
                   "PredictiveEcology/LandR@development (>=1.0.5)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development (>= 1.2.7.9011)",
-                  "PredictiveEcology/SpaDES.core@development",
+                  "PredictiveEcology/SpaDES.core@development (>= 1.1.0.9002)",
                   "PredictiveEcology/SpaDES.tools@development"),
   parameters = rbind(
     defineParameter("coverThresh", "integer", "10", NA, NA,
@@ -64,6 +67,10 @@ defineModule(sim, list(
                     desc = "This describes the simulation time at which the first save event should occur"),
     defineParameter(".saveInterval", "numeric", NA, NA, NA,
                     desc = "This describes the simulation time interval between save events"),
+    defineParameter(".sslVerify", "integer", as.integer(unname(curl::curl_options("^ssl_verifypeer$"))), NA_integer_, NA_integer_,
+                    paste("Passed to `httr::config(ssl_verifypeer = P(sim)$.sslVerify)` when downloading KNN",
+                          "(NFI) datasets. Set to 0L if necessary to bypass checking the SSL certificate (this",
+                          "may be necessary when NFI's website SSL certificate is not correctly configured).")),
     defineParameter(".studyAreaName", "character", NA, NA, NA,
                     "Human-readable name for the study area used. If `NA`, a hash of `studyArea` will be used."),
     defineParameter(".useCache", "logical", "init", NA, NA,
@@ -356,7 +363,7 @@ Init <- function(sim) {
   rasterToMatchIDs <- setValues(rasterToMatchIDs, values = 1:ncell(rasterToMatchIDs))
 
   ## get pixels inside fire perimeters
-  if (!st_is_empty(sim$firePerimeters)) {
+  if (!all(st_is_empty(sim$firePerimeters))) {
     inFireIDs <- getValues(mask(rasterToMatchIDs, sim$firePerimeters))
     inFireIDs <- inFireIDs[!is.na(inFireIDs)] ## faster than na.omit
   } else {
@@ -405,7 +412,9 @@ Init <- function(sim) {
   set(pixelTable, NULL, c("initialEcoregionCode", "rasterToMatch"), NULL)
   pixelTable <- unique(pixelTable)
 
-  validationDataStart <- LandR:::.createCohortData(pixelTable, rescale = TRUE,
+  validationDataStart <- LandR:::.createCohortData(pixelTable,
+                                                   sppColumns = grep("cover\\.", names(pixelTable), value = TRUE),
+                                                   rescale = TRUE,
                                                    minCoverThreshold = P(sim)$minCoverThreshold)
   validationDataStart <- partitionBiomass(x = P(sim)$deciduousCoverDiscount, validationDataStart)
   set(validationDataStart, NULL, "B",
@@ -429,6 +438,7 @@ Init <- function(sim) {
   pixelTable <- unique(pixelTable)
 
   validationDataEnd <- LandR:::.createCohortData(pixelTable, rescale = TRUE,
+                                                 sppColumns = grep("cover\\.", names(pixelTable), value = TRUE),
                                                  minCoverThreshold = P(sim)$minCoverThreshold)
   validationDataEnd <- partitionBiomass(x = P(sim)$deciduousCoverDiscount, validationDataEnd)
   set(validationDataEnd, NULL, "B",
@@ -1067,7 +1077,9 @@ obsrvdDeltaMapsEvent <- function(sim) {
       dev(mod$mapWindow)
       clearPlot()
     }
-    Plots(plotStack, new = TRUE,
+
+    Plots(plotStack,
+          new = TRUE, fn = quickPlot::Plot,
           filename = "deltaB_Age_Maps", path = file.path(mod$plotPath),
           deviceArgs = list(width = 7, height = 7, units = "in", res = 300))
 
@@ -1080,16 +1092,20 @@ obsrvdDeltaMapsEvent <- function(sim) {
 
     noScreenTypes <- setdiff(P(sim)$.plots, "screen")
     if (length(noScreenTypes)) {
-      Plots(plot4, types = noScreenTypes, filename = "observedDeltaBDeltaAge",
+      Plots(plot4, types = noScreenTypes, fn = quickPlot::Plot,
+            filename = "observedDeltaBDeltaAge",
             path = file.path(mod$plotPath),
             deviceArgs = list(width = 7, height = 5, units = "in", res = 300))
-      Plots(plot5, types = noScreenTypes, filename = "observedDeltaB_yearGap",
+      Plots(plot5, fn = quickPlot::Plot,
+            types = noScreenTypes, filename = "observedDeltaB_yearGap",
             path = file.path(mod$plotPath),
             deviceArgs = list(width = 5, height = 4, units = "in", res = 300))
-      Plots(plot9, types = noScreenTypes, filename = "observedDeltaBDeltaAge_ADJ",
+      Plots(plot9, fn = quickPlot::Plot,
+            types = noScreenTypes, filename = "observedDeltaBDeltaAge_ADJ",
             path = file.path(mod$plotPath),
             deviceArgs = list(width = 7, height = 5, units = "in", res = 300))
-      Plots(plot10, types = noScreenTypes, filename = "observedDeltaB_yearGapADJ",
+      Plots(plot10, fn = quickPlot::Plot,
+            types = noScreenTypes, filename = "observedDeltaB_yearGapADJ",
             path = file.path(mod$plotPath),
             deviceArgs = list(width = 5, height = 4, units = "in", res = 300))
     }
@@ -1159,18 +1175,22 @@ landscapeWidePlotsEvent <- function(sim) {
       dev(mod$landscapeWindow)
       clearPlot()
       Plots(plotLandscapeComp, types = "screen",
+            fn = quickPlot::Plot,
             title = "Landscape_averaged_comparisons", new = TRUE)
     }
 
     noScreenTypes <- setdiff(P(sim)$.plots, "screen")
     if (length(noScreenTypes)) {
-      Plots(plot11, types = noScreenTypes, filename = "LandscapeComparisons_relB",
+      Plots(plot11, fn = quickPlot::Plot,
+            types = noScreenTypes, filename = "LandscapeComparisons_relB",
             path = file.path(mod$plotPath),
             deviceArgs = list(width = 7, height = 5, units = "in", res = 300))
-      Plots(plot12, types = noScreenTypes, filename = "LandscapeComparisons_PresAbs",
+      Plots(plot12, fn = quickPlot::Plot,
+            types = noScreenTypes, filename = "LandscapeComparisons_PresAbs",
             path = file.path(mod$plotPath),
             deviceArgs = list(width = 7, height = 5, units = "in", res = 300))
-      Plots(plot13, types = noScreenTypes, filename = "LandscapeComparisons_Dom",
+      Plots(plot13, fn = quickPlot::Plot,
+            types = noScreenTypes, filename = "LandscapeComparisons_Dom",
             path = file.path(mod$plotPath),
             deviceArgs = list(width = 7, height = 5, units = "in", res = 300))
     }
@@ -1197,7 +1217,7 @@ pixelLevelPlotsEvent <- function(sim) {
       dev(mod$pixelWindow)
       clearPlot()
     }
-    Plots(plot14,
+    Plots(plot14, fn = quickPlot::Plot,
           title = "Pixel_level_comparisons", new = TRUE,
           filename = "PixelComparisons_relB",
           path = file.path(mod$plotPath),
@@ -1240,17 +1260,20 @@ deltaBComparisonsEvent <- function(sim) {
   if (anyPlotting(P(sim)$.plots)) {
     if (any(grepl("screen", P(sim)$.plots))) {
       dev.set(mod$statsWindow)
-      Plots(simObsDeltaBPlot, types = "screen", title = "observedDelta", new = TRUE)
+      Plots(simObsDeltaBPlot, fn = quickPlot::Plot,
+            types = "screen", title = "observedDelta", new = TRUE)
     }
 
     noScreenTypes <- setdiff(P(sim)$.plots, "screen")
     if (length(noScreenTypes)) {
-      Plots(plot15, types = noScreenTypes,
+      Plots(plot15, fn = quickPlot::Plot,
+            types = noScreenTypes,
             title = "observedDeltaLandscape", new = TRUE,
             filename = "LandscapeComparisons_deltaB",
             path = file.path(mod$plotPath),
             deviceArgs = list(width = 5, height = 5, units = "in", res = 300))
-      Plots(plot16, types = noScreenTypes,
+      Plots(plot16, fn = quickPlot::Plot,
+            types = noScreenTypes,
             title = "observedDeltaPixel", new = TRUE,
             filename = "PixelComparisons_deltaB",
             path = file.path(mod$plotPath),
@@ -1298,22 +1321,22 @@ deltaBComparisonsEvent <- function(sim) {
 
   if (!suppliedElsewhere("rawBiomassMapStart", sim) || needRTM) {
     rawBiomassMapFilename <- "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
-    # httr::with_config(config = httr::config(ssl_verifypeer = 0L), { ## TODO: re-enable verify
-    #necessary for KNN
-    sim$rawBiomassMapStart <- Cache(prepInputs,
-                                    url = extractURL("rawBiomassMapStart"),
-                                    destinationPath = dPath,
-                                    studyArea = sim$studyArea,   ## Ceres: makePixel table needs same no. pixels for this, RTM rawBiomassMapStart, LCC.. etc
-                                    rasterToMatch = if (!needRTM) sim$rasterToMatch else NULL,
-                                    maskWithRTM = if (!needRTM) TRUE else FALSE,
-                                    useSAcrs = FALSE,     ## never use SA CRS
-                                    method = "bilinear",
-                                    datatype = "INT2U",
-                                    filename2 = .suffix("rawBiomassMapStart.tif", paste0("_", P(sim)$.studyAreaName)),
-                                    overwrite = TRUE,
-                                    userTags = c(cacheTags, "rawBiomassMapStart"),
-                                    omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
-    # })
+    httr::with_config(config = httr::config(ssl_verifypeer =  P(sim)$.sslVerify), {
+      #necessary for KNN
+      sim$rawBiomassMapStart <- Cache(prepInputs,
+                                      url = extractURL("rawBiomassMapStart"),
+                                      destinationPath = dPath,
+                                      studyArea = sim$studyArea,   ## Ceres: makePixel table needs same no. pixels for this, RTM rawBiomassMapStart, LCC.. etc
+                                      rasterToMatch = if (!needRTM) sim$rasterToMatch else NULL,
+                                      maskWithRTM = if (!needRTM) TRUE else FALSE,
+                                      useSAcrs = FALSE,     ## never use SA CRS
+                                      method = "bilinear",
+                                      datatype = "INT2U",
+                                      filename2 = .suffix("rawBiomassMapStart.tif", paste0("_", P(sim)$.studyAreaName)),
+                                      overwrite = TRUE,
+                                      userTags = c(cacheTags, "rawBiomassMapStart"),
+                                      omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
+    })
 
     ## if using custom raster resolution, need to allocate biomass proportionally to each pixel
     ## if no rawBiomassMapStart/RTM/RTMLarge were suppliedElsewhere, the "original" pixel size respects
@@ -1559,23 +1582,23 @@ deltaBComparisonsEvent <- function(sim) {
   ## Biomass layers ----------------------------------------------------
   if (!suppliedElsewhere("rawBiomassMapEnd", sim)) {
     rawBiomassValFileName <- "NFI_MODIS250m_2011_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
-    # httr::with_config(config = httr::config(ssl_verifypeer = 0L), { ## TODO: re-enable verify
-    #necessary for KNN
-    sim$rawBiomassMapEnd <- Cache(prepInputs,
-                                  targetFile = rawBiomassValFileName,
-                                  url = extractURL("rawBiomassMapEnd"),
-                                  destinationPath = asPath(dPath),
-                                  fun = "raster::raster",
-                                  studyArea = sim$studyArea,
-                                  rasterToMatch = sim$rasterToMatch,
-                                  useSAcrs = FALSE,
-                                  method = "bilinear",
-                                  datatype = "INT2U",
-                                  filename2 = .suffix("rawBiomassMapEnd.tif", paste0("_", P(sim)$.studyAreaName)),
-                                  overwrite = TRUE,
-                                  userTags = c(cacheTags, "rawBiomassMapEnd"),
-                                  omitArgs = c("userTags"))
-    # })
+    httr::with_config(config = httr::config(ssl_verifypeer =  P(sim)$.sslVerify), {
+      #necessary for KNN
+      sim$rawBiomassMapEnd <- Cache(prepInputs,
+                                    targetFile = rawBiomassValFileName,
+                                    url = extractURL("rawBiomassMapEnd"),
+                                    destinationPath = asPath(dPath),
+                                    fun = "raster::raster",
+                                    studyArea = sim$studyArea,
+                                    rasterToMatch = sim$rasterToMatch,
+                                    useSAcrs = FALSE,
+                                    method = "bilinear",
+                                    datatype = "INT2U",
+                                    filename2 = .suffix("rawBiomassMapEnd.tif", paste0("_", P(sim)$.studyAreaName)),
+                                    overwrite = TRUE,
+                                    userTags = c(cacheTags, "rawBiomassMapEnd"),
+                                    omitArgs = c("userTags"))
+    })
   }
 
   if (!suppliedElsewhere("biomassMap", sim)) {
@@ -1584,42 +1607,42 @@ deltaBComparisonsEvent <- function(sim) {
 
   ## Age layers ----------------------------------------------------
   if (!suppliedElsewhere("standAgeMapStart", sim)) {
-    # httr::with_config(config = httr::config(ssl_verifypeer = 0L), {
-    sim$standAgeMapStart <- Cache(LandR::prepInputsStandAgeMap,
-                                  destinationPath = dPath,
-                                  ageURL = extractURL("standAgeMapStart"),
-                                  studyArea = raster::aggregate(sim$studyArea),
-                                  rasterToMatch = sim$rasterToMatch,
-                                  filename2 = .suffix("standAgeMapStart.tif", paste0("_", P(sim)$.studyAreaName)),
-                                  overwrite = TRUE,
-                                  fireURL = extractURL("fireURL"),
-                                  fireField = "YEAR",
-                                  startTime = start(sim),
-                                  userTags = c("prepInputsStandAge_rtm", currentModule(sim), cacheTags),
-                                  omitArgs = c("destinationPath", "targetFile", "overwrite",
-                                               "alsoExtract", "userTags"))
-    # })
+    httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
+      sim$standAgeMapStart <- Cache(LandR::prepInputsStandAgeMap,
+                                    destinationPath = dPath,
+                                    ageURL = extractURL("standAgeMapStart"),
+                                    studyArea = raster::aggregate(sim$studyArea),
+                                    rasterToMatch = sim$rasterToMatch,
+                                    filename2 = .suffix("standAgeMapStart.tif", paste0("_", P(sim)$.studyAreaName)),
+                                    overwrite = TRUE,
+                                    fireURL = extractURL("fireURL"),
+                                    fireField = "YEAR",
+                                    startTime = start(sim),
+                                    userTags = c("prepInputsStandAge_rtm", currentModule(sim), cacheTags),
+                                    omitArgs = c("destinationPath", "targetFile", "overwrite",
+                                                 "alsoExtract", "userTags"))
+    })
   }
 
   if (!suppliedElsewhere("standAgeMapEnd", sim)) {
     standAgeValFileName <- "NFI_MODIS250m_2011_kNN_Structure_Stand_Age_v1.tif"
-    # httr::with_config(config = httr::config(ssl_verifypeer = 0L), { ## TODO: re-enable verify
-    #necessary for KNN
-    sim$standAgeMapEnd <- Cache(prepInputs,
-                                targetFile = standAgeValFileName,
-                                url = extractURL("standAgeMapEnd"),
-                                destinationPath = asPath(dPath),
-                                fun = "raster::raster",
-                                studyArea = sim$studyArea,
-                                rasterToMatch = sim$rasterToMatch,
-                                useSAcrs = FALSE,
-                                method = "bilinear",
-                                datatype = "INT2U",
-                                filename2 = .suffix("standAgeMapEnd.tif", paste0("_", P(sim)$.studyAreaName)),
-                                overwrite = TRUE,
-                                userTags = c(cacheTags, "standAgeMapEnd"),
-                                omitArgs = c("userTags"))
-    # })
+    httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
+      #necessary for KNN
+      sim$standAgeMapEnd <- Cache(prepInputs,
+                                  targetFile = standAgeValFileName,
+                                  url = extractURL("standAgeMapEnd"),
+                                  destinationPath = asPath(dPath),
+                                  fun = "raster::raster",
+                                  studyArea = sim$studyArea,
+                                  rasterToMatch = sim$rasterToMatch,
+                                  useSAcrs = FALSE,
+                                  method = "bilinear",
+                                  datatype = "INT2U",
+                                  filename2 = .suffix("standAgeMapEnd.tif", paste0("_", P(sim)$.studyAreaName)),
+                                  overwrite = TRUE,
+                                  userTags = c(cacheTags, "standAgeMapEnd"),
+                                  omitArgs = c("userTags"))
+    })
   }
 
   ## Cohort data -------------------------------------------

@@ -1,11 +1,11 @@
 ---
 title: "LandR _Biomass_validationKNN_ Manual"
-subtitle: "v.`r SpaDES.core::moduleMetadata(module = 'Biomass_validationKNN', path = '..')$version`"
 date: "Last updated: `r Sys.Date()`"
 output:
   bookdown::html_document2:
     toc: true
     toc_float: true
+    toc_depth: 4
     theme: sandstone
     number_sections: false
     df_print: paged
@@ -20,15 +20,13 @@ link-citations: true
 always_allow_html: true
 ---
 
-# LandR *Biomass_validationKNN* Module
-
 <!-- the following are text references used in captions for LaTeX compatibility -->
 
 (ref:Biomass-validationKNN) *Biomass_validationKNN*
 
 (ref:percent) %
 
-```{r setup-Biomass-validationKNN, include=FALSE}
+```{r setup-Biomass-validationKNN, include = FALSE}
 ## set cache.rebuild = TRUE whenever there are changes to the module code/metadata
 knitr::opts_chunk$set(echo = TRUE, eval = FALSE, warning = FALSE, 
                       cache = TRUE, cache.rebuild = FALSE, results = "hold", dpi = 300)
@@ -39,246 +37,265 @@ if (!file.exists("citations/ecology-letters.csl")) {
   download.file("https://www.zotero.org/styles/ecology-letters?source=1", destfile = "citations/ecology-letters.csl")
 }
 
-if (!require(dplyr)) {
-  install.packages("dplyr")
-  library(dplyr)
-}
+library(Require)
+
+Require(c("SpaDES.core", "git2r", "dplyr", "data.table", "kableExtra",
+          "pander", "PredictiveEcology/SpaDES.docs"),
+        upgrade = FALSE, install = FALSE)
 ```
 
-```{r badgeFigs-Biomass-validationKNN, include=FALSE, eval = TRUE, cache = FALSE}
+```{r badgeFigs-Biomass-validationKNN, include = FALSE, eval = TRUE, cache = FALSE}
 dir.create("figures", showWarnings = FALSE)
 
-download.file(url = "https://img.shields.io/badge/Made%20with-Markdown-1f425f.png",
-              destfile = "figures/markdownBadge.png",
-              mode = 'wb')
-download.file(url = "https://img.shields.io/badge/Get%20help-Report%20issues-%3CCOLOR%3E.png",
-              destfile = "figures/genericBadge.png",
+if (!file.exists("figures/markdownBadge.png")) {
+  download.file(url = "https://img.shields.io/badge/Made%20with-Markdown-1f425f.png",
+                destfile = "figures/markdownBadge.png",
+                mode = 'wb')
+}
+if (!file.exists("figures/issuesBadge.png")) {
+  download.file(url = "https://img.shields.io/badge/Get%20help-Report%20issues-%3CCOLOR%3E.png",
+                destfile = "figures/issuesBadge.png",
+                mode = 'wb')
+}
+
+modversion <- paste(unlist(moduleMetadata(module = 'Biomass_validationKNN', path = '..')$version), collapse = ".")
+download.file(url = paste0("https://img.shields.io/badge/Biomass_validationKNN-", paste0("v.%20", modversion),
+                           "-%3CCOLOR%3E.png"),
+              destfile = "figures/moduleVersionBadge.png",
               mode = 'wb')
 ```
 
-[![made-with-Markdown](figures/markdownBadge.png)](http://commonmark.org)
+``` {r moduleBadge-Biomass-validationKNN, echo = FALSE, eval = TRUE, cache = FALSE, results = "asis"}
+## try to automatically get the commit URL and the path to the badge image
+modulePath <- if (grepl("Biomass_validationKNN$", normPath("."))) {
+    normPath(".")
+  } else {
+    modulePath <- grep("Biomass_validationKNN$", 
+                       list.files(pattern = "Biomass_validationKNN", recursive = TRUE, include.dirs = TRUE),
+                       value = TRUE)
+    modulePath <- grep("docs/", modulePath, value = TRUE, invert = TRUE)  ## exclude "copied" modules dirs for bookdown
+    normPath(modulePath)
+  }
 
-[![Generic badge](figures/genericBadge.png)](https://github.com/PredictiveEcology/Biomass_validationKNN/issues)
+badgeURL <- if (!is_detached(modulePath)) {
+  commitSHA <- sha(revparse_single(modulePath, "HEAD"))
+  repo <- sub("[.]git$", "/commit/",
+              branch_remote_url(branch_get_upstream(repository_head(modulePath))))
+  paste0(repo, commitSHA)
+} else {
+  ## if detached point to the first remote
+  remote_url(modulePath)[1]
+}
+badgeURL <- sub(".*github[.]com:", "https://github.com/", badgeURL)
+
+badgePath <- normPath("figures/moduleVersionBadge.png")
+
+## make string of markdown code to be executed as-is
+cat(paste0("[![module-version-Badge](", badgePath, ")](", badgeURL, ")"))
+```
+
+``` {r issuesBadge-Biomass-validationKNN, echo = FALSE, eval = TRUE, cache = FALSE, results = "asis"}
+badgeURL <- "https://github.com/PredictiveEcology/Biomass_validationKNN/issues"
+badgePath <- normPath("figures/issuesBadge.png")
+
+## make string of markdown code to be executed as-is
+cat(paste0("[![Issues-badge](", badgePath, ")](", badgeURL,")"))
+```
+
 
 <!-- if knitting to pdf remember to add the pandoc_args: ["--extract-media", "."] option to yml in order to get the badge images -->
 
-**This documentation is work in progress. Potential discrepancies and omissions
-may exist for the time being. If you find any, do contact us using the link
-above\^\^**
-
 #### Authors:
 
-`r paste(as.character(SpaDES.core::moduleMetadata(module = 'Biomass_validationKNN', path = '..')$authors), sep = ', ')`
+`r paste(as.character(moduleMetadata(module = 'Biomass_validationKNN', path = '..')$authors), sep = ', ')`
 <!-- ideally separate authors with new lines, '\n' not working -->
+
+**This documentation is work in progress. Potential discrepancies and omissions
+may exist for the time being. If you find any, contact us using the "Get help"
+link above.**
 
 ## Module Overview
 
-### Module summary
+### Quick links
 
-An approach to validating outputs from LandR Biomass - notably the
-*Biomass_core* vegetation simulation module - using publicly available data for
-Canadian forests. This module produces both visual and statistical validation of
-*Biomass_core* outputs that are related to species abundance and
-presence/absence in the landscape. To do so, it downloads and prepares all
-necessary data (observed and simulated), calculates validation statistics and
-produces/saves validation plots.
+-   [General functioning](#bvalid-general-functioning)
 
-### Module inputs and parameters at a glance
+-   [List of input objects](#bvalid-inputs-list)
 
-*Biomass_validationKNN* requires access to outputs of simulations from
-*Biomass_core*, and internet access to retrieve the observed kNN datasets used
-for validation. Raw data layers downloaded by the module are saved in
-`dataPath(sim)`, which can be controlled via
-`options(reproducible.destinationPath = ...)`.
+-   [List of parameters](#bvalid-params-list)
 
-We advise future users to run *Biomass_validationKNN* with defaults and inspect
-what the objects are like before supplying their own data, or alternative data
-URLs. We expect the number of validation modules to increase as other validation
-approaches are developed based on project needs.
+-   [List of outputs](#bvalid-outputs-list)
 
-The module is able to compile all simulation output data provided that the user
-supplies the object names and their file paths via the `simulationOutputs` input
-object. Alternatively, the user may pass the pre-compiled outputs (namely the
-`cohortData` and `pixelGroupMap` objects) via the `allCohortData` and
-`pixelGroupMapStk` input objects. See [Input objects] for more detail.
+-   [Simulation flow and module events](#bvalid-sim-flow)
 
-Key parameters are those defining simulation years and replicates,
-(`validationYears`, `validationReps`) and plot control (`.plots`). Here's the
-full list of parameters:
+### Summary
 
-Below are the full lists of input objects (Table
-\@ref(tab:moduleInputs-Biomass-validationKNN)) and parameters (Table
-\@ref(tab:moduleParams-Biomass-validationKNN)) that *Biomass_validationKNN*
-expects. The only input that **must** be provided (i.e., *Biomass_validationKNN*
-does not have a default for) is `studyArea`. All other input objects and
-parameters have internal defaults (see Tables
-\@ref(tab:moduleInputs2-Biomass-validationKNN) and
-\@ref(tab:moduleParams2-Biomass-validationKNN)). Objects suffixed with `*Start`
-correspond to the same objects in the simulation without this suffix (e.g.
-`rawBiomassMapStart` is `rawBiomassMap` in the simulation), whereas other
-objects like `studyArea` and `rasterToMatch` have the same names in the
-simulation and should be exactly the same object.
+LandR *Biomass_validationKNN* (hereafter *Biomass_validationKNN*) provides an
+approach to validate outputs from LandR Biomass (i.e., *Biomass_core* linked
+with other modules or not) simulations, using publicly available data for
+Canadian forests. It produces both a visual and statistical validation of
+*Biomass_core* outputs related to species abundance and presence/absence in the
+landscape. To do so, it downloads and prepares all necessary data (observed and
+simulated), calculates validation statistics and produces/saves validation
+plots.
 
-```{r moduleInputs-Biomass-validationKNN, echo = FALSE, eval = TRUE, message = FALSE}
-df_inputs <- SpaDES.core::moduleInputs("Biomass_validationKNN", "..")[, c(1, 3)]  ## name + desc only
-knitr::kable(df_inputs,
-             caption = "List of (ref:Biomass-validationKNN) input objects and their description.") %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE) %>%
-  kableExtra::column_spec(column = 2, width = "40em")
-```
+### Links to other modules {#bvalid-links-modules}
 
-```{r moduleParams-Biomass-validationKNN, echo = FALSE, eval = TRUE, message = FALSE}
-df_params <- SpaDES.core::moduleParams("Biomass_validationKNN", "..")[, c(1, 6)] ## name + desc only
-knitr::kable(df_params,
-             caption = "List of (ref:Biomass-validationKNN) parameters and their description.") %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE) %>%
-  kableExtra::column_spec(column = 2, width = "40em")
-```
+*Biomass_validationKNN* is intended to be used with *Biomass_core* and any other
+modules that link to it and affect cohort biomass (e.g., disturbance modules and
+calibration modules may both affect resulting biomass). See
+[here](https://rpubs.com/PredictiveEcology/LandR_Module_Ecosystem) for all
+available modules in the LandR ecosystem and select *Biomass_validationKNN* from
+the drop-down menu to see potential linkages. By default, disturbed pixels are
+excluded from the validation, but the user can bypass this option. The
+following is a list of the modules commonly validated with
+*Biomass_validationKNN*.
 
-### Events
+-   [*Biomass_core*](https://github.com/PredictiveEcology/Biomass_core): core
+forest dynamics simulation module. Used downstream from
+*Biomass_borealDataPrep*;
 
-The following events take place during a *Biomass_validationKNN* run. Note that
-this module only runs once (in one "time step").
+**Data and calibration modules:**
 
--   Module initiation (`init` event) - prepares both the observed and simulated
-    data to be compared
+-   [*Biomass_speciesData*](https://github.com/PredictiveEcology/Biomass_speciesData):
+grabs and merges several sources of species cover data, making species
+percent cover ((ref:percent) cover) layers used by other LandR Biomass
+modules. Default source data spans the entire Canadian territory;
 
--   Calculation of summary variables for validation (`calculateValidVars` event)
+-   [*Biomass_borealDataPrep*](https://github.com/PredictiveEcology/Biomass_borealDataPrep):
+prepares all parameters and inputs (including initial landscape conditions)
+that *Biomass_core* needs to run a realistic simulation. Default
+values/inputs produced are relevant for boreal forests of Western Canada;
 
--   Calculation of validation statistics (`validationStats` event)
+-   [*Biomass_speciesParameters*](https://github.com/PredictiveEcology/Biomass_speciesParameters):
+calibrates four-species level traits using permanent sample plot data (i.e.,
+repeated tree biomass measurements) across Western Canada.
 
--   Optional diagnostic plots of biomass and age changes ($\Delta$B,
-    $\Delta$Age) in the observed data (`obsDeltaMaps` event).
+**Disturbance-related modules:**
 
--   Plotting events:
+-   [*Biomass_regeneration*](https://github.com/PredictiveEcology/Biomass_regeneration):
+simulates cohort biomass responses to stand-replacing fires (as in the LANDIS-II
+Biomass Succession Extension v.3.2.1),
+including cohort mortality and regeneration through resprouting and/or
+serotiny;
 
-    -   Plots of landscape-wide (`landscapeWidePlots` event), pixel-level
-        (`pixelLevelPlots` events) comparisons of all summary variables
+-   [*Biomass_regenerationPM*](https://github.com/PredictiveEcology/Biomass_regenerationPM):
+like *Biomass_regeneration*, but allowing partial mortality. Based on the
+LANDIS-II Dynamic Fuels & Fire System extension [@SturtevantEtAl2018];
 
-    -   Plots of biomass and age changes ($\Delta$B, $\Delta$Age) in observed
-        and simulated data, with respect to the first year. (`deltaBComparisons`
-        event)
+-   *fireSense*: climate- and land-cover-sensitive fire model simulating fire
+ignition, escape and spread processes as a function of climate and
+land-cover. Includes built-in parameterisation of these processes using
+climate, land-cover, fire occurrence and fire perimeter data. Requires using
+*Biomass_regeneration* or *Biomass_regenerationPM*. See modules prefixed
+"*fireSense\_*" at <https://github.com/PredictiveEcology/>;
 
-### Module outputs
+-   [*LandMine*](https://github.com/PredictiveEcology/LandMine): wildfire
+ignition and cover-sensitive wildfire spread model based on a fire return
+interval input. Requires using *Biomass_regeneration* or
+*Biomass_regenerationPM*;
 
-The module produces the following outputs (Table
-\@ref(tab:moduleOutputs-Biomass-validationKNN)):
-
-```{r moduleOutputs-Biomass-validationKNN, echo = FALSE, eval = TRUE, message = FALSE}
-df_outputs <- SpaDES.core::moduleOutputs("Biomass_validationKNN", "..")[, c(1, 3)] ## name + desc only
-knitr::kable(df_outputs,
-             caption = "List of (ref:Biomass-validationKNN) output objects and their description.") %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE) %>%
-  kableExtra::column_spec(column = 2, width = "40em")
-```
-
-and saves the validation figures in the output path defined in
-`getPaths(sim)$outputPath` (which was defined as `paths$outputPath`). Tables are
-not saved unless specified via `spades(..., outputs = data.frame(...))`. If not
-saving objects to disk (such as tables), these can be looked at using, e.g.,
-`mySimValidation$logLikelihood`.
-
-### Links to other modules
-
-Intended to be used with *Biomass_core* and any other modules that link to it
-and affect cohort biomass (e.g., via `cohortData` table). You can see all
-*potential* module linkages within the LandR ecosystem
-[here](https://rpubs.com/PredictiveEcology/LandR_Module_Ecosystem). Select
-*Biomass_validationKNN* from the drop-down menu to see linkages.
-
-### Getting help
-
--   <https://github.com/PredictiveEcology/Biomass_validationKNN/issues>
+-   [*scfm*](https://github.com/PredictiveEcology/scfm): spatially explicit fire
+spread module parameterised and modelled as a stochastic three-part process
+of ignition, escape, and spread. Requires using *Biomass_regeneration* or
+*Biomass_regenerationPM*.
 
 ## Module manual
 
-### Detailed description
+### General functioning {#bvalid-general-functioning}
 
-This module compares simulated outputs of two years (across replicates), with
-corresponding years of observed data. It was designed to compare the observed
-data for years 2001 (start point for the simulation) and 2011 (i.e., after 10
-years of simulation) of the kNN forest layers of the Canadian National Forest
-Inventory -- these are currently the only available FAIR datasets [*sensu*
-@StallEtAl2019]) on stand biomass and species (ref:percent) cover changes across
-Canada. However, the user can supply other sources of observed data, as long as
-they have an identical format.
+*Biomass_validationKNN* compares simulated outputs of two years (across
+replicates), with corresponding years of observed data. It was designed to
+compare the observed data for years 2001 (start point for the simulation) and
+2011 (i.e., after 10 years of simulation) of the kNN forest layers of the
+Canadian National Forest Inventory -- these are currently the only available
+FAIR datasets [*sensu* @StallEtAl2019] on stand biomass and species
+(ref:percent) cover changes across Canada. However, the user can supply other
+sources of observed data, as long as they have an identical format.
 
 The validation is done both visually (using barplots and boxplots) and using two
 statistics: mean absolute deviation of simulated biomass (per species) and the
 sum of negative log-likelihoods (SNLL) of predictions with respect to observed
 data for species biomass, species presences/absences and changes in biomass
-($\Delta$B) - the later is still under development.
+($\Delta$B) -- the later is still under development.
 
 This module assumes that the simulation data preparation was carried out by
 *Biomass_borealDataPrep*, and so, to ensure that the comparison and the
 simulated datasets are built with the same assumptions, the data treatment steps
-in *Biomass_borealDataPrep* are repeated here. The module may also excludes
-disturbed pixels coded in `rstLCCChange` and fire perimeter data
-(`firePerimeters`). If this is not intended, pass a `rstLCCChange` with `NA`'s
-only and/or an empty `firePerimeters` `sf` object. *Biomass_validationKNN* then
-compares simulated species biomass, presences, dominance, and changes in biomass
-against observed data available for the starting conditions (2011 by default)
-and a second time point (e.g. 2011, or after 10 years of simulation). To do so,
-for each year and replicate, and for both the simulated and observed data, the
-module calculates:
+in *Biomass_borealDataPrep* are repeated here.
+
+The module may also exclude disturbed pixels identified in `rstLCCChange` raster
+layer and in the fire perimeter data (`firePerimeters` layer). If this is not
+intended, the user can provide a `rstLCCChange` with `NA`'s only and/or an empty
+`firePerimeters` `sf` object.
+
+*Biomass_validationKNN* then compares simulated species biomass, presences,
+dominance, and changes in biomass against observed data available for the
+starting conditions (2011 by default) and for second time point (e.g. 2011, or
+after 10 years of simulation). To do so, for each year and replicate, and for
+both the simulated and observed data, the module calculates:
 
 -   species relative abundances at the pixel- and landscape-level (across all
-    pixels)
+pixels);
 
--   species presences and dominance at the landscape level
+-   species presences and dominance at the landscape level;
 
 -   changes in species biomass ($\Delta$B) at the pixel- and landscape-level for
-    both the simulated and observed data. Biomass units respect those used in
-    *Biomass_core* ($g/m^2$).
+both the simulated and observed data. Biomass units respect those used in
+*Biomass_core* ($g/m^2$).
 
 Pixel-level relative abundances are calculated as the species biomass (summed
 across cohorts) divided by the total pixel biomass (summed across cohorts and
 species), while landscape-wide relative abundances are calculated as the sum of
 a species biomass across all pixels divided by the sum of total biomass across
-all pixels. Species presences are calculated as the number of pixels where a
-given species is present, and species dominance is calculated as the number of
-pixels where a species has the highest relative biomass in a given pixel. Pixels
-where two or more species share the highest biomass value are classified as
-'mixed forest', and pixels without any biomass are classified as 'no veg.'.
-Finally, ($\Delta$B) is calculated per species as the final biomass (e.g., year
+all pixels.
+
+Species presences are calculated as the number of pixels where a given species
+is present, and species dominance is calculated as the number of pixels where a
+species has the highest relative biomass in a given pixel. Pixels where two or
+more species share the highest biomass value are classified as 'mixed forest',
+and pixels without any biomass are classified as 'no veg.'.
+
+Finally, $\Delta$B is calculated per species as the final biomass (e.g., year
 2011) minus the initial biomass (e.g., year 2001), either at the pixel- or
-landscape-level. All calculations were done per replicate.
+landscape-level.
 
-### Validation approaches
+### Validation approaches {#bvalid-valid}
 
-#### Visual validation
+#### Visual validation {#bvalid-valid-visual}
 
 The module plots the above metrics as barplots showing landscape-level values
 (averaged across replicates for the simulated data) or boxplots showing
 pixel-level values. Plotting can be live and/or in the form of exported images
 (or both turned off completely).
 
-#### Mean absolute deviation
+#### Mean absolute deviation {#bvalid-valid-MAD}
 
 Mean absolute deviance (MAD) values are calculated on landscape- and pixel-level
 species relative abundances and $\Delta$B, and landscape-level species presences
-and dominance, per replicate and year (except for $\Delta$B, which is integrated
-across years). Output tables with MAD values are exported as `landscapeMAD` and
+and dominance. MAD values are calculated per replicate and year, except $\Delta$B 
+MAD values, which integrate across years. Output tables with MAD values are exported as `landscapeMAD` and
 `pixelMAD`, and the module also produces visual inspection of these values as
 dot-and-whisker plots.
 
-#### Sum of negative log-likelihood (SNLL)
+#### Sum of negative log-likelihood (SNLL) {#bvalid-valid-SNLL}
 
-To provide a measure of overall goodness of fit of the simulation model, given a
-given set of starting conditions and simulation mechanisms (i.e., the
-combination of inputs to *Biomass_core* but also other modules that may be
-associated in affecting vegetation dynamics), *Biomass_validationKNN* estimates
-sum of negative log-likelihoods (SNLL) of simulated species biomasses, $\Delta$B
-(both at the landscape and pixel-level), and species presences (at the
-landscape-level), with respect to their observed counterparts. More precisely,
-let $\ell$ be the log-likelihood function denoting the probability of observing
-$x$ of $X$ (a random variable following a continuous probability distribution
-$f(x)$), given a parameter $\theta$:
+To provide a measure of overall goodness of fit of the model set-up that 
+gave rise to the outputs, this is the set of starting conditions, parameters and 
+simulation mechanisms that generated predictions (which includes the LandR 
+modules used), *Biomass_validationKNN* estimates sum of negative log-likelihoods 
+(SNLL) of species presences (at the landscape-level), simulated species biomasses,
+and $\Delta$B (the latter two at the landscape and pixel levels), 
+with respect to their observed counterparts.
+
+More precisely, let $\ell$ be the log-likelihood function denoting the
+probability of observing $x$ of $X$ (a random variable following a continuous
+probability distribution $f(x)$), given a parameter $\theta$:
 
 ```{=tex}
 \begin{equation}
-  \ell(\theta \mid x) = f(x)
-  (\#eq:loglik)
+\ell(\theta \mid x) = f(x)
+(\#eq:loglik)
 \end{equation}
 ```
 In our case, $\theta$ is equivalent to the model's starting conditions and
@@ -290,32 +307,34 @@ landscape-level, $i$:
 
 ```{=tex}
 \begin{equation}
-  -\sum_{i = 1}^{N} \ell(\theta \mid x_{i})
-  (\#eq:negsumloglik)
+-\sum_{i = 1}^{N} \ell(\theta \mid x_{i})
+(\#eq:negsumloglik)
 \end{equation}
 ```
 where $N$ is equal to total number of pixels. At the landscape scale $N = 1$.
 
-For species biomass and species presences, we draw the probability of observing
-$x_{i}$ (a vector of species biomasses/presences in pixel/landscape $i$) from a
+For species presences and species biomass, we draw the probability of observing
+$x_{i}$ (a vector of species presences/biomasses in pixel/landscape $i$) from a
 multinomial density distribution
 ($f(x_{i}) = {\sf Multi}(n_{i}, \mathrm{p}_{i})$), where
 $n_{i} = \sum_{j = 1}^{K} X_{i,j}$ ($X$ being the observed values of biomass of
 $j = 1, ..., K$ species in a pixel/landscape $i$) and $\mathrm{p_{i}}$ is the
 vector of simulated values $x_{i,j}$.
 
-**The computation of SNLL for** $\Delta$B is still under development. We have
-implemented the following, approach: For $\Delta$B, we draw the probability of
-observing $x_{i,j}$ (the simulated $\Delta$B of $j = 1, ..., K$ species in a
-pixel/landscape $i$) from a multivariate Gaussian distribution,
+**The computation of SNLL for $\Delta$B is still under development**. The
+following approach is currently implemented, but presents issues:
+
+For $\Delta$B, we draw the probability of observing $x_{i,j}$ (the simulated
+$\Delta$B of $j = 1, ..., K$ species in a pixel/landscape $i$) from a
+multivariate Gaussian distribution,
 $f(x_{i}) = \mathcal {N}(\mu_{i}, \mathrm{M}_{i})$, where $\mu_{i}$ is the
 vector of observed mean $\Delta$B for each species $j = 1, ..., K$, and
 $\mathrm{M}$ is the observed $K * K$ variance-covariance matrix of species
 $\Delta$B. Unfortunately this is presenting problems, due to $\mathrm{M}$ not
 being strictly positive definite.
 
-After calculating SNLL across pixels (or for a landscape), values are averaged
-across replicates for an overall model estimate and exported in the
+After calculating SNLL across pixels (or for the entire landscape), values are
+averaged across replicates for an overall model estimate and exported in the
 `logLikelihood` table.
 
 We refer to the Wikipedia pages on the [multinomial
@@ -324,243 +343,319 @@ distribution](https://en.wikipedia.org/wiki/Multinomial_distribution) and on the
 distribution](https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Density_function)
 for a good summary of these two distributions and their use in SNLL estimation.
 
-### Initialization, inputs and parameters
+### List of input objects {#bvalid-inputs-list}
 
-*Biomass_validationKNN* initializes itself and prepares all inputs provided that
-it has access to outputs of simulations from *Biomass_core*, and internet access
-to retrieve the observed kNN datasets used for validation. Future users should
-run *Biomass_validationKNN* with defaults and inspect what the objects are like
-before supplying their own data, or alternative data URLs. Alternatively, users
-may develop their own validation modules using *Biomass_validationKNN* as a
-template.
+The full list of input objects *Biomass_validationKNN* requires is presented
+below (Table \@ref(tab:moduleInputs2-Biomass-validationKNN)). All have defaults
+except `studyArea`, which **must** be provided by the user, or another module.
 
-#### Input objects
+Of these, the input spatial layers land-cover change (change type and year),
+fire perimeters, (ref:percent) species cover, stand age and stand biomass are
+obtained from National Forest Inventory kNN layers for years 2001 and 2011.
 
-*Biomass_validationKNN* requires the following input data layers: land-cover
-change (change type and year), fire perimeters, (ref:percent) species cover,
-stand age and stand biomass. By default, the module will take these from
-National Forest Inventory kNN layers for years 2001 and 2011. We recommend that
-the user supplies layers used to initialise the simulation as the starting input
-layers (2001 if that is the starting point) to guarantee that they match. Table
-\@ref(tab:moduleInputs2-Biomass-validationKNN) shows the full list of input
-objects used by the module.
+We strongly recommend that for the "starting point layers" (those suffixed with
+`*Start`, which by default correspond to 2001) the user supplies the same
+objects used as the starting input layers to initialise the simulation to make
+sure that they match.
 
-```{r moduleInputs2-Biomass-validationKNN, echo = FALSE, eval = TRUE, message = FALSE}
-df_inputs <- SpaDES.core::moduleInputs("Biomass_validationKNN", "..")
-knitr::kable(df_inputs, 
-             caption = "List of (ref:Biomass-validationKNN) input objects and their description.") %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
-```
+Note that objects suffixed with `*Start` correspond to the same objects in the
+main simulation without this suffix (e.g. `rawBiomassMapStart` is
+`rawBiomassMap` in *Biomass_borealDataPrep*), whereas other objects like
+`studyArea` and `rasterToMatch` have the same names in the simulation and should
+be **exactly** the same object.
 
 Of the inputs in Table \@ref(tab:moduleInputs2-Biomass-validationKNN), the
-following are particularly important and deserve special attention:
+following deserve special attention:
 
--   **Spatial layers**
+**Spatial layers**
 
-    -   `biomassMap` -- a map of simulated stand biomass (in $g/m^2$ ) filtered
-        for the pixels where cohort dynamics were simulated. This corresponds to
-        the `sim$biomassMap` object produced by *Biomass_borealDataPrep* or to
-        the `sim$simulatedBiomassMap` produced by *Biomass_core*.
+-   `biomassMap` -- a map of simulated stand biomass (in $g/m^2$ ) filtered for
+the pixels where cohort dynamics were simulated. This corresponds to the
+`sim$biomassMap` object produced by *Biomass_borealDataPrep* or to the
+`sim$simulatedBiomassMap` produced by *Biomass_core*.
 
-    -   `firePerimeters` -- a fire perimeters polygon map that should be used to
-        exclude recently burned pixels from the analysis. If this is not desired
-        the user needs to provide an empty `sf` object (e.g.,
-        `sf::st_polygon()`) .
+-   `firePerimeters` -- a fire perimeters polygon map that should be used to
+exclude recently burned pixels from the analysis. If this is not desired the
+user needs to provide an empty `sf` object (e.g., `sf::st_polygon()`) .
 
-    -   `rawBiomassMapStart` -- raw biomass data used to initialize and
-        parametrize `Biomass_core`. By default, the module uses the stand
-        biomass map from KNN for the year 2001. The user must make sure this
-        appropriate for their use case, or else supply the correct raster layer.
+-   `rawBiomassMapStart` -- raw biomass data used to initialise and parametrise
+`Biomass_core`. By default, the module uses the stand biomass map from kNN
+for the year 2001. The user must make sure this appropriate for their use
+case, or else supply the correct raster layer.
 
-    -   `rawBiomassMapEnd` -- raw biomass data used to validate the model after
-        several simualtion years. By default, the module uses the stand biomass
-        map from KNN for the year 2011, which is compared with the 10th year of
-        a simulation initialised using the KNN 2001 data. The user must make
-        sure this appropriate for their use case, or else supply the correct
-        raster layer.
+-   `rawBiomassMapEnd` -- raw biomass data used to validate the model after
+several simulation years. By default, the module uses the kNN stand biomass map
+from 2011, which is compared with the 10th year of a simulation initialised 
+using the kNN 2001 data. The user must make sure this
+appropriate for their use case, or else supply the correct raster layer.
 
-    -   `rstLCChange` -- a binary raster layer with disturbed pixels that should
-        be removed from the analyses. Can be combined with `rstLCChangeYr` to
-        filter pixels disturbed in a given time period defined by
-        `P(sim)$LCChangeYr`. Defaults to [Canada's forest change national map
-        between 1985-2011
-        (CFS)](https://opendata.nfis.org/downloads/forest_change/C2C_change_type_1985_2011.zip).
+-   `rstLCChange` -- a binary raster layer with disturbed pixels that should be
+removed from the analyses. Can be combined with `rstLCChangeYr` to filter
+pixels disturbed in a given time period defined by `P(sim)$LCChangeYr`.
+Defaults to [Canada's forest change national map between 1985-2011
+(CFS)](https://opendata.nfis.org/downloads/forest_change/C2C_change_type_1985_2011.zip).
 
-    -   `rstLCChangeYr` -- a raster layer with year of disturbance. This is an
-        optional layer that can be combined with `rstLCChange` and
-        `P(sim)$LCChangeYr` to filter disturbed pixels by year of disturbance.
-        Not used by default. Defaults to [Canada's forest change year national
-        map between 1985-2011
-        (CFS)](https://opendata.nfis.org/downloads/forest_change/C2C_change_year_1985_2011.zip).
+-   `rstLCChangeYr` -- a raster layer with year of disturbance. This is an
+optional layer that can be combined with `rstLCChange` and
+`P(sim)$LCChangeYr` to filter disturbed pixels by year of disturbance. Not
+used by default. Defaults to [Canada's forest change year national map
+between 1985-2011
+(CFS)](https://opendata.nfis.org/downloads/forest_change/C2C_change_year_1985_2011.zip).
 
-    -   `speciesLayersStart` -- same as `rawBiomassMapStart`, but with respect
-        to species (ref:percent) cover data.
+-   `speciesLayersStart` -- same as `rawBiomassMapStart`, but with respect to
+species (ref:percent) cover data.
 
-    -   `speciesLayersEnd` -- same as `rawBiomassMapEnd`, but with respect to
-        species (ref:percent) cover data.
+-   `speciesLayersEnd` -- same as `rawBiomassMapEnd`, but with respect to
+species (ref:percent) cover data.
 
-    -   `studyArea` -- shapefile. A `SpatialPolygonsDataFrame` with a single
-        polygon determining the where the simulation will take place. This is
-        the only input object that **must be supplied by the user**.
+-   `studyArea` -- shapefile. A `SpatialPolygonsDataFrame` with a single polygon
+determining the where the simulation will take place. This is the only input
+object that **must be supplied by the user**.
 
--   **Simulation-related objects**
+**Simulation-related objects**
 
-    -   `allCohortData` -- OPTIONAL. A `data.table` containing all `cohortData`
-        objects relevant for the validation (e.g., as many `cohortData` objects
-        as simulation replicates times 2, for the beginning and end year). If
-        not supplied, *Biomass_validationKNN* attempts to produce this object
-        using the `cohortData` object file listed in `simulationOutputs` .
-        Hence, the user must either supply **both** `allCohortData` and
-        `pixelGroupMapStk` **or** `simulationOutputs.`
+-   `allCohortData` -- OPTIONAL. A `data.table` containing all `cohortData`
+objects relevant for the validation (e.g., as many `cohortData` objects as
+simulation replicates times 2, for the beginning and end year). If not
+supplied, *Biomass_validationKNN* attempts to produce this object using the
+`cohortData` object file listed in `simulationOutputs` . Hence, the user
+must either supply *both* `allCohortData` and `pixelGroupMapStk` *or*
+`simulationOutputs.`
 
-    -   `pixelGroupMapStk` -- OPTIONAL. As `allCohortData` but with respect to
-        `pixelGroupMap` objects.
+-   `pixelGroupMapStk` -- OPTIONAL. As `allCohortData`, but with respect to
+`pixelGroupMap` objects.
 
-    -   `simulationOutputs` -- OPTIONAL. A `data.frame` that has the same
-        structure as the `data.frame`'s specifying outputs to be saved in
-        `spades(..., outputs = data.frame(...))`. We advise passing the same
-        `data.frame` that was supplied to `spades` during the simulation call,
-        but filtered by the relevant `cohortData` and `pixelGroupMap` objects
-        and, potentially, with file paths corrected to match the current working
-        directory (see [Usage example]). Only used if `allCohortData` and
-        `pixelGroupMapStk` are not supplied.
+-   `simulationOutputs` -- OPTIONAL. A `data.frame` that has the same structure
+as the `data.frame`'s specifying outputs to be saved in
+`spades(..., outputs = data.frame(...))`. We advise passing the same
+`data.frame` that was supplied to `spades` during the simulation call, but
+filtered by the relevant `cohortData` and `pixelGroupMap` objects and,
+potentially, with file paths corrected to match the current working
+directory (see [Usage example](#bvalid-example)). Only used if
+`allCohortData` and `pixelGroupMapStk` are not supplied.
 
-    -   `pixelGroupMap` -- a raster layer with *pixelGroup* IDs per pixel.
-        Pixels are always grouped based on identical *ecoregionGroup*,
-        *speciesCode*, *age* and *B* composition, even if the user supplies
-        other initial groupings (e.g., this is possible in the
-        *Biomass_borealDataPrep* data module).
+-   `pixelGroupMap` -- a raster layer with *pixelGroup* IDs per pixel. Pixels
+are grouped based on identical *ecoregionGroup*, *speciesCode*, *age*
+and *B* composition, even if the user supplies other initial groupings
+(e.g., this is possible in the *Biomass_borealDataPrep* data module).
 
-#### Parameters
+\newpage
+\blandscape
+
+```{r moduleInputs2-Biomass-validationKNN, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
+df_inputs <- moduleInputs("Biomass_validationKNN", "..")
+caption <- "List of (ref:Biomass-validationKNN) input objects and their description."
+
+## pander's hyphenation doesn't work with URLs and big/strange words (like obj names). split manually
+if (knitr::is_latex_output()) {
+  df_inputs$objectName <- wrapStrFun(df_inputs$objectName, size = 10)
+  df_inputs$objectClass <- wrapStrFun(df_inputs$objectClass, size = 10)
+  df_inputs$desc <- wrapStrFun(df_inputs$desc, size = 40)
+  df_inputs$sourceURL <- wrapStrFun(df_inputs$sourceURL, size = 10)
+}
+
+panble(df_inputs, caption, landscape = TRUE,
+       panderArgs = list("justify" = "left", "split.tables" = Inf,
+                                       "keep.line.breaks" = TRUE),
+       kable_stylingArgs = list(full_width = TRUE))
+```
+
+\elandscape
+
+### List of parameters {#bvalid-params-list}
 
 Table \@ref(tab:moduleParams2-Biomass-validationKNN) lists all parameters used
-in *Biomass_validationKNN* and their detailed information.
-
-```{r moduleParams2-Biomass-validationKNN, echo = FALSE, eval = TRUE, message = FALSE}
-df_params <- SpaDES.core::moduleParams("Biomass_validationKNN", "..")
-knitr::kable(df_params,
-             caption = "List of (ref:Biomass-validationKNN) parameters and their description.") %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE) %>%
-  kableExtra::landscape(.)
-```
+in *Biomass_validationKNN* and their detailed information. All have default
+values specified in the module's metadata
 
 Of the parameters listed in Table
 \@ref(tab:moduleParams2-Biomass-validationKNN), the following are particularly
 important:
 
 -   `LCChangeYr` -- integer. Optional parameter defining the years of
-    disturbance that should be filtered out of the analysis using the
-    `rstLCChangeYr` layer. This parameter is set to `NULL` by default, meaning
-    that `rstLCChangeYr` will not be used.
+disturbance that should be filtered out of the analysis using the
+`rstLCChangeYr` layer. This parameter is set to `NULL` by default, meaning
+that `rstLCChangeYr` will not be used.
 
 -   `sppEquivCol` -- character. the column name in `speciesEquivalency`
-    data.table that defines the naming convention to use throughout the
-    simulation.
+data.table that defines the naming convention to use throughout the
+simulation.
 
 -   `validationReps` -- integer. which simulation replicates should be used for
-    the validation.
+the validation.
 
 -   `validationYears` -- integer. What simulation years should be used for the
-    validation - the year number needs to match the observed data year. For
-    instance, if the first observed data year is 2001, that must be the first
-    simulation year.
+validation - the year number needs to match the observed data year. For
+instance, if the first observed data year is 2001, that must be the first
+simulation year.
 
-### Simulation flow
+\newpage
+\blandscape
 
-The general flow of *Biomass_validationKNN* processes is:
+```{r moduleParams2-Biomass-validationKNN, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
+df_params <- moduleParams("Biomass_validationKNN", "..")
+caption <- "List of (ref:Biomass-validationKNN) parameters and their description."
+
+panble(df_params, caption, landscape = TRUE,
+       panderArgs = list("justify" = "left", "digits" = 3, "split.cells" = c(15,15, 5, 5, 5, 40), "split.tables" = Inf),
+       kable_stylingArgs = list(full_width = TRUE))
+```
+
+\elandscape
+
+### List of outputs {#bvalid-outputs-list}
+
+The module produces the following outputs (Table
+\@ref(tab:moduleOutputs-Biomass-validationKNN)):
+
+```{r moduleOutputs-Biomass-validationKNN, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
+df_outputs <- moduleOutputs("Biomass_validationKNN", "..")
+caption <- "List of (ref:Biomass-validationKNN) output objects and their description."
+
+panble(df_outputs, caption, 
+       panderArgs = list("justify" = "left", "digits" = 3, "split.cells" = c(15, 15, 40), "split.tables" = Inf),
+       kable_stylingArgs = list(full_width = TRUE))
+```
+
+### Simulation flow and module events {#bvalid-sim-flow}
+
+*Biomass_validationKNN* initialises itself and prepares all inputs provided that
+it has access to outputs of simulations from *Biomass_core*, and internet access
+to retrieve the observed kNN datasets used for
+validation[^biomass_validationknn-1].
+
+[^biomass_validationknn-1]: Raw data layers downloaded by the module are saved
+in \`dataPath(sim)\`, which can be controlled via
+\`options(reproducible.destinationPath = ...)\`.
+
+The module then compiles all simulation output data provided that the user
+supplies the object names and their file paths via the `simulationOutputs` input
+object. Alternatively, the user may pass the pre-compiled outputs (namely the
+`cohortData` and `pixelGroupMap` objects) via the `allCohortData` and
+`pixelGroupMapStk` input objects. See [list of input
+objects](#bvalid-inputs-list) for more detail.
+
+Future users should run *Biomass_validationKNN* with defaults and inspect what
+the objects are like before supplying their own data, or alternative data URLs.
+Alternatively, users may develop their own validation modules using
+*Biomass_validationKNN* as a template. We expect the number of validation
+modules to increase as other validation approaches are developed based on
+project needs.
+
+The general flow of *Biomass_validationKNN* processes is (note that this module
+only runs once, i.e. in one "time step"):
 
 1.  Preparation of all necessary objects, namely obtaining the observed data
-    layers from online repositories (or if available stored local copies) and
-    the compiling simulated data if the user has not done so previously (see
-    [Input objects]).
+layers from on-line repositories (or if available stored local copies) and
+the compiling simulated data if the user has not done so previously (see
+[list of input objects](#bvalid-inputs-list)) -- (`init` event).
 
-2.  Calculation of summary variables for validation, namely:
+2.  Calculation of summary variables for validation (`calculateValidVars`
+event), namely :
 
-    -   relative biomass per species per pixel and across the landscape (per
-        year and per replicate)
+-   relative biomass per species per pixel and across the landscape (per year
+and per replicate)
 
-    -   changes in species biomass per pixel and across the landscape (per
-        replicate), with respect to the first year.
+-   changes in species biomass per pixel and across the landscape (per
+replicate), with respect to the first year.
 
-    -   species dominance across the landscape
+-   species dominance across the landscape
 
-    -   species presences across the landscape
+-   species presences across the landscape
 
-3.  Calculation of validation statistics, namely mean absolute deviations (MAD)
-    and sum of negative log-likelihoods (SNLL).
+3.  Calculation of validation statistics (`validationStats` event), namely mean
+absolute deviations (MAD) and sum of negative log-likelihoods (SNLL).
 
 4.  Assessment of the relationship between observed $\Delta$B and observed
-    $\Delta$Age -- this is an optional visual diagnostic of the observed data
-    that produces scatterplots of $\Delta$B \~ $\Delta$Age of three types:
+$\Delta$Age (`obsDeltaMaps` event) -- this is an optional visual diagnostic
+of the observed data that produces scatterplots of $\Delta$B \~ $\Delta$Age
+of three types:
 
-    -   With raw observed values of $\Delta$B and $\Delta$Age
+-   With raw observed values of $\Delta$B and $\Delta$Age
 
-    -   With $\Delta$B and $\Delta$Age calculated on observed data *after*
-        pre-processing (i.e., the data clean-steps done in
-        `Biomass_borealDataPrep`, which are also done to the observed data
-        before validation)
+-   With $\Delta$B and $\Delta$Age calculated on observed data *after*
+pre-processing (i.e., the data clean-steps done in `Biomass_borealDataPrep`,
+which are also done to the observed data before validation)
 
-    -   With the data shown in 2) above, but filtered by pixels where there was
-        only a stand age increment corresponding to the number of years of
-        between the two validation time points. This is not necessarily a
-        *correct* filter, as stands may have suffered an age reduction due to
-        the loss of old cohorts from background mortality (i.e., not coming from
-        disturbances. However, if using the default input datasets, it is
-        unlikely that this is a widespread phenomenon in only 10 years. We
-        remind the user that disturbed pixels should be removed from the
-        analyses when validating succession dynamics in the absence of
-        disturbance - the default option.
+-   With the data shown in 2) above, but filtered by pixels where there was only
+a stand age increment corresponding to the number of years of between the
+two validation time points. This is not necessarily a *correct* filter, as
+stands may have suffered an age reduction due to the loss of old cohorts
+from background mortality (i.e., not coming from disturbances. However, if
+using the default input datasets, it is unlikely that this is a widespread
+phenomenon in only 10 years. We remind the user that disturbed pixels should
+be removed from the analyses when validating succession dynamics in the
+absence of disturbance - the default option.
 
-5.  Plots:
+5.  Plots (`landscapeWidePlots`, `pixelLevelPlots` and `deltaBComparisons`
+events):
 
-    -   Barplots of landscape-wide and pixel-level comparisons between observed
-        and simulated data, with respect to relative biomass, dominance and
-        presences.
+-   Barplots of landscape-wide and pixel-level comparisons between observed and
+simulated data, with respect to relative biomass, dominance and presences.
 
-    -   Boxplots of biomass changes ($\Delta$B) in observed and simulated data,
-        with respect to the first year.
+-   Boxplots of biomass changes ($\Delta$B) in observed and simulated data, with
+respect to the first year.
 
-    -   Maps of biomass and age changes ($\Delta$B, $\Delta$Age) with respect to
-        the first year, in observed and simulated data.
+-   Maps of biomass and age changes ($\Delta$B, $\Delta$Age) with respect to the
+first year, in observed and simulated data.
 
 All module default outputs are in the form of plots, but the user can chose to
 save any objects (see Table \@ref(tab:moduleOutputs-Biomass-validationKNN)).
 
-## Usage example
+## Usage example {#bvalid-example}
 
-### Load `SpaDES` and other packages.
+### Set up R libraries {#bvalid-example-libs}
 
-```{r load-SpaDES-Biomass-validationKNN, eval=FALSE}
-library(SpaDES)
-library(SpaDES.install)
-library(SpaDES.experiment)
-library(future)
+```{r load-Rlibs-Biomass-validationKNN, eval=FALSE}
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+tempDir <- tempdir()
+
+pkgPath <- file.path(tempDir, "packages", version$platform,
+                     paste0(version$major, ".", strsplit(version$minor, "[.]")[[1]][1]))
+dir.create(pkgPath, recursive = TRUE)
+.libPaths(pkgPath, include.site = FALSE)
+
+if (!require(Require, lib.loc = pkgPath)) {
+  remotes::install_github("PredictiveEcology/Require@5c44205bf407f613f53546be652a438ef1248147",
+                          upgrade = FALSE, force = TRUE)
+  library(Require, lib.loc = pkgPath)
+}
+
+setLinuxBinaryRepo()
 ```
 
-### Get the modules
+### Get the module and module dependencies {#b-valid-example-pkg-mods}
 
 Because *Biomass_validationKNN* is meant to validate simulation outputs against
 observed data, we need to first run a simulation of forest dynamics with
 *Biomass_core*. To do that we get both modules' code from the PredictiveEcology
-GitHub repository. Notice that we are placing all module code, inputs and
-outputs in temporary directories.
+GitHub repository (all install all necessary packages). Notice that we are
+placing all packages, module code, inputs and outputs in temporary directories.
 
-```{r module usage example setup -Biomass-validationKNN, eval = FALSE}
-tempDir <- tempdir()
-paths <- list(inputPath = file.path(tempDir, "inputs"), 
-                 cachePath = file.path(tempDir, "cache"), 
-                 modulePath = file.path(tempDir, "modules"), 
-                 outputPath = file.path(tempDir, "outputs"))
+```{r getModule-Biomass-validationKNN, eval=FALSE}
+Require("PredictiveEcology/SpaDES.project@6d7de6ee12fc967c7c60de44f1aa3b04e6eeb5db", 
+        require = FALSE, upgrade = FALSE, standAlone = TRUE)
 
-getModule("PredictiveEcology/Biomass_core", modulePath = paths$modulePath, overwrite = TRUE)
-getModule("PredictiveEcology/Biomass_validationKNN", modulePath = paths$modulePath, overwrite = TRUE)
+paths <- list(inputPath = normPath(file.path(tempDir, "inputs")), 
+              cachePath = normPath(file.path(tempDir, "cache")), 
+              modulePath = normPath(file.path(tempDir, "modules")), 
+              outputPath = normPath(file.path(tempDir, "outputs")))
 
-## by default the repository branch name is appended to the module folder name.
-## so we change the folder name to remove the "-master" suffix.
-file.rename(c(file.path(paths$modulePath, "Biomass_core-master"),
-              file.path(paths$modulePath, "Biomass_validationKNN-master")),
-            c(file.path(paths$modulePath, "Biomass_core"),
-              file.path(paths$modulePath, "Biomass_validationKNN")))
+SpaDES.project::getModule(modulePath = paths$modulePath,
+                          c("PredictiveEcology/Biomass_core@master",
+                            "PredictiveEcology/Biomass_validationKNN@master"),
+                          overwrite = TRUE)
+
+## make sure all necessary packages are installed:
+outs <- SpaDES.project::packagesInModules(modulePath = paths$modulePath)
+Require(c(unname(unlist(outs)),
+          "PredictiveEcology/SpaDES.experiment@development",
+          "future"),
+        require = FALSE, standAlone = TRUE)
+
+## load necessary packages
+Require(c("SpaDES.core", "LandR", "reproducible", "pemisc",
+          "SpaDES.experiment", "future"), upgrade = FALSE, install = FALSE)
 ```
 
 ### Setup simulation
@@ -574,9 +669,9 @@ studyArea <- Cache(randomStudyArea, size = 1e7) # cache this so it creates a ran
 speciesNameConvention <- "Boreal"
 speciesToUse <- c("Pice_Gla", "Popu_Tre", "Pinu_Con")
 
-sppEquiv <- LandR::sppEquivalencies_CA[get(speciesNameConvention) %in% speciesToUse]
+sppEquiv <- sppEquivalencies_CA[get(speciesNameConvention) %in% speciesToUse]
 # Assign a colour convention for graphics for each species
-sppColorVect <- LandR::sppColors(sppEquiv, speciesNameConvention,
+sppColorVect <- sppColors(sppEquiv, speciesNameConvention,
                                  newVals = "Mixed", palette = "Set1")
 
 ## Usage example
@@ -586,7 +681,7 @@ objects <- list(studyArea = studyArea, sppEquiv = sppEquiv, sppColorVect = sppCo
 successionTimestep <- 20L
 
 ## keep default values for most parameters 
-## (ommitted from this list)
+## (omitted from this list)
 parameters <- list(
   Biomass_core = list(
     "sppEquivCol" = speciesNameConvention
@@ -616,6 +711,9 @@ of the `SpaDES.experiment` R package [@McIntireChubaty2021], which builds a
 folder structure where simulation outputs are conveniently organised.
 
 ```{r module usage example2 -Biomass-validationKNN, eval=FALSE}
+opts <- options(reproducible.useCache = TRUE,
+                reproducible.destinationPath = paths$inputPath,
+                spades.useRequire = FALSE)
 graphics.off()
 mySimInit <- simInit(times = times,
                      params = parameters, 
@@ -636,6 +734,8 @@ mySimExperiment <- experiment2(
 Note that because we ran *Biomass_core* by itself using theoretical input data,
 we can expect the validation to reveal that the module didn't do a great job at
 reproducing observed patterns.
+
+*Note that a Google Account is needed to download some of the input files.*
 
 ```{r module usage example validation,  eval=FALSE}
 simulationOutputs <- lapply(mySimExperiment, FUN = function(x, localSimPaths) {
@@ -687,16 +787,16 @@ Here are some of the output figures automatically produced by
 ```{r fig-Biomass-validationKNNOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', out.width = "70%", fig.cap = "(ref:Biomass-validationKNN) automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left)."}
 ## make sure all include_graphics have wd attached to figure path
 ## this is necessary to knit to pdf using child Rmds - see https://stackoverflow.com/questions/61065560/cant-compile-rmarkdown-pdf-with-image-in-child-rmd-latex-error-image-file
-knitr::include_graphics(normalizePath(c("figures/LandscapeComparisons_PresAbs.png",
-                                        "figures/PixelComparisons_relB.png"), winslash = "/"))
+knitr::include_graphics(normPath(c("figures/LandscapeComparisons_PresAbs.png",
+                                        "figures/PixelComparisons_relB.png")))
 ```
 
 ```{r fig-Biomass-validationKNNOutPlots2, echo = FALSE, eval = TRUE, fig.show='hold', out.width = "70%", fig.cap = "A plot of landscape-wide mean absolute deviations (MAD) from (top to bottom) observed mean relative abundance, no. of presences, no. of pixels where the species is dominant and $\\Delta$B."}
-knitr::include_graphics(normalizePath(c("figures/landscapeMAD.png"), winslash = "/"))
+knitr::include_graphics(normPath(c("figures/landscapeMAD.png")))
 ```
 
 ```{r fig-Biomass-validationKNNOutPlots3, echo = FALSE, eval = TRUE, fig.show='hold', out.width = "70%", fig.cap = "Diagnostic plot of observed changes in biomass and age $\\Delta$B and $\\Delta$Age, respectively)."}
-knitr::include_graphics(normalizePath(c("figures/observedDeltaBDeltaAge.png"), winslash = "/"))
+knitr::include_graphics(normPath(c("figures/observedDeltaBDeltaAge.png")))
 ```
 
-## References
+## References {#bvalid-refs}
