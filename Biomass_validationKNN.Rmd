@@ -456,7 +456,8 @@ if (knitr::is_latex_output()) {
 
 panble(df_inputs, caption, landscape = TRUE,
        panderArgs = list("justify" = "left", "split.tables" = Inf,
-                                       "keep.line.breaks" = TRUE))
+                                       "keep.line.breaks" = TRUE),
+       kable_stylingArgs = list(full_width = TRUE))
 ```
 
 \elandscape
@@ -496,7 +497,8 @@ df_params <- moduleParams("Biomass_validationKNN", "..")
 caption <- "List of (ref:Biomass-validationKNN) parameters and their description."
 
 panble(df_params, caption, landscape = TRUE,
-       panderArgs = list("justify" = "left", "digits" = 3, "split.cells" = c(15,15, 5, 5, 5, 40), "split.tables" = Inf))
+       panderArgs = list("justify" = "left", "digits" = 3, "split.cells" = c(15,15, 5, 5, 5, 40), "split.tables" = Inf),
+       kable_stylingArgs = list(full_width = TRUE))
 ```
 
 \elandscape
@@ -511,7 +513,8 @@ df_outputs <- moduleOutputs("Biomass_validationKNN", "..")
 caption <- "List of (ref:Biomass-validationKNN) output objects and their description."
 
 panble(df_outputs, caption, 
-       panderArgs = list("justify" = "left", "digits" = 3, "split.cells" = c(15, 15, 40), "split.tables" = Inf))
+       panderArgs = list("justify" = "left", "digits" = 3, "split.cells" = c(15, 15, 40), "split.tables" = Inf),
+       kable_stylingArgs = list(full_width = TRUE))
 ```
 
 ### Simulation flow and module events {#bvalid-sim-flow}
