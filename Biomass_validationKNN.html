@@ -2570,6 +2570,230 @@ window.onload = function() {
   PagedTableDoc.initAll();
 };
 </script>
+<script>$(document).ready(function(){
+    if (typeof $('[data-toggle="tooltip"]').tooltip === 'function') {
+        $('[data-toggle="tooltip"]').tooltip();
+    }
+    if ($('[data-toggle="popover"]').popover === 'function') {
+        $('[data-toggle="popover"]').popover();
+    }
+});
+</script>
+<style type="text/css">
+.lightable-minimal {
+border-collapse: separate;
+border-spacing: 16px 1px;
+width: 100%;
+margin-bottom: 10px;
+}
+.lightable-minimal td {
+margin-left: 5px;
+margin-right: 5px;
+}
+.lightable-minimal th {
+margin-left: 5px;
+margin-right: 5px;
+}
+.lightable-minimal thead tr:last-child th {
+border-bottom: 2px solid #00000050;
+empty-cells: hide;
+}
+.lightable-minimal tbody tr:first-child td {
+padding-top: 0.5em;
+}
+.lightable-minimal.lightable-hover tbody tr:hover {
+background-color: #f5f5f5;
+}
+.lightable-minimal.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-classic {
+border-top: 0.16em solid #111111;
+border-bottom: 0.16em solid #111111;
+width: 100%;
+margin-bottom: 10px;
+margin: 10px 5px;
+}
+.lightable-classic tfoot tr td {
+border: 0;
+}
+.lightable-classic tfoot tr:first-child td {
+border-top: 0.14em solid #111111;
+}
+.lightable-classic caption {
+color: #222222;
+}
+.lightable-classic td {
+padding-left: 5px;
+padding-right: 5px;
+color: #222222;
+}
+.lightable-classic th {
+padding-left: 5px;
+padding-right: 5px;
+font-weight: normal;
+color: #222222;
+}
+.lightable-classic thead tr:last-child th {
+border-bottom: 0.10em solid #111111;
+}
+.lightable-classic.lightable-hover tbody tr:hover {
+background-color: #F9EEC1;
+}
+.lightable-classic.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-classic-2 {
+border-top: 3px double #111111;
+border-bottom: 3px double #111111;
+width: 100%;
+margin-bottom: 10px;
+}
+.lightable-classic-2 tfoot tr td {
+border: 0;
+}
+.lightable-classic-2 tfoot tr:first-child td {
+border-top: 3px double #111111;
+}
+.lightable-classic-2 caption {
+color: #222222;
+}
+.lightable-classic-2 td {
+padding-left: 5px;
+padding-right: 5px;
+color: #222222;
+}
+.lightable-classic-2 th {
+padding-left: 5px;
+padding-right: 5px;
+font-weight: normal;
+color: #222222;
+}
+.lightable-classic-2 tbody tr:last-child td {
+border-bottom: 3px double #111111;
+}
+.lightable-classic-2 thead tr:last-child th {
+border-bottom: 1px solid #111111;
+}
+.lightable-classic-2.lightable-hover tbody tr:hover {
+background-color: #F9EEC1;
+}
+.lightable-classic-2.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-material {
+min-width: 100%;
+white-space: nowrap;
+table-layout: fixed;
+font-family: Roboto, sans-serif;
+border: 1px solid #EEE;
+border-collapse: collapse;
+margin-bottom: 10px;
+}
+.lightable-material tfoot tr td {
+border: 0;
+}
+.lightable-material tfoot tr:first-child td {
+border-top: 1px solid #EEE;
+}
+.lightable-material th {
+height: 56px;
+padding-left: 16px;
+padding-right: 16px;
+}
+.lightable-material td {
+height: 52px;
+padding-left: 16px;
+padding-right: 16px;
+border-top: 1px solid #eeeeee;
+}
+.lightable-material.lightable-hover tbody tr:hover {
+background-color: #f5f5f5;
+}
+.lightable-material.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-material.lightable-striped tbody td {
+border: 0;
+}
+.lightable-material.lightable-striped thead tr:last-child th {
+border-bottom: 1px solid #ddd;
+}
+.lightable-material-dark {
+min-width: 100%;
+white-space: nowrap;
+table-layout: fixed;
+font-family: Roboto, sans-serif;
+border: 1px solid #FFFFFF12;
+border-collapse: collapse;
+margin-bottom: 10px;
+background-color: #363640;
+}
+.lightable-material-dark tfoot tr td {
+border: 0;
+}
+.lightable-material-dark tfoot tr:first-child td {
+border-top: 1px solid #FFFFFF12;
+}
+.lightable-material-dark th {
+height: 56px;
+padding-left: 16px;
+padding-right: 16px;
+color: #FFFFFF60;
+}
+.lightable-material-dark td {
+height: 52px;
+padding-left: 16px;
+padding-right: 16px;
+color: #FFFFFF;
+border-top: 1px solid #FFFFFF12;
+}
+.lightable-material-dark.lightable-hover tbody tr:hover {
+background-color: #FFFFFF12;
+}
+.lightable-material-dark.lightable-striped tbody tr:nth-child(even) {
+background-color: #FFFFFF12;
+}
+.lightable-material-dark.lightable-striped tbody td {
+border: 0;
+}
+.lightable-material-dark.lightable-striped thead tr:last-child th {
+border-bottom: 1px solid #FFFFFF12;
+}
+.lightable-paper {
+width: 100%;
+margin-bottom: 10px;
+color: #444;
+}
+.lightable-paper tfoot tr td {
+border: 0;
+}
+.lightable-paper tfoot tr:first-child td {
+border-top: 1px solid #00000020;
+}
+.lightable-paper thead tr:last-child th {
+color: #666;
+vertical-align: bottom;
+border-bottom: 1px solid #00000020;
+line-height: 1.15em;
+padding: 10px 5px;
+}
+.lightable-paper td {
+vertical-align: middle;
+border-bottom: 1px solid #00000010;
+line-height: 1.15em;
+padding: 7px 5px;
+}
+.lightable-paper.lightable-hover tbody tr:hover {
+background-color: #F9EEC1;
+}
+.lightable-paper.lightable-striped tbody tr:nth-child(even) {
+background-color: #00000008;
+}
+.lightable-paper.lightable-striped tbody td {
+border: 0;
+}
+</style>
 
 <style type="text/css">
 code{white-space: pre-wrap;}
@@ -2776,7 +3000,7 @@ border-radius: 0px;
 
 
 <h1 class="title toc-ignore">LandR <em>Biomass_validationKNN</em> Manual</h1>
-<h4 class="date">Last updated: 2022-10-27</h4>
+<h4 class="date">Last updated: 2022-11-04</h4>
 
 </div>
 
@@ -2784,7 +3008,7 @@ border-radius: 0px;
 <!-- the following are text references used in captions for LaTeX compatibility -->
 
 
-<p><a href="https://github.com/PredictiveEcology/Biomass_validationKNN31c177f739cd3955a45386735dfc6ac408d7400d"><img src="data:image/png;base64,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" alt="module-version-Badge" /></a></p>
+<p><a href="https://github.com/PredictiveEcology/Biomass_validationKNN80dd5f6552410e9ca1c05b520ea855f83b5e054a"><img src="data:image/png;base64,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" alt="module-version-Badge" /></a></p>
 <p><a href="https://github.com/PredictiveEcology/Biomass_validationKNN/issues"><img src="data:image/png;base64,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" alt="Issues-badge" /></a></p>
 <!-- if knitting to pdf remember to add the pandoc_args: ["--extract-media", "."] option to yml in order to get the badge images -->
 <div id="authors" class="section level4">
@@ -3079,7 +3303,7 @@ are grouped based on identical <em>ecoregionGroup</em>, <em>speciesCode</em>, <e
 and <em>B</em> composition, even if the user supplies other initial groupings
 (e.g., this is possible in the <em>Biomass_borealDataPrep</em> data module).</p></li>
 </ul>
-<table>
+<table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 <span id="tab:moduleInputs2-Biomass-validationKNN">Table 1: </span>List of <em>Biomass_validationKNN</em> input objects and their description.
 </caption>
@@ -3378,7 +3602,7 @@ validation - the year number needs to match the observed data year. For
 instance, if the first observed data year is 2001, that must be the first
 simulation year.</p></li>
 </ul>
-<table>
+<table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 <span id="tab:moduleParams2-Biomass-validationKNN">Table 2: </span>List of <em>Biomass_validationKNN</em> parameters and their description.
 </caption>
@@ -3731,7 +3955,7 @@ Controls cache; caches the init event by default
 <h3>List of outputs</h3>
 <p>The module produces the following outputs (Table
 <a href="#tab:moduleOutputs-Biomass-validationKNN">3</a>):</p>
-<table>
+<table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 <span id="tab:moduleOutputs-Biomass-validationKNN">Table 3: </span>List of <em>Biomass_validationKNN</em> output objects and their description.
 </caption>
