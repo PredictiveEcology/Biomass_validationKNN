@@ -446,11 +446,6 @@ and *B* composition, even if the user supplies other initial groupings
 df_inputs <- moduleInputs("Biomass_validationKNN", "..")
 caption <- "List of (ref:Biomass-validationKNN) input objects and their description."
 
-# knitr::kable(df_inputs, caption = caption) %>%
-#   kableExtra::kable_styling(latex_options = c("repeat_header"))
-
-## setting the options is necessary to escape special characters (must have chunk opt results = 'asis')
-# opts <- panderOptions("knitr.auto.asis", FALSE)  
 ## pander's hyphenation doesn't work with URLs and big/strange words (like obj names). split manually
 if (knitr::is_latex_output()) {
   df_inputs$objectName <- wrapStrFun(df_inputs$objectName, size = 10)
@@ -459,9 +454,6 @@ if (knitr::is_latex_output()) {
   df_inputs$sourceURL <- wrapStrFun(df_inputs$sourceURL, size = 10)
 }
 
-# pander::pander(df_inputs, caption = addLabel(caption), justify = "left",
-#                split.tables = Inf, keep.line.breaks = TRUE)
-# options(opts)
 panble(df_inputs, caption, landscape = TRUE,
        panderArgs = list("justify" = "left", "split.tables" = Inf,
                                        "keep.line.breaks" = TRUE))
@@ -503,14 +495,6 @@ simulation year.
 df_params <- moduleParams("Biomass_validationKNN", "..")
 caption <- "List of (ref:Biomass-validationKNN) parameters and their description."
 
-# knitr::kable(df_params,caption = caption) %>%
-#   kableExtra::kable_styling(latex_options = c("repeat_header")) %>% 
-#   kableExtra::landscape(.)
-
-# opts <- panderOptions("knitr.auto.asis", FALSE)    
-# pander(df_params, caption = addLabel(caption), justify = "left", 
-#        digits = 3, split.cells = c(15,15, 5, 5, 5, 40), split.tables = Inf)
-# options(opts)
 panble(df_params, caption, landscape = TRUE,
        panderArgs = list("justify" = "left", "digits" = 3, "split.cells" = c(15,15, 5, 5, 5, 40), "split.tables" = Inf))
 ```
@@ -526,13 +510,6 @@ The module produces the following outputs (Table
 df_outputs <- moduleOutputs("Biomass_validationKNN", "..")
 caption <- "List of (ref:Biomass-validationKNN) output objects and their description."
 
-# knitr::kable(df_outputs, caption = caption) %>%
-#   kableExtra::kable_styling(latex_options = c("repeat_header")) %>%
-#   kableExtra::column_spec(column = 3, width = "40em")
-
-## options and results='asis' not necessary when not using landscape
-# pander(df_outputs, caption = addLabel(caption), justify = "left", 
-#        digits = 3, split.cells = c(15, 15, 40), split.tables = Inf)
 panble(df_outputs, caption, 
        panderArgs = list("justify" = "left", "digits" = 3, "split.cells" = c(15, 15, 40), "split.tables" = Inf))
 ```
