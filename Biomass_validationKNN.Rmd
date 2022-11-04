@@ -501,7 +501,6 @@ panble(df_params, caption, landscape = TRUE,
        kable_stylingArgs = list(full_width = TRUE))
 ```
 
-\elandscape
 
 ### List of outputs {#bvalid-outputs-list}
 
@@ -516,6 +515,8 @@ panble(df_outputs, caption,
        panderArgs = list("justify" = "left", "digits" = 3, "split.cells" = c(15, 15, 40), "split.tables" = Inf),
        kable_stylingArgs = list(full_width = TRUE))
 ```
+
+\elandscape
 
 ### Simulation flow and module events {#bvalid-sim-flow}
 
@@ -553,15 +554,15 @@ the compiling simulated data if the user has not done so previously (see
 2.  Calculation of summary variables for validation (`calculateValidVars`
 event), namely :
 
--   relative biomass per species per pixel and across the landscape (per year
-and per replicate)
-
--   changes in species biomass per pixel and across the landscape (per
-replicate), with respect to the first year.
-
--   species dominance across the landscape
-
--   species presences across the landscape
+    -   relative biomass per species per pixel and across the landscape (per year
+    and per replicate)
+    
+    -   changes in species biomass per pixel and across the landscape (per
+    replicate), with respect to the first year.
+    
+    -   species dominance across the landscape
+    
+    -   species presences across the landscape
 
 3.  Calculation of validation statistics (`validationStats` event), namely mean
 absolute deviations (MAD) and sum of negative log-likelihoods (SNLL).
@@ -571,33 +572,33 @@ $\Delta$Age (`obsDeltaMaps` event) -- this is an optional visual diagnostic
 of the observed data that produces scatterplots of $\Delta$B \~ $\Delta$Age
 of three types:
 
--   With raw observed values of $\Delta$B and $\Delta$Age
-
--   With $\Delta$B and $\Delta$Age calculated on observed data *after*
-pre-processing (i.e., the data clean-steps done in `Biomass_borealDataPrep`,
-which are also done to the observed data before validation)
-
--   With the data shown in 2) above, but filtered by pixels where there was only
-a stand age increment corresponding to the number of years of between the
-two validation time points. This is not necessarily a *correct* filter, as
-stands may have suffered an age reduction due to the loss of old cohorts
-from background mortality (i.e., not coming from disturbances. However, if
-using the default input datasets, it is unlikely that this is a widespread
-phenomenon in only 10 years. We remind the user that disturbed pixels should
-be removed from the analyses when validating succession dynamics in the
-absence of disturbance - the default option.
+    -   With raw observed values of $\Delta$B and $\Delta$Age
+    
+    -   With $\Delta$B and $\Delta$Age calculated on observed data *after*
+    pre-processing (i.e., the data clean-steps done in `Biomass_borealDataPrep`,
+    which are also done to the observed data before validation)
+    
+    -   With the data shown in 2) above, but filtered by pixels where there was only
+    a stand age increment corresponding to the number of years of between the
+    two validation time points. This is not necessarily a *correct* filter, as
+    stands may have suffered an age reduction due to the loss of old cohorts
+    from background mortality (i.e., not coming from disturbances. However, if
+    using the default input datasets, it is unlikely that this is a widespread
+    phenomenon in only 10 years. We remind the user that disturbed pixels should
+    be removed from the analyses when validating succession dynamics in the
+    absence of disturbance - the default option.
 
 5.  Plots (`landscapeWidePlots`, `pixelLevelPlots` and `deltaBComparisons`
 events):
 
--   Barplots of landscape-wide and pixel-level comparisons between observed and
-simulated data, with respect to relative biomass, dominance and presences.
-
--   Boxplots of biomass changes ($\Delta$B) in observed and simulated data, with
-respect to the first year.
-
--   Maps of biomass and age changes ($\Delta$B, $\Delta$Age) with respect to the
-first year, in observed and simulated data.
+    -   Barplots of landscape-wide and pixel-level comparisons between observed and
+    simulated data, with respect to relative biomass, dominance and presences.
+    
+    -   Boxplots of biomass changes ($\Delta$B) in observed and simulated data, with
+    respect to the first year.
+    
+    -   Maps of biomass and age changes ($\Delta$B, $\Delta$Age) with respect to the
+    first year, in observed and simulated data.
 
 All module default outputs are in the form of plots, but the user can chose to
 save any objects (see Table \@ref(tab:moduleOutputs-Biomass-validationKNN)).
@@ -616,8 +617,10 @@ dir.create(pkgPath, recursive = TRUE)
 .libPaths(pkgPath, include.site = FALSE)
 
 if (!require(Require, lib.loc = pkgPath)) {
-  remotes::install_github("PredictiveEcology/Require@5c44205bf407f613f53546be652a438ef1248147",
-                          upgrade = FALSE, force = TRUE)
+  remotes::install_github(
+    paste0("PredictiveEcology/",
+           "Require@5c44205bf407f613f53546be652a438ef1248147"),
+    upgrade = FALSE, force = TRUE)
   library(Require, lib.loc = pkgPath)
 }
 
@@ -633,7 +636,8 @@ GitHub repository (all install all necessary packages). Notice that we are
 placing all packages, module code, inputs and outputs in temporary directories.
 
 ```{r getModule-Biomass-validationKNN, eval=FALSE}
-Require("PredictiveEcology/SpaDES.project@6d7de6ee12fc967c7c60de44f1aa3b04e6eeb5db", 
+Require(paste0("PredictiveEcology/",
+               "SpaDES.project@6d7de6ee12fc967c7c60de44f1aa3b04e6eeb5db"), 
         require = FALSE, upgrade = FALSE, standAlone = TRUE)
 
 paths <- list(inputPath = normPath(file.path(tempDir, "inputs")), 
@@ -784,18 +788,18 @@ mySimValidation <- simInitAndSpades(times = validationTimes
 Here are some of the output figures automatically produced by
 *Biomass_validationKNN*
 
-```{r fig-Biomass-validationKNNOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', out.width = "70%", fig.cap = "(ref:Biomass-validationKNN) automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left)."}
+```{r fig-Biomass-validationKNNOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', out.width = ifelse(knitr::is_latex_output(), "100%", "70%"), fig.cap = "(ref:Biomass-validationKNN) automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left)."}
 ## make sure all include_graphics have wd attached to figure path
 ## this is necessary to knit to pdf using child Rmds - see https://stackoverflow.com/questions/61065560/cant-compile-rmarkdown-pdf-with-image-in-child-rmd-latex-error-image-file
 knitr::include_graphics(normPath(c("figures/LandscapeComparisons_PresAbs.png",
                                         "figures/PixelComparisons_relB.png")))
 ```
 
-```{r fig-Biomass-validationKNNOutPlots2, echo = FALSE, eval = TRUE, fig.show='hold', out.width = "70%", fig.cap = "A plot of landscape-wide mean absolute deviations (MAD) from (top to bottom) observed mean relative abundance, no. of presences, no. of pixels where the species is dominant and $\\Delta$B."}
+```{r fig-Biomass-validationKNNOutPlots2, echo = FALSE, eval = TRUE, fig.align = "center", fig.show = "hold", out.width = ifelse(knitr::is_latex_output(), "100%", "70%"), fig.cap = "A plot of landscape-wide mean absolute deviations (MAD) from (top to bottom) observed mean relative abundance, no. of presences, no. of pixels where the species is dominant and $\\Delta$B."}
 knitr::include_graphics(normPath(c("figures/landscapeMAD.png")))
 ```
 
-```{r fig-Biomass-validationKNNOutPlots3, echo = FALSE, eval = TRUE, fig.show='hold', out.width = "70%", fig.cap = "Diagnostic plot of observed changes in biomass and age $\\Delta$B and $\\Delta$Age, respectively)."}
+```{r fig-Biomass-validationKNNOutPlots3, echo = FALSE, eval = TRUE, fig.align = "center", fig.show = "hold", out.width = ifelse(knitr::is_latex_output(), "100%", "70%"), fig.cap = "Diagnostic plot of observed changes in biomass and age $\\Delta$B and $\\Delta$Age, respectively)."}
 knitr::include_graphics(normPath(c("figures/observedDeltaBDeltaAge.png")))
 ```
 
