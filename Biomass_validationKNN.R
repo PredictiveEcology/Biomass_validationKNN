@@ -360,11 +360,11 @@ Init <- function(sim) {
   ## EXCLUDE DISTURBED PIXELS FROM VALIDATION  -----------------------------------
   ## make a template raster with IDs
   rasterToMatchIDs <- sim$rasterToMatch
-  rasterToMatchIDs <- setValues(rasterToMatchIDs, values = 1:ncell(rasterToMatchIDs))
+  rasterToMatchIDs[] <- 1:ncell(rasterToMatchIDs)
 
   ## get pixels inside fire perimeters
   if (!all(st_is_empty(sim$firePerimeters))) {
-    inFireIDs <- getValues(mask(rasterToMatchIDs, sim$firePerimeters))
+    inFireIDs <- as.vector(mask(rasterToMatchIDs, sim$firePerimeters)[])
     inFireIDs <- inFireIDs[!is.na(inFireIDs)] ## faster than na.omit
   } else {
     inFireIDs <- integer(0)
@@ -374,8 +374,8 @@ Init <- function(sim) {
   ## convert years to the map's format
   if (!is.null(P(sim)$LCChangeYr)) {
     yrs <- P(sim)$LCChangeYr - 1900
-    pixKeep <- !is.na(getValues(sim$rstLCChange)) &
-      getValues(sim$rstLCChangeYr) %in% yrs
+    pixKeep <- !is.na(as.vector(sim$rstLCChange[])) &
+      as.vector(sim$rstLCChangeYr[]) %in% yrs
 
     sim$rstLCChange[!pixKeep] <- NA
     sim$rstLCChangeYr[!pixKeep] <- NA
@@ -389,7 +389,7 @@ Init <- function(sim) {
   mod$disturbedIDs <- union(inFireIDs, inLCChangeIDs)
 
   sim$rstDisturbedPix <- sim$rasterToMatch
-  sim$rstDisturbedPix <- setValues(sim$rstDisturbedPix, values = NA)
+  sim$rstDisturbedPix[] <- NA
   sim$rstDisturbedPix[mod$disturbedIDs] <- 1
 
   ## exclude these pixels from validation layers
@@ -615,7 +615,7 @@ Init <- function(sim) {
                       mod$disturbedIDs))
   excludedPixStats <- data.table(noPixels = length(pixToRm),
                                  landscapePrc = round(length(pixToRm) /
-                                                        sum(!is.na(getValues(sim$biomassMap))),
+                                                        sum(!is.na(as.vector(sim$biomassMap[]))),
                                                       2) * 100)
   message(blue("Pixels disturbed during the validation period will be excluded from validation,\n",
                "representing a loss of:", excludedPixStats$noPixels, "pixels or",
@@ -975,8 +975,8 @@ obsrvdDeltaMapsEvent <- function(sim) {
 
   ## what is the relationship between the two?
   pixelDeltaObsrvdData <- na.omit(data.table(pixelIndex = 1:ncell(pixelDeltaBObsrvdRas),
-                                             pixelDeltaBObsrvd = getValues(pixelDeltaBObsrvdRas),
-                                             pixelDeltaAgeObsrvd = getValues(pixelDeltaAgeObsrvdRas)))
+                                             pixelDeltaBObsrvd = as.vector(pixelDeltaBObsrvdRas[]),
+                                             pixelDeltaAgeObsrvd = as.vector(pixelDeltaAgeObsrvdRas[])))
 
   plot1 <- ggplot(pixelDeltaObsrvdData,
                   aes(x = pixelDeltaAgeObsrvd, y = pixelDeltaBObsrvd)) +
@@ -1025,10 +1025,10 @@ obsrvdDeltaMapsEvent <- function(sim) {
   if (any(duplicated(plotData$pixelIndex)))
     stop("There should not be duplicated pixels in observed data")
 
-  pixelDeltaBObsrvdAdj <- setValues(sim$rasterToMatch, NA)
+  pixelDeltaBObsrvdAdj[] <- NA
   pixelDeltaBObsrvdAdj[plotData[, pixelIndex]] <- plotData[, pixelDeltaBObsrvd]
 
-  pixelDeltaAgeObsrvdAdj <- setValues(sim$rasterToMatch, NA)
+  pixelDeltaAgeObsrvdAdj[] <- NA
   pixelDeltaAgeObsrvdAdj[plotData[, pixelIndex]] <- plotData[, pixelDeltaAgeObsrvd]
 
 
@@ -1163,7 +1163,7 @@ landscapeWidePlotsEvent <- function(sim) {
     labs(title = "Dominant species' presences",
          x = "", y = "No. of pixels", fill = "", colour = "")
 
-  maxPixels <- sum(!is.na(getValues(sim$biomassMap)))
+  maxPixels <- sum(!is.na(as.vector(sim$biomassMap[])))
   plotLandscapeComp <- ggarrange(plot11 + scale_y_continuous(limits = c(0,1)),
                                  plot12 + scale_y_continuous(limits = c(0, maxPixels)),
                                  plot13 + scale_y_continuous(limits = c(0, maxPixels)),
@@ -1353,7 +1353,7 @@ deltaBComparisonsEvent <- function(sim) {
   if (needRTM) {
     ## if we need rasterToMatch, that means a) we don't have it, but b) we will have rawBiomassMapStart
     sim$rasterToMatch <- sim$rawBiomassMapStart
-    RTMvals <- getValues(sim$rasterToMatch)
+    RTMvals <- as.vector(sim$rasterToMatch[])
     sim$rasterToMatch[!is.na(RTMvals)] <- 1
 
     sim$rasterToMatch <- Cache(writeOutputs, sim$rasterToMatch,
