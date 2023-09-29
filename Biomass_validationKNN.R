@@ -320,39 +320,39 @@ Init <- function(sim) {
       1L
 
   ## CHECK RASTER LAYERS AGAINST RASTERTOMATCH -----------------------------------
-  if (!compareRaster(sim$biomassMap, sim$rasterToMatch, stopiffalse = FALSE)) {
+  if (!.compareRas(sim$biomassMap, sim$rasterToMatch, stopOnError = FALSE)) {
     sim$biomassMap <- postProcess(sim$biomassMap, rasterToMatch = sim$rasterToMatch)
   }
 
-  if (!compareRaster(sim$rawBiomassMapStart, sim$rasterToMatch, stopiffalse = FALSE)) {
+  if (!.compareRas(sim$rawBiomassMapStart, sim$rasterToMatch, stopOnError = FALSE)) {
     sim$rawBiomassMapStart <- postProcess(sim$rawBiomassMapStart, rasterToMatch = sim$rasterToMatch)
   }
-  if (!compareRaster(sim$rawBiomassMapEnd, sim$rasterToMatch, stopiffalse = FALSE)) {
+  if (!.compareRas(sim$rawBiomassMapEnd, sim$rasterToMatch, stopOnError = FALSE)) {
     sim$rawBiomassMapEnd <- postProcess(sim$rawBiomassMapEnd, rasterToMatch = sim$rasterToMatch)
   }
 
-  if (!compareRaster(sim$speciesLayersStart, sim$rasterToMatch, stopiffalse = FALSE)) {
+  if (!.compareRas(sim$speciesLayersStart, sim$rasterToMatch, stopOnError = FALSE)) {
     sim$speciesLayersStart <- postProcess(sim$speciesLayersStart, rasterToMatch = sim$rasterToMatch)
   }
 
-  if (!compareRaster(sim$speciesLayersEnd, sim$rasterToMatch, stopiffalse = FALSE)) {
+  if (!.compareRas(sim$speciesLayersEnd, sim$rasterToMatch, stopOnError = FALSE)) {
     sim$speciesLayersEnd <- postProcess(sim$speciesLayersEnd, rasterToMatch = sim$rasterToMatch)
   }
 
-  if (!compareRaster(sim$standAgeMapStart, sim$rasterToMatch, stopiffalse = FALSE)) {
+  if (!.compareRas(sim$standAgeMapStart, sim$rasterToMatch, stopOnError = FALSE)) {
     sim$standAgeMapStart <- postProcess(sim$standAgeMapStart, rasterToMatch = sim$rasterToMatch)
   }
 
-  if (!compareRaster(sim$standAgeMapEnd, sim$rasterToMatch, stopiffalse = FALSE)) {
+  if (!.compareRas(sim$standAgeMapEnd, sim$rasterToMatch, stopOnError = FALSE)) {
     sim$standAgeMapEnd <- postProcess(sim$standAgeMapEnd, rasterToMatch = sim$rasterToMatch)
   }
 
-  if (!compareRaster(sim$rstLCChange, sim$rasterToMatch, stopiffalse = FALSE)) {
+  if (!.compareRas(sim$rstLCChange, sim$rasterToMatch, stopOnError = FALSE)) {
     sim$rstLCChange <- postProcess(sim$rstLCChange, rasterToMatch = sim$rasterToMatch)
   }
 
   if (!is.null(P(sim)$LCChangeYr)) {
-    if (!compareRaster(sim$rstLCChangeYr, sim$rasterToMatch, stopiffalse = FALSE)) {
+    if (!.compareRas(sim$rstLCChangeYr, sim$rasterToMatch, stopOnError = FALSE)) {
       sim$rstLCChangeYr <- postProcess(sim$rstLCChangeYr, rasterToMatch = sim$rasterToMatch)
     }
   }
