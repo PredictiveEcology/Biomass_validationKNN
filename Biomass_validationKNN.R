@@ -17,13 +17,13 @@ defineModule(sim, list(
   citation = list("citation.bib"),
   documentation = list("README.txt", "Biomass_validationKNN.Rmd"),
   reqdPkgs = list("achubaty/amc", "crayon", "ggplot2", "ggpubr",
-                  "mclust", "raster", "RCurl", "scales", "sf", "XML",
+                  "mclust", "terra", "RCurl", "scales", "sf", "XML",
                   # "curl", "httr", ## called directly by this module, but pulled in by LandR (Sep 6th 2022).
                   ## Excluded because loading is not necessary (just installation)
-                  "PredictiveEcology/LandR@development (>=1.0.5)",
+                  "PredictiveEcology/LandR@development (>= 1.1.0.9064)",
                   "PredictiveEcology/pemisc@development",
-                  "PredictiveEcology/reproducible@development (>= 1.2.7.9011)",
-                  "PredictiveEcology/SpaDES.core@development (>= 1.1.0.9002)",
+                  "PredictiveEcology/reproducible@development (>= 2.0.2)",
+                  "PredictiveEcology/SpaDES.core@development (>= 2.0.2.9004)",
                   "PredictiveEcology/SpaDES.tools@development"),
   parameters = rbind(
     defineParameter("coverThresh", "integer", "10", NA, NA,
