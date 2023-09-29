@@ -183,7 +183,7 @@ defineModule(sim, list(
                  sourceURL = paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
                                     "canada-forests-attributes_attributs-forests-canada/2011-attributes_attributs-2011/",
                                     "NFI_MODIS250m_2011_kNN_Structure_Stand_Age_v1.tif")),
-    expectsInput("studyArea", "SpatialPolygonsDataFrame",
+    expectsInput("studyArea", "SpatVector",
                  desc = paste("Polygon to use as the study area. Must be provided by the user")),
   ),
   outputObjects = bind_rows(
