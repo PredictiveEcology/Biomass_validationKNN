@@ -1337,11 +1337,23 @@ deltaBComparisonsEvent <- function(sim) {
                                       omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
     })
 
-
-
-
-
+  if (!suppliedElsewhere("rawBiomassMapEnd", sim)) {
+    rawBiomassValFileName <- "NFI_MODIS250m_2011_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
+    # httr::with_config(config = httr::config(ssl_verifypeer =  P(sim)$.sslVerify), {
+      #necessary for KNN
+      sim$rawBiomassMapEnd <- prepRawBiomassMap(
+        targetFile = rawBiomassValFileName,
+        url = extractURL("rawBiomassMapEnd"),
+        studyAreaName = P(sim)$.studyAreaName,
+        cacheTags = cacheTags,
+        to = if (!needRTM) sim$rasterToMatch else sim$studyArea,
+        projectTo = if (!needRTM) NULL else NA, ## don't project to SA if RTMs not present
+        destinationPath = dPath,
+        filename2 = .suffix("rawBiomassMapEnd.tif", paste0("_", P(sim)$.studyAreaName)),
+        userTags = c(cacheTags, "rawBiomassMapEnd"))
     }
+  if (!suppliedElsewhere("biomassMap", sim)) {
+    sim$biomassMap <- sim$rawBiomassMapStart
   }
 
   if (needRTM) {
@@ -1566,32 +1578,6 @@ deltaBComparisonsEvent <- function(sim) {
   } else {
     stop("There are no common species between 'speciesLayersStart' and 'speciesLayersEnd'.
          Please check these objects and/or they are being produced")
-  }
-
-  ## Biomass layers ----------------------------------------------------
-  if (!suppliedElsewhere("rawBiomassMapEnd", sim)) {
-    rawBiomassValFileName <- "NFI_MODIS250m_2011_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
-    httr::with_config(config = httr::config(ssl_verifypeer =  P(sim)$.sslVerify), {
-      #necessary for KNN
-      sim$rawBiomassMapEnd <- Cache(prepInputs,
-                                    targetFile = rawBiomassValFileName,
-                                    url = extractURL("rawBiomassMapEnd"),
-                                    destinationPath = asPath(dPath),
-                                    fun = "raster::raster",
-                                    studyArea = sim$studyArea,
-                                    rasterToMatch = sim$rasterToMatch,
-                                    useSAcrs = FALSE,
-                                    method = "bilinear",
-                                    datatype = "INT2U",
-                                    filename2 = .suffix("rawBiomassMapEnd.tif", paste0("_", P(sim)$.studyAreaName)),
-                                    overwrite = TRUE,
-                                    userTags = c(cacheTags, "rawBiomassMapEnd"),
-                                    omitArgs = c("userTags"))
-    })
-  }
-
-  if (!suppliedElsewhere("biomassMap", sim)) {
-    sim$biomassMap <- sim$rawBiomassMapStart
   }
 
   ## Age layers ----------------------------------------------------
