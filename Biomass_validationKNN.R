@@ -1337,15 +1337,10 @@ deltaBComparisonsEvent <- function(sim) {
                                       omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
     })
 
-    ## if using custom raster resolution, need to allocate biomass proportionally to each pixel
-    ## if no rawBiomassMapStart/RTM/RTMLarge were suppliedElsewhere, the "original" pixel size respects
-    ## whatever resolution comes with the rawBiomassMapStart data
-    simPixelSize <- unique(asInteger(res(sim$rasterToMatch)))
-    origPixelSize <- 250L # unique(res(sim$rawBiomassMapStart)) ## TODO: figure out a good way to not hardcode this
 
-    if (simPixelSize != origPixelSize) { ## make sure we are comparing integers, else else %!=%
-      rescaleFactor <- (origPixelSize / simPixelSize)^2
-      sim$rawBiomassMapStart <- sim$rawBiomassMapStart / rescaleFactor
+
+
+
     }
   }
 
