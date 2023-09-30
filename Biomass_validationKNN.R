@@ -1322,18 +1322,17 @@ deltaBComparisonsEvent <- function(sim) {
   if (!suppliedElsewhere("rawBiomassMapStart", sim) || needRTM) {
     rawBiomassMapFilename <- "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
     httr::with_config(config = httr::config(ssl_verifypeer =  P(sim)$.sslVerify), {
-      #necessary for KNN
-      sim$rawBiomassMapStart <- Cache(prepInputs,
-                                      url = extractURL("rawBiomassMapStart"),
-                                      destinationPath = dPath,
-                                      studyArea = sim$studyArea,   ## Ceres: makePixel table needs same no. pixels for this, RTM rawBiomassMapStart, LCC.. etc
-                                      rasterToMatch = if (!needRTM) sim$rasterToMatch else NULL,
-                                      maskWithRTM = if (!needRTM) TRUE else FALSE,
-                                      useSAcrs = FALSE,     ## never use SA CRS
-                                      method = "bilinear",
-                                      datatype = "INT2U",
-                                      filename2 = .suffix("rawBiomassMapStart.tif", paste0("_", P(sim)$.studyAreaName)),
-                                      overwrite = TRUE,
+    #necessary for KNN
+    sim$rawBiomassMapStart <- prepRawBiomassMap(
+      targetFile = rawBiomassMapFilename,
+      url = extractURL("rawBiomassMapStart"),
+      studyAreaName = P(sim)$.studyAreaName,
+      cacheTags = cacheTags,
+      to = if (!needRTM) sim$rasterToMatch else sim$studyArea,
+      projectTo = if (!needRTM) NULL else NA, ## don't project to SA if RTMs not present
+      destinationPath = dPath,
+      filename2 = .suffix("rawBiomassMapStart.tif", paste0("_", P(sim)$.studyAreaName)),
+      userTags = c(cacheTags, "rawBiomassMapStart"))
                                       userTags = c(cacheTags, "rawBiomassMapStart"),
                                       omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
     })
