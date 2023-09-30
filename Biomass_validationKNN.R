@@ -1741,7 +1741,11 @@ deltaBComparisonsEvent <- function(sim) {
         names(pixelGroupMap) <- paste0("year", as.numeric(x["saveTime"]), "_rep", as.numeric(x["rep"]))
         pixelGroupMap
       })
-      sim$pixelGroupMapStk <- stack(sim$pixelGroupMapStk)
+      isSpat <- vapply(sim$pixelGroupMapStk, is, class2 = "SpatRaster", FUN.VALUE = logical(1))
+      if (!all(isSpat)) {
+        sim$pixelGroupMapStk[!isSpat] <- lapply(sim$pixelGroupMapStk[!isSpat], rast)
+      }
+      sim$pixelGroupMapStk <- rast(sim$pixelGroupMapStk)  ## stack
     }
   }
 
