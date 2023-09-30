@@ -1410,7 +1410,7 @@ deltaBComparisonsEvent <- function(sim) {
                              userTags = c("rstLCChange", cacheTags),
                              omitArgs = c("destinationPath", "targetFile", "userTags"))
     ## convert to mask
-    sim$rstLCChange[!is.na(sim$rstLCChange)] <- 1
+    sim$rstLCChange[!is.na(sim$rstLCChange[])] <- 1
   }
 
   ## Check that rstLCChange is a mask and matches RTM
