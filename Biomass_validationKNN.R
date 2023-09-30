@@ -1319,6 +1319,7 @@ deltaBComparisonsEvent <- function(sim) {
     }
   }
 
+  ## Biomass layers ----------------------------------------------------
   if (!suppliedElsewhere("rawBiomassMapStart", sim) ||
       (is.null(sim$rawBiomassMapStart) && needRTM)) { ## needs to be in sim now for RTM
     rawBiomassMapFilename <- "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
