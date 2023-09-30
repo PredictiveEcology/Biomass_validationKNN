@@ -1319,7 +1319,8 @@ deltaBComparisonsEvent <- function(sim) {
     }
   }
 
-  if (!suppliedElsewhere("rawBiomassMapStart", sim) || needRTM) {
+  if (!suppliedElsewhere("rawBiomassMapStart", sim) ||
+      (is.null(sim$rawBiomassMapStart) && needRTM)) { ## needs to be in sim now for RTM
     rawBiomassMapFilename <- "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
     httr::with_config(config = httr::config(ssl_verifypeer =  P(sim)$.sslVerify), {
     #necessary for KNN
