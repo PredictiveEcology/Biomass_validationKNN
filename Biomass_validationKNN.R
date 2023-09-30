@@ -1359,11 +1359,12 @@ deltaBComparisonsEvent <- function(sim) {
     sim$biomassMap <- sim$rawBiomassMapStart
   }
 
+  ## rasterToMatch --------------------------------
   if (needRTM) {
     ## if we need rasterToMatch, that means a) we don't have it, but b) we will have rawBiomassMapStart
     sim$rasterToMatch <- sim$rawBiomassMapStart
     RTMvals <- as.vector(sim$rasterToMatch[])
-    sim$rasterToMatch[!is.na(RTMvals)] <- 1
+    sim$rasterToMatch[!is.na(RTMvals)] <- 1L
 
     sim$rasterToMatch <- Cache(writeTo, sim$rasterToMatch,
                                filename2 = .suffix(file.path(dPath, "rasterToMatch.tif"),
