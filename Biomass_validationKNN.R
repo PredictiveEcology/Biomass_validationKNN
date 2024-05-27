@@ -16,7 +16,7 @@ defineModule(sim, list(
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("README.txt", "Biomass_validationKNN.Rmd"),
-  reqdPkgs = list("achubaty/amc", "crayon", "ggplot2", "ggpubr",
+  reqdPkgs = list("crayon", "ggplot2", "ggpubr",
                   "mclust", "raster", "RCurl", "scales", "sf", "XML",
                   # "curl", "httr", ## called directly by this module, but pulled in by LandR (Sep 6th 2022).
                   ## Excluded because loading is not necessary (just installation)
@@ -626,7 +626,7 @@ Init <- function(sim) {
 
   ## clean up and free memory
   rm(pixelTable, pixelCohortData, combinationsStart, combinationsEnd, validationDataStart, validationDataEnd)
-  .gc()
+  for (i in 1:3) gc()
 
   return(invisible(sim))
 }
