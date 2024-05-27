@@ -1375,10 +1375,11 @@ deltaBComparisonsEvent <- function(sim) {
 
   }
 
-  if (!.compareCRS(sim$studyArea, sim$rasterToMatch)) {
+  if (!terra::same.crs(sim$studyArea, sim$rasterToMatch)) {
+  # if (!identical(crs(sim$studyArea), crs(sim$rasterToMatch))) {
     warning(paste0("studyArea and rasterToMatch projections differ.\n",
                    "studyArea will be projected to match rasterToMatch"))
-    sim$studyArea <- project(sim$studyArea, crs(sim$rasterToMatch))
+    sim$studyArea <- projectTo(sim$studyArea, crs(sim$rasterToMatch))
     sim$studyArea <- fixErrors(sim$studyArea)
   }
 
@@ -1587,7 +1588,8 @@ deltaBComparisonsEvent <- function(sim) {
   ## Age layers ----------------------------------------------------
   if (!suppliedElsewhere("standAgeMapStart", sim)) {
     # httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
-      sim$standAgeMapStart <- Cache(prepInputsStandAgeMap,
+      sim$standAgeMapStart <- Cache(LandR::prepInputsStandAgeMap,
+                                    ageFun = "terra::rast",
                                     destinationPath = dPath,
                                     ageURL = extractURL("standAgeMapStart"),
                                     to = sim$rasterToMatch,
