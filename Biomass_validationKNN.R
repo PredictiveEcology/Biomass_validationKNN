@@ -18,13 +18,10 @@ defineModule(sim, list(
   documentation = list("README.txt", "Biomass_validationKNN.Rmd"),
   reqdPkgs = list("achubaty/amc", "crayon", "ggplot2", "ggpubr",
                   "mclust", "terra", "RCurl", "scales", "sf", "XML",
-                  # "curl", "httr", ## called directly by this module, but pulled in by LandR (Sep 6th 2022).
-                  ## Excluded because loading is not necessary (just installation)
+                  "reproducible (>= 2.0.2)",
+                  "SpaDES.core (>= 2.0.2.9004)", "SpaDES.tools (>= 2.0.7)",
                   "PredictiveEcology/LandR@development (>= 1.1.0.9064)",
-                  "PredictiveEcology/pemisc@development",
-                  "PredictiveEcology/reproducible@development (>= 2.0.2)",
-                  "PredictiveEcology/SpaDES.core@development (>= 2.0.2.9004)",
-                  "PredictiveEcology/SpaDES.tools@development"),
+                  "PredictiveEcology/pemisc@development"),
   parameters = rbind(
     defineParameter("coverThresh", "integer", "10", NA, NA,
                     desc = paste("The minimum % cover a species needs to have (per pixel) in the study",
