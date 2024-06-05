@@ -10,7 +10,7 @@ defineModule(sim, list(
   authors = c(person("Ceres", "Barros", email = "ceres.barros@ubc.ca", role = c("aut", "cre")),
               person(c("Eliot"), "McIntire", email = "eliot.mcintire@nrcan-rncan.gc.ca", role = c("aut"))),
   childModules = character(0),
-  version = list(Biomass_validationKNN = "0.0.4"),
+  version = list(Biomass_validationKNN = "0.0.4.9001"),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
