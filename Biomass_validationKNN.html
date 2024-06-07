@@ -3338,7 +3338,7 @@ NA
 biomassMap
 </td>
 <td style="text-align:left;">
-RasterLayer
+SpatRaster
 </td>
 <td style="text-align:left;">
 total biomass raster layer in study area (in g/m^2), filtered for pixels covered by <code>cohortData</code>. Only used to calculate total no. of pixels being simulated If not supplied, will default to <code>rawBiomassMapStart</code>
@@ -3394,7 +3394,7 @@ NA
 rawBiomassMapStart
 </td>
 <td style="text-align:left;">
-RasterLayer
+SpatRaster
 </td>
 <td style="text-align:left;">
 observed total biomass raster layer in study area at the first year of the validation period. Defaults to the Canadian Forestry Service, National Forest Inventory, kNN-derived total aboveground biomass map from 2001 (in ton/ha). See <a href="https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990" class="uri">https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990</a> for metadata.
@@ -3408,7 +3408,7 @@ observed total biomass raster layer in study area at the first year of the valid
 rawBiomassMapEnd
 </td>
 <td style="text-align:left;">
-RasterLayer
+SpatRaster
 </td>
 <td style="text-align:left;">
 observed total biomass raster layer in study area at the last year of the validation period. Defaults to the Canadian Forestry Service, National Forest Inventory, kNN-derived total aboveground biomass map from 2011 (in ton/ha) See <a href="https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990" class="uri">https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990</a>
@@ -3422,7 +3422,7 @@ observed total biomass raster layer in study area at the last year of the valida
 rasterToMatch
 </td>
 <td style="text-align:left;">
-RasterLayer
+SpatRaster
 </td>
 <td style="text-align:left;">
 A raster of the <code>studyArea</code> in the same resolution and projection as <code>rawBiomassMapStart</code>. This is the scale used for all outputs for use in the simulation.
@@ -3436,7 +3436,7 @@ NA
 rstLCChange
 </td>
 <td style="text-align:left;">
-RasterLayer
+SpatRaster
 </td>
 <td style="text-align:left;">
 A mask-type map of land cover changes in the study area that can be used to exclude pixels that have been disturbed during the validation period. If disturbed pixels are not to be excluded Provide an empty sf object with the same properties as the default. Defaults to Canada’s forest change map between 1985-2011 (CFS), filtered for years 2001-2011 (inclusively) and all disturbances collapsed (map only has values of 1 and NA). See <code>P(sim)$LCChangeYr</code> parameter to change the period of disturbances, and <a href="https://opendata.nfis.org/mapserver/nfis-change_eng.html" class="uri">https://opendata.nfis.org/mapserver/nfis-change_eng.html</a> for more information.
@@ -3450,7 +3450,7 @@ A mask-type map of land cover changes in the study area that can be used to excl
 rstLCChangeYr
 </td>
 <td style="text-align:left;">
-RasterLayer
+SpatRaster
 </td>
 <td style="text-align:left;">
 An OPTIONAL map of land cover change years in the study area used to exclude pixels that have been disturbed during the validation period. It defaults to Canada’s forest change year national map between 1985-2011 (CFS). If <code>P(sim)$LCChangeYr</code> is not <code>NULL</code>, this layer is used to filted disturbed pixels that fall within the years specified by <code>P(sim)$LCChangeYr</code>. If <code>P(sim)$LCChangeYr</code> is <code>NULL</code> this layer is not used. See <a href="https://opendata.nfis.org/mapserver/nfis-change_eng.html" class="uri">https://opendata.nfis.org/mapserver/nfis-change_eng.html</a> for more information.
@@ -3534,7 +3534,7 @@ NA
 standAgeMapStart
 </td>
 <td style="text-align:left;">
-RasterLayer
+SpatRaster
 </td>
 <td style="text-align:left;">
 observed stand age map in study area, at the first year of the validation period Defaults to the Canadian Forestry Service, National Forest Inventory, kNN-derived biomass map from 2001 - see <a href="https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990" class="uri">https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990</a> for metadata
@@ -3548,7 +3548,7 @@ observed stand age map in study area, at the first year of the validation period
 standAgeMapEnd
 </td>
 <td style="text-align:left;">
-RasterLayer
+SpatRaster
 </td>
 <td style="text-align:left;">
 observed stand age raster layer in study area, at the last year of the validation period. Defaults to the Canadian Forestry Service, National Forest Inventory, kNN-derived stand age map from 2011. See <a href="https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990" class="uri">https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990</a>
@@ -3562,7 +3562,7 @@ observed stand age raster layer in study area, at the last year of the validatio
 studyArea
 </td>
 <td style="text-align:left;">
-SpatialPolygonsDataFrame
+SpatVector
 </td>
 <td style="text-align:left;">
 Polygon to use as the study area. Must be provided by the user
@@ -4039,7 +4039,7 @@ The same as <code>landscapeVars</code>, but variables are calculated at the pixe
 rstDisturbedPix
 </td>
 <td style="text-align:left;">
-RasterLayer
+SpatRaster
 </td>
 <td style="text-align:left;">
 Raster of pixel IDs (as a mask) that have been disturbed by fire or suffered land-cover changes during the validation period. These pixels are excluded form the validation.
@@ -4050,7 +4050,7 @@ Raster of pixel IDs (as a mask) that have been disturbed by fire or suffered lan
 rawBiomassMapStart
 </td>
 <td style="text-align:left;">
-RasterLayer
+SpatRaster
 </td>
 <td style="text-align:left;">
 observed total biomass raster layer in study area at the first year of the validation period. Filtered to exclude pixels that were disturbed during the validation period
@@ -4061,7 +4061,7 @@ observed total biomass raster layer in study area at the first year of the valid
 rawBiomassMapEnd
 </td>
 <td style="text-align:left;">
-RasterLayer
+SpatRaster
 </td>
 <td style="text-align:left;">
 observed total biomass raster layer in study area at the last year of the validation period. Filtered to exclude pixels that were disturbed during the validation period
@@ -4072,7 +4072,7 @@ observed total biomass raster layer in study area at the last year of the valida
 speciesLayersStart
 </td>
 <td style="text-align:left;">
-RasterStack
+SpatRaster
 </td>
 <td style="text-align:left;">
 observed percent cover raster layers by species in Canada at the first year of the validation period. Filtered to exclude pixels that were disturbed during the validation period
@@ -4083,7 +4083,7 @@ observed percent cover raster layers by species in Canada at the first year of t
 speciesLayersEnd
 </td>
 <td style="text-align:left;">
-RasterStack
+SpatRaster
 </td>
 <td style="text-align:left;">
 observed percent cover raster layers by species in Canada at the last year of the validation period. Filtered to exclude pixels that were disturbed during the validation period
@@ -4094,7 +4094,7 @@ observed percent cover raster layers by species in Canada at the last year of th
 standAgeMapStart
 </td>
 <td style="text-align:left;">
-RasterLayer
+SpatRaster
 </td>
 <td style="text-align:left;">
 observed stand age map in study area, at the first year of the validation period Filtered to exclude pixels that were disturbed during the validation period
@@ -4105,7 +4105,7 @@ observed stand age map in study area, at the first year of the validation period
 standAgeMapEnd
 </td>
 <td style="text-align:left;">
-RasterLayer
+SpatRaster
 </td>
 <td style="text-align:left;">
 observed stand age map in study area, at the last year of the validation period Filtered to exclude pixels that were disturbed during the validation period
