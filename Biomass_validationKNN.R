@@ -19,7 +19,7 @@ defineModule(sim, list(
   reqdPkgs = list("achubaty/amc", "crayon", "ggplot2", "ggpubr",
                   "mclust", "terra", "RCurl", "scales", "sf", "XML",
                   "reproducible (>= 2.1.0)",
-                  "SpaDES.core (>= 2.1.0)", "SpaDES.tools (>= 2.0.7)",
+                  "SpaDES.core (>= 2.1.4)", "SpaDES.tools (>= 2.0.7)",
                   "PredictiveEcology/LandR (>= 1.1.0.9064)",
                   "PredictiveEcology/pemisc@development"),
   parameters = rbind(
