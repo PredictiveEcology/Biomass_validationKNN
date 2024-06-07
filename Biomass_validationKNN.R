@@ -623,7 +623,7 @@ Init <- function(sim) {
 
   ## clean up and free memory
   rm(pixelTable, pixelCohortData, combinationsStart, combinationsEnd, validationDataStart, validationDataEnd)
-  .gc()
+  for (i in 1:3) gc()
 
   return(invisible(sim))
 }
