@@ -71,7 +71,7 @@ defineModule(sim, list(
                           "may be necessary when NFI's website SSL certificate is not correctly configured).")),
     defineParameter(".studyAreaName", "character", NA, NA, NA,
                     "Human-readable name for the study area used. If `NA`, a hash of `studyArea` will be used."),
-    defineParameter(".useCache", "logical", "init", NA, NA,
+    defineParameter(".useCache", "logical", c(".inputObjects", "init"), NA, NA,
                     desc = "Controls cache; caches the init event by default")
   ),
   inputObjects = bind_rows(
