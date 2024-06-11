@@ -1686,9 +1686,9 @@ deltaBComparisonsEvent <- function(sim) {
 
       sim$allCohortData <- rbindlist(fill = TRUE, use.names = TRUE,
                                      l = apply(cohortDataOutputs, MARGIN = 1, FUN = function(x) {
-                                       cohortData <- readRDS(x["file"])
-                                       cohortData[, year := as.numeric(x["saveTime"])]
-                                       cohortData[, rep := as.numeric(x["rep"])]
+                                       cohortData <- readRDS(x[["file"]])
+                                       cohortData[, year := as.numeric(x[["saveTime"]])]
+                                       cohortData[, rep := as.numeric(x[["rep"]])]
                                        return(cohortData)
                                      }))
     }
@@ -1739,8 +1739,8 @@ deltaBComparisonsEvent <- function(sim) {
       }
 
       sim$pixelGroupMapStk <- apply(pixelGroupMapOutputs, MARGIN = 1, FUN = function(x) {
-        pixelGroupMap <- readRDS(x["file"])
-        names(pixelGroupMap) <- paste0("year", as.numeric(x["saveTime"]), "_rep", as.numeric(x["rep"]))
+        pixelGroupMap <- rast(x[["file"]])
+        names(pixelGroupMap) <- paste0("year", as.numeric(x[["saveTime"]]), "_rep", as.numeric(x[["rep"]]))
         pixelGroupMap
       })
       isSpat <- vapply(sim$pixelGroupMapStk, is, class2 = "SpatRaster", FUN.VALUE = logical(1))
