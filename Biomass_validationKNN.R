@@ -10,16 +10,17 @@ defineModule(sim, list(
   authors = c(person("Ceres", "Barros", email = "ceres.barros@ubc.ca", role = c("aut", "cre")),
               person(c("Eliot"), "McIntire", email = "eliot.mcintire@nrcan-rncan.gc.ca", role = c("aut"))),
   childModules = character(0),
-  version = list(Biomass_validationKNN = "0.0.4.9001"),
+  version = list(Biomass_validationKNN = "1.0.1"),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("README.txt", "Biomass_validationKNN.Rmd"),
   reqdPkgs = list("achubaty/amc", "crayon", "ggplot2", "ggpubr",
+                  "quickPlot (>= 1.0.2.9003)",
                   "mclust", "terra", "RCurl", "scales", "sf", "XML",
                   "reproducible (>= 2.1.0)",
-                  "SpaDES.core (>= 2.1.0)", "SpaDES.tools (>= 2.0.7)",
+                  "SpaDES.core (>= 2.1.4)", "SpaDES.tools (>= 2.0.7)",
                   "PredictiveEcology/LandR (>= 1.1.0.9064)",
                   "PredictiveEcology/pemisc@development"),
   parameters = rbind(
@@ -70,12 +71,13 @@ defineModule(sim, list(
                           "may be necessary when NFI's website SSL certificate is not correctly configured).")),
     defineParameter(".studyAreaName", "character", NA, NA, NA,
                     "Human-readable name for the study area used. If `NA`, a hash of `studyArea` will be used."),
-    defineParameter(".useCache", "logical", "init", NA, NA,
+    defineParameter(".useCache", "logical", c(".inputObjects", "init"), NA, NA,
                     desc = "Controls cache; caches the init event by default")
   ),
   inputObjects = bind_rows(
     expectsInput("allCohortData", "data.table",
-                 desc = paste("All `cohortData` tables saved during the simulation, particularly for the validation years.",
+                 desc = paste("A table 'rbinding' all `cohortData` tables saved during the simulation, with the added 'rep'",
+                              "and 'year' columns. It must contain all the validation years.",
                               "If not supplied, the module will attempt to retrieve them using the 'simulationOutputs' table")),
     expectsInput("biomassMap", "SpatRaster",
                  desc = paste("total biomass raster layer in study area (in g/m^2), filtered for pixels covered by `cohortData`.",
@@ -94,9 +96,10 @@ defineModule(sim, list(
                               "If supplied (omitted with NULL or NA), this will be used to 'update' age pixels on `standAgeMap`",
                               "with 'time since fire' as derived from this fire polygons map"),
                  sourceURL = "https://cwfis.cfs.nrcan.gc.ca/downloads/nfdb/fire_poly/current_version/NFDB_poly.zip"),
-    expectsInput("pixelGroupMapStk", "RasterStack",
+    expectsInput("pixelGroupMapStk", "SpatRaster",
                  desc = paste("A stack of `pixelGroupMap`s saved during the simulation, particularly for the validation years.",
-                              "If not supplied, the module will attempt to make it using the 'simulationOutputs' table")),
+                              "If not supplied, the module will attempt to make it using the 'simulationOutputs' table.",
+                              "names(pixelGroupMapStk) should be 'paste0('year', <theYear>, '_rep', <theRep>)'.")),
     expectsInput("rawBiomassMapStart", "SpatRaster",
                  desc = paste("observed total biomass raster layer in study area at the first year of the validation period.",
                               "Defaults to the Canadian Forestry Service, National Forest Inventory, kNN-derived",
@@ -1401,7 +1404,7 @@ deltaBComparisonsEvent <- function(sim) {
                              destinationPath = dPath,
                              to = sim$rasterToMatch,
                              cropTo = sim$studyArea,
-                             method = "ngb",
+                             method = "near",
                              datatype = "INT2U",
                              filename2 = .suffix("rstLCChange.tif", paste0("_", P(sim)$.studyAreaName)),
                              overwrite = TRUE,
@@ -1422,7 +1425,7 @@ deltaBComparisonsEvent <- function(sim) {
                                destinationPath = dPath,
                                to = sim$rasterToMatch,
                                cropTo = sim$studyArea,
-                               method = "ngb",
+                               method = "near",
                                datatype = "INT2U",
                                filename2 = .suffix("rstLCChangeYr.tif", paste0("_", P(sim)$.studyAreaName)),
                                overwrite = TRUE,
@@ -1683,9 +1686,9 @@ deltaBComparisonsEvent <- function(sim) {
 
       sim$allCohortData <- rbindlist(fill = TRUE, use.names = TRUE,
                                      l = apply(cohortDataOutputs, MARGIN = 1, FUN = function(x) {
-                                       cohortData <- readRDS(x["file"])
-                                       cohortData[, year := as.numeric(x["saveTime"])]
-                                       cohortData[, rep := as.numeric(x["rep"])]
+                                       cohortData <- readRDS(x[["file"]])
+                                       cohortData[, year := as.numeric(x[["saveTime"]])]
+                                       cohortData[, rep := as.numeric(x[["rep"]])]
                                        return(cohortData)
                                      }))
     }
@@ -1736,8 +1739,8 @@ deltaBComparisonsEvent <- function(sim) {
       }
 
       sim$pixelGroupMapStk <- apply(pixelGroupMapOutputs, MARGIN = 1, FUN = function(x) {
-        pixelGroupMap <- readRDS(x["file"])
-        names(pixelGroupMap) <- paste0("year", as.numeric(x["saveTime"]), "_rep", as.numeric(x["rep"]))
+        pixelGroupMap <- rast(x[["file"]])
+        names(pixelGroupMap) <- paste0("year", as.numeric(x[["saveTime"]]), "_rep", as.numeric(x[["rep"]]))
         pixelGroupMap
       })
       isSpat <- vapply(sim$pixelGroupMapStk, is, class2 = "SpatRaster", FUN.VALUE = logical(1))
