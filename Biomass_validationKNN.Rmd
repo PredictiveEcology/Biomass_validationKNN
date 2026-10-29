@@ -209,9 +209,9 @@ replicates), with corresponding years of observed data. It was designed to
 compare the observed data for years 2001 (start point for the simulation) and
 2011 (i.e., after 10 years of simulation) of the kNN forest layers of the
 Canadian National Forest Inventory -- these are currently the only available
-FAIR datasets [*sensu* @StallEtAl2019] on stand biomass and species
-(ref:percent) cover changes across Canada. However, the user can supply other
-sources of observed data, as long as they have an identical format.
+FAIR datasets [*sensu* @StallEtAl2019] on stand biomass and
+species (ref:percent) cover changes across Canada. However, the user can supply
+other sources of observed data, as long as they have an identical format.
 
 The validation is done both visually (using barplots and boxplots) and using two
 statistics: mean absolute deviation of simulated biomass (per species) and the

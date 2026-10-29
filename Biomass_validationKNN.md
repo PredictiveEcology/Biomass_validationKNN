@@ -1,6 +1,6 @@
 ---
 title: "LandR _Biomass_validationKNN_ Manual"
-date: "Last updated: 2022-10-24"
+date: "Last updated: 2026-10-29"
 output:
   bookdown::html_document2:
     toc: true
@@ -30,9 +30,9 @@ always_allow_html: true
 
 
 
-[![module-version-Badge](D:/GitHub/LandR-Manual/modules/Biomass_validationKNN/figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_validationKNN/commit/09bdb72202aee4d4065cc7804a39840f035728f6)
+[![module-version-Badge](/home/runner/work/Biomass_validationKNN/Biomass_validationKNN/figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_validationKNN4c84c1db5700bc4bfa4f8db5ab12f4bf2d6441bb)
 
-[![Issues-badge](D:/GitHub/LandR-Manual/modules/Biomass_validationKNN/figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_validationKNN/issues)
+[![Issues-badge](/home/runner/work/Biomass_validationKNN/Biomass_validationKNN/figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_validationKNN/issues)
 
 
 <!-- if knitting to pdf remember to add the pandoc_args: ["--extract-media", "."] option to yml in order to get the badge images -->
@@ -374,7 +374,7 @@ and *B* composition, even if the user supplies other initial groupings
 \newpage
 \blandscape
 
-<table>
+<table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>(\#tab:moduleInputs2-Biomass-validationKNN)List of (ref:Biomass-validationKNN) input objects and their description.</caption>
  <thead>
   <tr>
@@ -388,12 +388,12 @@ and *B* composition, even if the user supplies other initial groupings
   <tr>
    <td style="text-align:left;"> allCohortData </td>
    <td style="text-align:left;"> data.table </td>
-   <td style="text-align:left;"> All `cohortData` tables saved during the simulation, particularly for the validation years. If not supplied, the module will attempt to retrieve them using the 'simulationOutputs' table </td>
+   <td style="text-align:left;"> A table 'rbinding' all `cohortData` tables saved during the simulation, with the added 'rep' and 'year' columns. It must contain all the validation years. If not supplied, the module will attempt to retrieve them using the 'simulationOutputs' table </td>
    <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> biomassMap </td>
-   <td style="text-align:left;"> RasterLayer </td>
+   <td style="text-align:left;"> SpatRaster </td>
    <td style="text-align:left;"> total biomass raster layer in study area (in g/m^2), filtered for pixels covered by `cohortData`. Only used to calculate total no. of pixels being simulated If not supplied, will default to `rawBiomassMapStart` </td>
    <td style="text-align:left;"> NA </td>
   </tr>
@@ -411,37 +411,37 @@ and *B* composition, even if the user supplies other initial groupings
   </tr>
   <tr>
    <td style="text-align:left;"> pixelGroupMapStk </td>
-   <td style="text-align:left;"> RasterStack </td>
-   <td style="text-align:left;"> A stack of `pixelGroupMap`s saved during the simulation, particularly for the validation years. If not supplied, the module will attempt to make it using the 'simulationOutputs' table </td>
+   <td style="text-align:left;"> SpatRaster </td>
+   <td style="text-align:left;"> A stack of `pixelGroupMap`s saved during the simulation, particularly for the validation years. If not supplied, the module will attempt to make it using the 'simulationOutputs' table. names(pixelGroupMapStk) should be 'paste0('year', &lt;theYear&gt;, '_rep', &lt;theRep&gt;)'. </td>
    <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> rawBiomassMapStart </td>
-   <td style="text-align:left;"> RasterLayer </td>
+   <td style="text-align:left;"> SpatRaster </td>
    <td style="text-align:left;"> observed total biomass raster layer in study area at the first year of the validation period. Defaults to the Canadian Forestry Service, National Forest Inventory, kNN-derived total aboveground biomass map from 2001 (in ton/ha). See https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990 for metadata. </td>
    <td style="text-align:left;"> http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif </td>
   </tr>
   <tr>
    <td style="text-align:left;"> rawBiomassMapEnd </td>
-   <td style="text-align:left;"> RasterLayer </td>
+   <td style="text-align:left;"> SpatRaster </td>
    <td style="text-align:left;"> observed total biomass raster layer in study area at the last year of the validation period. Defaults to the Canadian Forestry Service, National Forest Inventory, kNN-derived total aboveground biomass map from 2011 (in ton/ha) See https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990 </td>
    <td style="text-align:left;"> http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada-forests-attributes_attributs-forests-canada/2011-attributes_attributs-2011/NFI_MODIS250m_2011_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif </td>
   </tr>
   <tr>
    <td style="text-align:left;"> rasterToMatch </td>
-   <td style="text-align:left;"> RasterLayer </td>
+   <td style="text-align:left;"> SpatRaster </td>
    <td style="text-align:left;"> A raster of the `studyArea` in the same resolution and projection as `rawBiomassMapStart`. This is the scale used for all outputs for use in the simulation. </td>
    <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> rstLCChange </td>
-   <td style="text-align:left;"> RasterLayer </td>
+   <td style="text-align:left;"> SpatRaster </td>
    <td style="text-align:left;"> A mask-type map of land cover changes in the study area that can be used to exclude pixels that have been disturbed during the validation period. If disturbed pixels are not to be excluded Provide an empty sf object with the same properties as the default. Defaults to Canada's forest change map between 1985-2011 (CFS), filtered for years 2001-2011 (inclusively) and all disturbances collapsed (map only has values of 1 and NA). See `P(sim)$LCChangeYr` parameter to change the period of disturbances, and https://opendata.nfis.org/mapserver/nfis-change_eng.html for more information. </td>
    <td style="text-align:left;"> https://opendata.nfis.org/downloads/forest_change/C2C_change_type_1985_2011.zip </td>
   </tr>
   <tr>
    <td style="text-align:left;"> rstLCChangeYr </td>
-   <td style="text-align:left;"> RasterLayer </td>
+   <td style="text-align:left;"> SpatRaster </td>
    <td style="text-align:left;"> An OPTIONAL map of land cover change years in the study area used to exclude pixels that have been disturbed during the validation period. It defaults to Canada's forest change year national map between 1985-2011 (CFS). If `P(sim)$LCChangeYr` is not `NULL`, this layer is used to filted disturbed pixels that fall within the years specified by `P(sim)$LCChangeYr`. If `P(sim)$LCChangeYr` is `NULL` this layer is not used. See https://opendata.nfis.org/mapserver/nfis-change_eng.html for more information. </td>
    <td style="text-align:left;"> https://opendata.nfis.org/downloads/forest_change/C2C_change_year_1985_2011.zip </td>
   </tr>
@@ -477,19 +477,19 @@ and *B* composition, even if the user supplies other initial groupings
   </tr>
   <tr>
    <td style="text-align:left;"> standAgeMapStart </td>
-   <td style="text-align:left;"> RasterLayer </td>
+   <td style="text-align:left;"> SpatRaster </td>
    <td style="text-align:left;"> observed stand age map in study area, at the first year of the validation period Defaults to the Canadian Forestry Service, National Forest Inventory, kNN-derived biomass map from 2001 - see https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990 for metadata </td>
    <td style="text-align:left;"> http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/NFI_MODIS250m_2001_kNN_Structure_Stand_Age_v1.tif </td>
   </tr>
   <tr>
    <td style="text-align:left;"> standAgeMapEnd </td>
-   <td style="text-align:left;"> RasterLayer </td>
+   <td style="text-align:left;"> SpatRaster </td>
    <td style="text-align:left;"> observed stand age raster layer in study area, at the last year of the validation period. Defaults to the Canadian Forestry Service, National Forest Inventory, kNN-derived stand age map from 2011. See https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990 </td>
    <td style="text-align:left;"> http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada-forests-attributes_attributs-forests-canada/2011-attributes_attributs-2011/NFI_MODIS250m_2011_kNN_Structure_Stand_Age_v1.tif </td>
   </tr>
   <tr>
    <td style="text-align:left;"> studyArea </td>
-   <td style="text-align:left;"> SpatialPolygonsDataFrame </td>
+   <td style="text-align:left;"> SpatVector </td>
    <td style="text-align:left;"> Polygon to use as the study area. Must be provided by the user </td>
    <td style="text-align:left;"> NA </td>
   </tr>
@@ -528,7 +528,7 @@ simulation year.
 \newpage
 \blandscape
 
-<table>
+<table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>(\#tab:moduleParams2-Biomass-validationKNN)List of (ref:Biomass-validationKNN) parameters and their description.</caption>
  <thead>
   <tr>
@@ -538,6 +538,7 @@ simulation year.
    <th style="text-align:left;"> min </th>
    <th style="text-align:left;"> max </th>
    <th style="text-align:left;"> paramDesc </th>
+   <th style="text-align:left;"> cacheKey </th>
   </tr>
  </thead>
 <tbody>
@@ -548,6 +549,7 @@ simulation year.
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> The minimum % cover a species needs to have (per pixel) in the study area to be considered present. Should be the same as the one used to obtain the species cover layers for simulation set up. </td>
+   <td style="text-align:left;"> TRUE </td>
   </tr>
   <tr>
    <td style="text-align:left;"> deciduousCoverDiscount </td>
@@ -556,6 +558,7 @@ simulation year.
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> This was estimated with data from NWT on March 18, 2020 and may or may not be universal. Should be the same as the one used when preparing `cohortData` in the simulation set up. </td>
+   <td style="text-align:left;"> TRUE </td>
   </tr>
   <tr>
    <td style="text-align:left;"> LCChangeYr </td>
@@ -564,6 +567,7 @@ simulation year.
    <td style="text-align:left;"> 1900 </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> OPTIONAL. An integer or vector of integers of the validation period years, defining which years of land-cover changes (i.e. disturbances) should be excluded. `NULL` by default, which presumes no subsetting based on years is done internally (either the user supplies a pre-filtered `rstLCChange`, or no filtering is desired). If not `NULL` `rstLCChangeYr` is used to filter disturbed pixels within the specified years. See https://opendata.nfis.org/mapserver/nfis-change_eng.html for more information. </td>
+   <td style="text-align:left;"> TRUE </td>
   </tr>
   <tr>
    <td style="text-align:left;"> minCoverThreshold </td>
@@ -572,6 +576,7 @@ simulation year.
    <td style="text-align:left;"> 0 </td>
    <td style="text-align:left;"> 100 </td>
    <td style="text-align:left;"> Cover that is equal to or below this number will be omitted from the dataset Should be the same as the one used when preparing `cohortData` in the simulation set up. </td>
+   <td style="text-align:left;"> TRUE </td>
   </tr>
   <tr>
    <td style="text-align:left;"> obsDeltaAgeB </td>
@@ -580,6 +585,7 @@ simulation year.
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> When TRUE, the observed changes in biomass and age (deltaB, deltaAge) between the two validation years will be plotted as maps and scatterplots </td>
+   <td style="text-align:left;"> TRUE </td>
   </tr>
   <tr>
    <td style="text-align:left;"> pixelGroupBiomassClass </td>
@@ -588,6 +594,7 @@ simulation year.
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> When assigning `pixelGroup` membership, this defines the resolution of biomass that will be considered 'the same pixelGroup', e.g., if it is 100, then 5160 and 5240 will be the same Should be the same as the one used when preparing `cohortData` in the simulation set up. </td>
+   <td style="text-align:left;"> TRUE </td>
   </tr>
   <tr>
    <td style="text-align:left;"> sppEquivCol </td>
@@ -596,6 +603,7 @@ simulation year.
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> The column in `sim$sppEquiv` data.table to use as a naming convention </td>
+   <td style="text-align:left;"> TRUE </td>
   </tr>
   <tr>
    <td style="text-align:left;"> validationReps </td>
@@ -604,6 +612,7 @@ simulation year.
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> The simulation repetitions for the validation. Defaults to 1:10. Set to NA if not using repetitions (i.e. only one run) </td>
+   <td style="text-align:left;"> TRUE </td>
   </tr>
   <tr>
    <td style="text-align:left;"> validationYears </td>
@@ -612,6 +621,7 @@ simulation year.
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> The simulation years for the validation. Defaults to 2001 and 2011. Must select two years </td>
+   <td style="text-align:left;"> TRUE </td>
   </tr>
   <tr>
    <td style="text-align:left;"> .plotInitialTime </td>
@@ -620,6 +630,7 @@ simulation year.
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> If NA plotting is off completely (this includes saving). </td>
+   <td style="text-align:left;"> TRUE </td>
   </tr>
   <tr>
    <td style="text-align:left;"> .plots </td>
@@ -628,6 +639,7 @@ simulation year.
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> Passed to `types` in Plots (see ?Plots). There are a few plots that are made within this module, if set. Note that plots (or their data) are saved in file.path(outputPath(sim), 'figures'). If `NA`, plotting is off completely (this includes plot saving). </td>
+   <td style="text-align:left;"> TRUE </td>
   </tr>
   <tr>
    <td style="text-align:left;"> .saveInitialTime </td>
@@ -636,6 +648,7 @@ simulation year.
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> This describes the simulation time at which the first save event should occur </td>
+   <td style="text-align:left;"> TRUE </td>
   </tr>
   <tr>
    <td style="text-align:left;"> .saveInterval </td>
@@ -644,6 +657,7 @@ simulation year.
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> This describes the simulation time interval between save events </td>
+   <td style="text-align:left;"> TRUE </td>
   </tr>
   <tr>
    <td style="text-align:left;"> .sslVerify </td>
@@ -651,7 +665,8 @@ simulation year.
    <td style="text-align:left;"> 64 </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> Passed to `httr::config(ssl_verifypeer = P(sim)$sslVerify)` when downloading KNN (NFI) datasets. Set to 0L if necessary to bypass checking the SSL certificate (this may be necessary when NFI's FTP website SSL certificate is down/out-of-date). </td>
+   <td style="text-align:left;"> Passed to `httr::config(ssl_verifypeer = P(sim)$.sslVerify)` when downloading KNN (NFI) datasets. Set to 0L if necessary to bypass checking the SSL certificate (this may be necessary when NFI's website SSL certificate is not correctly configured). </td>
+   <td style="text-align:left;"> TRUE </td>
   </tr>
   <tr>
    <td style="text-align:left;"> .studyAreaName </td>
@@ -660,26 +675,27 @@ simulation year.
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> Human-readable name for the study area used. If `NA`, a hash of `studyArea` will be used. </td>
+   <td style="text-align:left;"> TRUE </td>
   </tr>
   <tr>
    <td style="text-align:left;"> .useCache </td>
    <td style="text-align:left;"> logical </td>
-   <td style="text-align:left;"> init </td>
+   <td style="text-align:left;"> .inputOb.... </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> Controls cache; caches the init event by default </td>
+   <td style="text-align:left;"> TRUE </td>
   </tr>
 </tbody>
 </table>
 
-\elandscape
 
 ### List of outputs {#bvalid-outputs-list}
 
 The module produces the following outputs (Table
 \@ref(tab:moduleOutputs-Biomass-validationKNN)):
 
-<table>
+<table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>(\#tab:moduleOutputs-Biomass-validationKNN)List of (ref:Biomass-validationKNN) output objects and their description.</caption>
  <thead>
   <tr>
@@ -721,41 +737,43 @@ The module produces the following outputs (Table
   </tr>
   <tr>
    <td style="text-align:left;"> rstDisturbedPix </td>
-   <td style="text-align:left;"> RasterLayer </td>
+   <td style="text-align:left;"> SpatRaster </td>
    <td style="text-align:left;"> Raster of pixel IDs (as a mask) that have been disturbed by fire or suffered land-cover changes during the validation period. These pixels are excluded form the validation. </td>
   </tr>
   <tr>
    <td style="text-align:left;"> rawBiomassMapStart </td>
-   <td style="text-align:left;"> RasterLayer </td>
+   <td style="text-align:left;"> SpatRaster </td>
    <td style="text-align:left;"> observed total biomass raster layer in study area at the first year of the validation period. Filtered to exclude pixels that were disturbed during the validation period </td>
   </tr>
   <tr>
    <td style="text-align:left;"> rawBiomassMapEnd </td>
-   <td style="text-align:left;"> RasterLayer </td>
+   <td style="text-align:left;"> SpatRaster </td>
    <td style="text-align:left;"> observed total biomass raster layer in study area at the last year of the validation period. Filtered to exclude pixels that were disturbed during the validation period </td>
   </tr>
   <tr>
    <td style="text-align:left;"> speciesLayersStart </td>
-   <td style="text-align:left;"> RasterStack </td>
+   <td style="text-align:left;"> SpatRaster </td>
    <td style="text-align:left;"> observed percent cover raster layers by species in Canada at the first year of the validation period. Filtered to exclude pixels that were disturbed during the validation period </td>
   </tr>
   <tr>
    <td style="text-align:left;"> speciesLayersEnd </td>
-   <td style="text-align:left;"> RasterStack </td>
+   <td style="text-align:left;"> SpatRaster </td>
    <td style="text-align:left;"> observed percent cover raster layers by species in Canada at the last year of the validation period. Filtered to exclude pixels that were disturbed during the validation period </td>
   </tr>
   <tr>
    <td style="text-align:left;"> standAgeMapStart </td>
-   <td style="text-align:left;"> RasterLayer </td>
+   <td style="text-align:left;"> SpatRaster </td>
    <td style="text-align:left;"> observed stand age map in study area, at the first year of the validation period Filtered to exclude pixels that were disturbed during the validation period </td>
   </tr>
   <tr>
    <td style="text-align:left;"> standAgeMapEnd </td>
-   <td style="text-align:left;"> RasterLayer </td>
+   <td style="text-align:left;"> SpatRaster </td>
    <td style="text-align:left;"> observed stand age map in study area, at the last year of the validation period Filtered to exclude pixels that were disturbed during the validation period </td>
   </tr>
 </tbody>
 </table>
+
+\elandscape
 
 ### Simulation flow and module events {#bvalid-sim-flow}
 
@@ -793,15 +811,15 @@ the compiling simulated data if the user has not done so previously (see
 2.  Calculation of summary variables for validation (`calculateValidVars`
 event), namely :
 
--   relative biomass per species per pixel and across the landscape (per year
-and per replicate)
-
--   changes in species biomass per pixel and across the landscape (per
-replicate), with respect to the first year.
-
--   species dominance across the landscape
-
--   species presences across the landscape
+    -   relative biomass per species per pixel and across the landscape (per year
+    and per replicate)
+    
+    -   changes in species biomass per pixel and across the landscape (per
+    replicate), with respect to the first year.
+    
+    -   species dominance across the landscape
+    
+    -   species presences across the landscape
 
 3.  Calculation of validation statistics (`validationStats` event), namely mean
 absolute deviations (MAD) and sum of negative log-likelihoods (SNLL).
@@ -811,33 +829,33 @@ $\Delta$Age (`obsDeltaMaps` event) -- this is an optional visual diagnostic
 of the observed data that produces scatterplots of $\Delta$B \~ $\Delta$Age
 of three types:
 
--   With raw observed values of $\Delta$B and $\Delta$Age
-
--   With $\Delta$B and $\Delta$Age calculated on observed data *after*
-pre-processing (i.e., the data clean-steps done in `Biomass_borealDataPrep`,
-which are also done to the observed data before validation)
-
--   With the data shown in 2) above, but filtered by pixels where there was only
-a stand age increment corresponding to the number of years of between the
-two validation time points. This is not necessarily a *correct* filter, as
-stands may have suffered an age reduction due to the loss of old cohorts
-from background mortality (i.e., not coming from disturbances. However, if
-using the default input datasets, it is unlikely that this is a widespread
-phenomenon in only 10 years. We remind the user that disturbed pixels should
-be removed from the analyses when validating succession dynamics in the
-absence of disturbance - the default option.
+    -   With raw observed values of $\Delta$B and $\Delta$Age
+    
+    -   With $\Delta$B and $\Delta$Age calculated on observed data *after*
+    pre-processing (i.e., the data clean-steps done in `Biomass_borealDataPrep`,
+    which are also done to the observed data before validation)
+    
+    -   With the data shown in 2) above, but filtered by pixels where there was only
+    a stand age increment corresponding to the number of years of between the
+    two validation time points. This is not necessarily a *correct* filter, as
+    stands may have suffered an age reduction due to the loss of old cohorts
+    from background mortality (i.e., not coming from disturbances. However, if
+    using the default input datasets, it is unlikely that this is a widespread
+    phenomenon in only 10 years. We remind the user that disturbed pixels should
+    be removed from the analyses when validating succession dynamics in the
+    absence of disturbance - the default option.
 
 5.  Plots (`landscapeWidePlots`, `pixelLevelPlots` and `deltaBComparisons`
 events):
 
--   Barplots of landscape-wide and pixel-level comparisons between observed and
-simulated data, with respect to relative biomass, dominance and presences.
-
--   Boxplots of biomass changes ($\Delta$B) in observed and simulated data, with
-respect to the first year.
-
--   Maps of biomass and age changes ($\Delta$B, $\Delta$Age) with respect to the
-first year, in observed and simulated data.
+    -   Barplots of landscape-wide and pixel-level comparisons between observed and
+    simulated data, with respect to relative biomass, dominance and presences.
+    
+    -   Boxplots of biomass changes ($\Delta$B) in observed and simulated data, with
+    respect to the first year.
+    
+    -   Maps of biomass and age changes ($\Delta$B, $\Delta$Age) with respect to the
+    first year, in observed and simulated data.
 
 All module default outputs are in the form of plots, but the user can chose to
 save any objects (see Table \@ref(tab:moduleOutputs-Biomass-validationKNN)).
@@ -847,7 +865,7 @@ save any objects (see Table \@ref(tab:moduleOutputs-Biomass-validationKNN)).
 ### Set up R libraries {#bvalid-example-libs}
 
 
-```r
+``` r
 options(repos = c(CRAN = "https://cloud.r-project.org"))
 tempDir <- tempdir()
 
@@ -857,7 +875,10 @@ dir.create(pkgPath, recursive = TRUE)
 .libPaths(pkgPath, include.site = FALSE)
 
 if (!require(Require, lib.loc = pkgPath)) {
-  install.packages("Require")
+  remotes::install_github(
+    paste0("PredictiveEcology/",
+           "Require@5c44205bf407f613f53546be652a438ef1248147"),
+    upgrade = FALSE, force = TRUE)
   library(Require, lib.loc = pkgPath)
 }
 
@@ -873,8 +894,9 @@ GitHub repository (all install all necessary packages). Notice that we are
 placing all packages, module code, inputs and outputs in temporary directories.
 
 
-```r
-Require("PredictiveEcology/SpaDES.project@6d7de6ee12fc967c7c60de44f1aa3b04e6eeb5db", 
+``` r
+Require(paste0("PredictiveEcology/",
+               "SpaDES.project@6d7de6ee12fc967c7c60de44f1aa3b04e6eeb5db"), 
         require = FALSE, upgrade = FALSE, standAlone = TRUE)
 
 paths <- list(inputPath = normPath(file.path(tempDir, "inputs")), 
@@ -889,18 +911,20 @@ SpaDES.project::getModule(modulePath = paths$modulePath,
 
 ## make sure all necessary packages are installed:
 outs <- SpaDES.project::packagesInModules(modulePath = paths$modulePath)
-Require(c(unname(unlist(outs)), "SpaDES", "SpaDES.experiment", "future"),
+Require(c(unname(unlist(outs)),
+          "PredictiveEcology/SpaDES.experiment@development",
+          "future"),
         require = FALSE, standAlone = TRUE)
 
 ## load necessary packages
-Require(c("SpaDES", "LandR", "reproducible", "pemisc",
+Require(c("SpaDES.core", "LandR", "reproducible", "pemisc",
           "SpaDES.experiment", "future"), upgrade = FALSE, install = FALSE)
 ```
 
 ### Setup simulation
 
 
-```r
+``` r
 times <- list(start = 2001, end = 2011)
 
 studyArea <- Cache(randomStudyArea, size = 1e7) # cache this so it creates a random one only once on a machine
@@ -921,7 +945,7 @@ objects <- list(studyArea = studyArea, sppEquiv = sppEquiv, sppColorVect = sppCo
 successionTimestep <- 20L
 
 ## keep default values for most parameters 
-## (ommitted from this list)
+## (omitted from this list)
 parameters <- list(
   Biomass_core = list(
     "sppEquivCol" = speciesNameConvention
@@ -951,7 +975,10 @@ of the `SpaDES.experiment` R package [@McIntireChubaty2021], which builds a
 folder structure where simulation outputs are conveniently organised.
 
 
-```r
+``` r
+opts <- options(reproducible.useCache = TRUE,
+                reproducible.destinationPath = paths$inputPath,
+                spades.useRequire = FALSE)
 graphics.off()
 mySimInit <- simInit(times = times,
                      params = parameters, 
@@ -973,8 +1000,10 @@ Note that because we ran *Biomass_core* by itself using theoretical input data,
 we can expect the validation to reveal that the module didn't do a great job at
 reproducing observed patterns.
 
+*Note that a Google Account is needed to download some of the input files.*
 
-```r
+
+``` r
 simulationOutputs <- lapply(mySimExperiment, FUN = function(x, localSimPaths) {
   oldPath <- dirname(outputPath(x)) ## exclude sim*_rep* folder
   DT <- as.data.table(outputs(x))
@@ -1022,17 +1051,17 @@ Here are some of the output figures automatically produced by
 *Biomass_validationKNN*
 
 <div class="figure">
-<img src="D:/GitHub/LandR-Manual/modules/Biomass_validationKNN/figures/LandscapeComparisons_PresAbs.png" alt="(ref:Biomass-validationKNN) automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left)." width="70%" /><img src="D:/GitHub/LandR-Manual/modules/Biomass_validationKNN/figures/PixelComparisons_relB.png" alt="(ref:Biomass-validationKNN) automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left)." width="70%" />
+<img src="figures/LandscapeComparisons_PresAbs.png" alt="(ref:Biomass-validationKNN) automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left)." width="70%" /><img src="figures/PixelComparisons_relB.png" alt="(ref:Biomass-validationKNN) automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left)." width="70%" />
 <p class="caption">(\#fig:fig-Biomass-validationKNNOutPlots)(ref:Biomass-validationKNN) automatically generates plots showing a visual comparison between simulated and observed species presences (right) across the landscape, and relative species biomass per pixel (left).</p>
 </div>
 
-<div class="figure">
-<img src="D:/GitHub/LandR-Manual/modules/Biomass_validationKNN/figures/landscapeMAD.png" alt="A plot of landscape-wide mean absolute deviations (MAD) from (top to bottom) observed mean relative abundance, no. of presences, no. of pixels where the species is dominant and $\Delta$B." width="70%" />
+<div class="figure" style="text-align: center">
+<img src="figures/landscapeMAD.png" alt="A plot of landscape-wide mean absolute deviations (MAD) from (top to bottom) observed mean relative abundance, no. of presences, no. of pixels where the species is dominant and $\Delta$B." width="70%" />
 <p class="caption">(\#fig:fig-Biomass-validationKNNOutPlots2)A plot of landscape-wide mean absolute deviations (MAD) from (top to bottom) observed mean relative abundance, no. of presences, no. of pixels where the species is dominant and $\Delta$B.</p>
 </div>
 
-<div class="figure">
-<img src="D:/GitHub/LandR-Manual/modules/Biomass_validationKNN/figures/observedDeltaBDeltaAge.png" alt="Diagnostic plot of observed changes in biomass and age $\Delta$B and $\Delta$Age, respectively)." width="70%" />
+<div class="figure" style="text-align: center">
+<img src="figures/observedDeltaBDeltaAge.png" alt="Diagnostic plot of observed changes in biomass and age $\Delta$B and $\Delta$Age, respectively)." width="70%" />
 <p class="caption">(\#fig:fig-Biomass-validationKNNOutPlots3)Diagnostic plot of observed changes in biomass and age $\Delta$B and $\Delta$Age, respectively).</p>
 </div>
 
