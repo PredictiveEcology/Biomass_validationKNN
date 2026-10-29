@@ -30,7 +30,7 @@ always_allow_html: true
 
 
 
-[![module-version-Badge](/home/runner/work/Biomass_validationKNN/Biomass_validationKNN/figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_validationKNN4c84c1db5700bc4bfa4f8db5ab12f4bf2d6441bb)
+[![module-version-Badge](/home/runner/work/Biomass_validationKNN/Biomass_validationKNN/figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_validationKNN0f5010af66cf1113d92068f65c98a1b843b5dcbb)
 
 [![Issues-badge](/home/runner/work/Biomass_validationKNN/Biomass_validationKNN/figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_validationKNN/issues)
 
@@ -141,9 +141,9 @@ replicates), with corresponding years of observed data. It was designed to
 compare the observed data for years 2001 (start point for the simulation) and
 2011 (i.e., after 10 years of simulation) of the kNN forest layers of the
 Canadian National Forest Inventory -- these are currently the only available
-FAIR datasets [*sensu* @StallEtAl2019] on stand biomass and species
-(ref:percent) cover changes across Canada. However, the user can supply other
-sources of observed data, as long as they have an identical format.
+FAIR datasets [*sensu* @StallEtAl2019] on stand biomass and
+species (ref:percent) cover changes across Canada. However, the user can supply
+other sources of observed data, as long as they have an identical format.
 
 The validation is done both visually (using barplots and boxplots) and using two
 statistics: mean absolute deviation of simulated biomass (per species) and the
