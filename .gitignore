@@ -14,3 +14,4 @@ figures/*Badge.png
 ## html cache/files
 *_cache/
 *_files/
+/Biomass_validationKNN.html
