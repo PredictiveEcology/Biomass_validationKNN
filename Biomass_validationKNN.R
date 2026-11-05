@@ -17,7 +17,7 @@ defineModule(sim, list(
   citation = list("citation.bib"),
   documentation = list("README.txt", "Biomass_validationKNN.Rmd"),
   reqdPkgs = list("achubaty/amc", "crayon", "curl", "data.table", "dplyr", "ggplot2", "ggpubr",
-                  "quickPlot (>= 1.0.2.9003)",
+                  "httr2", "quickPlot (>= 1.0.2.9003)",
                   "googledrive", "mclust", "raster", "terra", "RCurl", "scales", "sf", "XML",
                   "reproducible (>= 2.1.0)",
                   "SpaDES.core (>= 2.1.4)", "SpaDES.tools (>= 2.0.7)",
