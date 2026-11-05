@@ -1,6 +1,6 @@
 ---
 title: "LandR _Biomass_validationKNN_ Manual"
-date: "Last updated: 2026-11-04"
+date: "Last updated: 2026-11-05"
 output:
   bookdown::html_document2:
     toc: true
@@ -30,7 +30,7 @@ always_allow_html: true
 
 
 
-[![module-version-Badge](/home/runner/work/Biomass_validationKNN/Biomass_validationKNN/figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_validationKNNca738d4285485313d536e71aa8a537b4550f6d95)
+[![module-version-Badge](/home/runner/work/Biomass_validationKNN/Biomass_validationKNN/figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_validationKNN7ca91c5377ff8e0ffed0b8e45c5898dd70a7b856)
 
 [![Issues-badge](/home/runner/work/Biomass_validationKNN/Biomass_validationKNN/figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_validationKNN/issues)
 
